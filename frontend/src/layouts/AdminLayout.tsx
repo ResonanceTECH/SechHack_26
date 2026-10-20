@@ -11,7 +11,11 @@ const STORAGE_KEY = 'kk-admin-sidebar-open'
 
 const pageMeta: Record<
   string,
-  { crumbs: AdminBreadcrumbItem[]; searchPlaceholder: string }
+  {
+    crumbs: AdminBreadcrumbItem[]
+    searchPlaceholder: string
+    compactTopBar?: boolean
+  }
 > = {
   '/admin/employees': {
     crumbs: [
@@ -30,6 +34,7 @@ const pageMeta: Record<
   '/admin/audit': {
     crumbs: [{ label: 'Администрирование' }, { label: 'Журнал аудита' }],
     searchPlaceholder: 'Поиск по журналу...',
+    compactTopBar: true,
   },
   '/admin/settings': {
     crumbs: [
@@ -37,6 +42,7 @@ const pageMeta: Record<
       { label: 'Настройки клиники' },
     ],
     searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
   },
 }
 
@@ -105,6 +111,7 @@ export function AdminLayout() {
             searchPlaceholder={meta.searchPlaceholder}
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
+            compact={meta.compactTopBar}
           />
           <main className={styles.content}>
             <Outlet context={outletContext} />
