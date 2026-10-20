@@ -1,0 +1,143 @@
+.loginLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease;
+}
+
+.loginLink:hover {
+  background: #f7f8fc;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: #c47a00;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e6a317;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin-top: -4px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.infoBox {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #edeffc;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--brand);
+}
+
+.infoText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.infoTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.infoBody {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.primaryBtn,
+.softBtn {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primaryBtn {
+  margin-top: 4px;
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0, 89, 255, 0.28);
+  transition: background 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: var(--brand-hover);
+}
+
+.softBtn {
+  background: var(--bg-cta-soft);
+  color: var(--brand);
+  transition: background 0.15s ease;
+}
+
+.softBtn:hover {
+  background: var(--brand-soft);
+}
+
+.footerNote {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.45;
+  color: var(--muted);
+}
