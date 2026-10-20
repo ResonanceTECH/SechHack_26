@@ -1,0 +1,110 @@
+.topbar {
+  height: var(--topbar-height);
+  min-height: var(--topbar-height);
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px 0 20px;
+  background: transparent;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  min-width: 0;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.crumbSep {
+  margin: 0 8px;
+  color: var(--footer);
+  font-weight: 500;
+}
+
+.crumbLink,
+.crumbMuted {
+  color: var(--muted);
+}
+
+.crumbLink:hover {
+  color: var(--brand);
+}
+
+.crumbCurrent {
+  color: var(--ink);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.search {
+  justify-self: center;
+  width: 360px;
+  max-width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-search);
+  color: var(--muted);
+}
+
+.search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.search input::placeholder {
+  color: var(--muted);
+}
+
+.right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bell {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--ink-secondary);
+  display: grid;
+  place-items: center;
+}
+
+.bell:hover {
+  background: rgba(27, 36, 64, 0.06);
+  color: var(--ink);
+}
+
+.clinic {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+}
