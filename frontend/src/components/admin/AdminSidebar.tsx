@@ -70,7 +70,8 @@ export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
         pathname.startsWith('/admin/confirm-role') ||
         pathname.startsWith('/admin/suspend-access') ||
         pathname.startsWith('/admin/roles') ||
-        pathname.startsWith('/admin/employee-card'))
+        pathname.startsWith('/admin/employee-card') ||
+        pathname.startsWith('/admin/team'))
     ) {
       return true
     }
