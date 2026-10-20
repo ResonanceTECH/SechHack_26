@@ -142,11 +142,24 @@ export type PatientsFilter =
   | 'stable'
   | 'aviandr'
 
+export type ProfileTabId = 'personal' | 'security' | 'notifications'
+
 export interface DoctorProfile {
   fullName: string
   shortName: string
   initials: string
   specialty: string
+  lastName: string
+  firstName: string
+  middleName: string
+  about: string
+  email: string
+  phone: string
+  clinicName: string
+  specialtyLabel: string
+  accreditationUntil: string
+  verifiedByClinic: boolean
+  prescriptionContourConfirmed: boolean
 }
 
 export interface StatCardData {
@@ -264,7 +277,9 @@ export type ProgramTaskStatus = 'not_started' | 'in_progress' | 'done'
 export interface PatientBadge {
   id: string
   label: string
-  tone: 'critical' | 'aviandr' | 'info'
+  tone: 'critical' | 'aviandr' | 'info' | 'appointment'
+  /** Показать иконку календаря (бейдж приёма) */
+  withCalendar?: boolean
 }
 
 export interface PatientAlertBanner {
@@ -295,6 +310,161 @@ export interface QuestionnaireSnapshot {
   dates: [string, string]
   bars: [number, number]
   note?: string
+}
+
+/** Вкладка «Опросники» в карточке пациента */
+export interface QuestionnaireSummaryCard {
+  id: string
+  label: string
+  value: string
+  footnote: string
+}
+
+export interface QuestionnaireHistoryRow {
+  id: string
+  dateLabel: string
+  phq9: number
+  gad7: number
+  q9Label: string
+  q9Danger?: boolean
+}
+
+export interface PatientQuestionnairesTab {
+  summary: QuestionnaireSummaryCard[]
+  historyTitle: string
+  historyHint: string
+  history: QuestionnaireHistoryRow[]
+}
+
+/** Вкладка «Дневник» в карточке пациента */
+export interface DiaryLastEntryMetric {
+  id: string
+  label: string
+  value: string
+}
+
+export interface DiaryLastEntry {
+  title: string
+  sourceBadge: string
+  metrics: DiaryLastEntryMetric[]
+}
+
+export interface DiaryFillCard {
+  title: string
+  percent: string
+  detail: string
+  weekNote: string
+}
+
+export interface DiaryMessageCard {
+  statusLabel: string
+  title: string
+  body: string
+  cta: string
+}
+
+export interface PatientDiaryTab {
+  chartTitle: string
+  chartFootnote: string
+  points: DiarySeriesPoint[]
+  lastEntry: DiaryLastEntry
+  fill: DiaryFillCard
+  message: DiaryMessageCard
+}
+
+export type ProgramTabTaskStatus = 'in_progress' | 'done' | 'not_started'
+
+export interface ProgramTabTask {
+  id: string
+  title: string
+  subtitle: string
+  status: ProgramTabTaskStatus
+  statusLabel: string
+}
+
+export interface ProgramSideCard {
+  title: string
+  body: string
+  cta: string
+  ctaTone: 'soft' | 'primary'
+}
+
+export interface PatientProgramTab {
+  tasksTitle: string
+  weekBadge: string
+  tasks: ProgramTabTask[]
+  observation: ProgramSideCard
+  addTask: ProgramSideCard
+}
+
+/** Вкладка «Препараты» в карточке пациента */
+export interface PatientMedDrug {
+  title: string
+  contourBadge: string
+  schedule: string
+  courseLine: string
+  planLine: string
+  adherenceLabel: string
+  adherencePercent: string
+  adherenceDoses: string
+  adherenceNote: string
+  grlsCta: string
+  grlsTo: string
+}
+
+export interface PatientMedAlertCard {
+  statusLabel: string
+  title: string
+  body: string
+  cta: string
+}
+
+export interface PatientMedPlanCard {
+  title: string
+  body: string
+  cta: string
+}
+
+export interface PatientMedicationsTab {
+  drug: PatientMedDrug
+  alert: PatientMedAlertCard
+  plan: PatientMedPlanCard
+}
+
+/** Вкладка «Визиты и заметки» */
+export interface VisitAppointment {
+  statusLabel: string
+  datetime: string
+  kindLine: string
+  doctorLine: string
+  reportCta: string
+  transferTitle: string
+  transferBody: string
+  alertCta: string
+}
+
+export interface VisitNote {
+  title: string
+  body: string
+  disclaimer: string
+  editCta: string
+}
+
+export type VisitHistoryAction = 'plan' | 'questionnaires'
+
+export interface VisitHistoryRow {
+  id: string
+  dateLabel: string
+  text: string
+  actionLabel: string
+  action: VisitHistoryAction
+}
+
+export interface PatientVisitsTab {
+  appointment: VisitAppointment
+  note: VisitNote
+  historyTitle: string
+  history: VisitHistoryRow[]
 }
 
 export interface ProgramTask {
