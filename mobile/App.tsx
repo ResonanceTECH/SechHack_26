@@ -15,6 +15,27 @@ import {
   type MedicationItem,
 } from "./src/screens/RegisterMedsScreen";
 import { RegisterAddMedScreen } from "./src/screens/RegisterAddMedScreen";
+import { RegisterQuestionnaireIntroScreen } from "./src/screens/RegisterQuestionnaireIntroScreen";
+import { RegisterQuestionnaireQuestionScreen } from "./src/screens/RegisterQuestionnaireQuestionScreen";
+import { RegisterQuestionnaireResultsScreen } from "./src/screens/RegisterQuestionnaireResultsScreen";
+import { RegisterReadyScreen } from "./src/screens/RegisterReadyScreen";
+import { HomeScreen } from "./src/screens/HomeScreen";
+import { NotificationsScreen } from "./src/screens/NotificationsScreen";
+import {
+  CheckInMoodScreen,
+  type MoodId,
+} from "./src/screens/CheckInMoodScreen";
+import {
+  CheckInAnxietyScreen,
+  type AnxietyId,
+} from "./src/screens/CheckInAnxietyScreen";
+import { CheckInSleepScreen } from "./src/screens/CheckInSleepScreen";
+import { CheckInSavedScreen } from "./src/screens/CheckInSavedScreen";
+import { AppointmentScreen } from "./src/screens/AppointmentScreen";
+import {
+  scoreQuestionnaires,
+  type InstrumentResult,
+} from "./src/data/questionnaires";
 import { QrScanScreen } from "./src/screens/QrScanScreen";
 
 type Screen =
@@ -29,7 +50,37 @@ type Screen =
   | "registerSurveyOwnWords"
   | "registerMeds"
   | "registerAddMed"
+  | "registerQuestionnaire"
+  | "registerQuestionnaireRun"
+  | "registerQuestionnaireResults"
+  | "registerReady"
+  | "home"
+  | "notifications"
+  | "checkInMood"
+  | "checkInAnxiety"
+  | "checkInSleep"
+  | "checkInSaved"
+  | "appointment"
   | "qrScan";
+
+const DEMO_RESULTS = scoreQuestionnaires({
+  "phq9-1": 2,
+  "phq9-2": 2,
+  "phq9-3": 2,
+  "phq9-4": 2,
+  "phq9-5": 2,
+  "phq9-6": 2,
+  "phq9-7": 2,
+  "phq9-8": 2,
+  "phq9-9": 1,
+  "gad7-1": 2,
+  "gad7-2": 2,
+  "gad7-3": 2,
+  "gad7-4": 2,
+  "gad7-5": 2,
+  "gad7-6": 1,
+  "gad7-7": 1,
+});
 
 function extractInviteCode(raw: string): string {
   const text = raw.trim();
@@ -48,6 +99,13 @@ export default function App() {
   const [medications, setMedications] = useState<MedicationItem[]>([]);
   const [takingNothing, setTakingNothing] = useState(true);
   const [allergy, setAllergy] = useState<AllergyAnswer>("no");
+  const [results, setResults] = useState<{
+    phq9: InstrumentResult;
+    gad7: InstrumentResult;
+  }>(DEMO_RESULTS);
+  const [checkInMood, setCheckInMood] = useState<MoodId>(2);
+  const [checkInAnxiety, setCheckInAnxiety] = useState<AnxietyId>(4);
+  const [sleepFrom, setSleepFrom] = useState<"home" | "anxiety">("home");
 
   return (
     <SafeAreaProvider>
@@ -160,9 +218,7 @@ export default function App() {
           }}
           onBack={() => setScreen("registerSurvey")}
           onAddMedication={() => setScreen("registerAddMed")}
-          onContinue={() => {
-            // TODO: step 5
-          }}
+          onContinue={() => setScreen("registerQuestionnaire")}
         />
       )}
 
@@ -178,6 +234,116 @@ export default function App() {
           }}
           onAddManual={() => {
             // TODO: manual medication form
+          }}
+        />
+      )}
+
+      {screen === "registerQuestionnaire" && (
+        <RegisterQuestionnaireIntroScreen
+          onBack={() => setScreen("registerMeds")}
+          onStart={() => setScreen("registerQuestionnaireRun")}
+          onSkip={() => setScreen("registerReady")}
+        />
+      )}
+
+      {screen === "registerQuestionnaireRun" && (
+        <RegisterQuestionnaireQuestionScreen
+          onBack={() => setScreen("registerQuestionnaire")}
+          onClose={() => setScreen("registerQuestionnaire")}
+          onComplete={(answers) => {
+            setResults(scoreQuestionnaires(answers));
+            setScreen("registerQuestionnaireResults");
+          }}
+        />
+      )}
+
+      {screen === "registerQuestionnaireResults" && (
+        <RegisterQuestionnaireResultsScreen
+          phq9={results.phq9}
+          gad7={results.gad7}
+          onContinue={() => setScreen("registerReady")}
+        />
+      )}
+
+      {screen === "registerReady" && (
+        <RegisterReadyScreen onGoHome={() => setScreen("home")} />
+      )}
+
+      {screen === "home" && (
+        <HomeScreen
+          onNotifications={() => setScreen("notifications")}
+          onQuestionnaire={() => setScreen("registerQuestionnaire")}
+          onConfirmVisit={() => setScreen("appointment")}
+          onRescheduleVisit={() => setScreen("appointment")}
+          onAddAction={(action) => {
+            if (action === "wellbeing") setScreen("checkInMood");
+            if (action === "sleep") {
+              setSleepFrom("home");
+              setScreen("checkInSleep");
+            }
+          }}
+          onMood={() => setScreen("checkInMood")}
+        />
+      )}
+
+      {screen === "appointment" && (
+        <AppointmentScreen
+          onBack={() => setScreen("home")}
+          onDone={() => setScreen("home")}
+          onReschedule={() => {
+            // TODO: reschedule flow
+          }}
+        />
+      )}
+
+      {screen === "notifications" && (
+        <NotificationsScreen onBack={() => setScreen("home")} />
+      )}
+
+      {screen === "checkInMood" && (
+        <CheckInMoodScreen
+          initialMood={checkInMood}
+          onClose={() => setScreen("home")}
+          onContinue={(mood) => {
+            setCheckInMood(mood);
+            setScreen("checkInAnxiety");
+          }}
+        />
+      )}
+
+      {screen === "checkInAnxiety" && (
+        <CheckInAnxietyScreen
+          initialAnxiety={checkInAnxiety}
+          onBack={() => setScreen("checkInMood")}
+          onClose={() => setScreen("home")}
+          onContinue={(anxiety) => {
+            setCheckInAnxiety(anxiety);
+            setSleepFrom("anxiety");
+            setScreen("checkInSleep");
+          }}
+        />
+      )}
+
+      {screen === "checkInSleep" && (
+        <CheckInSleepScreen
+          step={sleepFrom === "anxiety" ? 3 : 1}
+          total={sleepFrom === "anxiety" ? 3 : 1}
+          onBack={() =>
+            setScreen(sleepFrom === "anxiety" ? "checkInAnxiety" : "home")
+          }
+          onClose={() => setScreen("home")}
+          onSave={() => setScreen("checkInSaved")}
+        />
+      )}
+
+      {screen === "checkInSaved" && (
+        <CheckInSavedScreen
+          onGoHome={() => setScreen("home")}
+          onTellDoctor={() => {
+            // TODO: chat with doctor
+          }}
+          onBreathing={() => {
+            // TODO: breathing exercise
           }}
         />
       )}
