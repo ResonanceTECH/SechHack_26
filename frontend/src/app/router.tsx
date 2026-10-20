@@ -2,9 +2,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { RequireDoctorAuth } from '@/components/auth/RequireDoctorAuth'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { DoctorLayout } from '@/layouts/DoctorLayout'
-import { AdminPlaceholderPage } from '@/pages/admin/AdminPlaceholderPage'
 import { AnalyticsPage } from '@/pages/admin/analytics/AnalyticsPage'
+import { AuditPage } from '@/pages/admin/audit/AuditPage'
 import { EmployeesPage } from '@/pages/admin/employees/EmployeesPage'
+import { SettingsPage } from '@/pages/admin/settings/SettingsPage'
 import { AdverseEventAlertPage } from '@/pages/alerts/AdverseEventAlertPage'
 import { AlertsPage } from '@/pages/alerts/AlertsPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
@@ -29,8 +30,8 @@ export function AppRouter() {
           <Route index element={<Navigate to="employees" replace />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="audit" element={<AdminPlaceholderPage />} />
-          <Route path="settings" element={<AdminPlaceholderPage />} />
+          <Route path="audit" element={<AuditPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         <Route
