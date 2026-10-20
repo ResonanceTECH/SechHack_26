@@ -2,6 +2,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01Icon,
   Alert02Icon,
+  Analytics01Icon,
   ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowUp01Icon,
@@ -21,6 +22,7 @@ import {
   Home01Icon,
   InformationCircleIcon,
   Leaf01Icon,
+  Link01Icon,
   Logout01Icon,
   LungsIcon,
   MailSend01Icon,
@@ -30,7 +32,10 @@ import {
   PencilEdit01Icon,
   PillIcon,
   Search01Icon,
+  SecurityIcon,
+  Shield01Icon,
   SidebarLeft01Icon,
+  SlidersHorizontalIcon,
   SquareLock02Icon,
   Tick02Icon,
   UserIcon,
@@ -288,6 +293,36 @@ export function IconMore(props: IconProps) {
 export function IconSend(props: IconProps) {
   return (
     <HugeiconsIcon {...defaults} size={16} icon={MailSend01Icon} {...props} />
+  )
+}
+
+export function IconEmployees(props: IconProps) {
+  return <HugeiconsIcon {...defaults} icon={UserGroupIcon} {...props} />
+}
+
+export function IconAnalytics(props: IconProps) {
+  return <HugeiconsIcon {...defaults} icon={Analytics01Icon} {...props} />
+}
+
+export function IconAudit(props: IconProps) {
+  return <HugeiconsIcon {...defaults} icon={SecurityIcon} {...props} />
+}
+
+export function IconClinicSettings(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} icon={SlidersHorizontalIcon} {...props} />
+  )
+}
+
+export function IconShield(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={Shield01Icon} {...props} />
+  )
+}
+
+export function IconLink(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={Link01Icon} {...props} />
   )
 }
 
