@@ -390,3 +390,148 @@
   color: var(--ink-secondary);
   white-space: nowrap;
 }
+
+/* —— Empty state (no assigned patients) —— */
+.emptyLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 16px;
+  align-items: start;
+}
+
+.emptyCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.accessBadge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: #1f7a52;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.accessDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.emptyBody {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+.emptyInfo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #edeffc;
+  margin-top: 4px;
+}
+
+.emptyInfoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-secondary);
+}
+
+.emptyInfoTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.emptyInfoBody {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.profileBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  margin-top: 4px;
+  border-radius: 12px;
+  background: #e8eeff;
+  color: #2654e8;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease;
+}
+
+.profileBtn:hover {
+  background: #dce5ff;
+}
+
+.roleCard {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: #edeffc;
+}
+
+.roleIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-secondary);
+}
+
+.roleTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.roleBody {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .emptyLayout {
+    grid-template-columns: 1fr;
+  }
+}

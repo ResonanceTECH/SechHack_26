@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { InvitePatientButton } from '@/components/InvitePatientButton/InvitePatientButton'
 import {
   IconFilter,
+  IconShield,
   IconTrendDown,
   IconTrendSame,
   IconTrendUp,
@@ -98,14 +99,76 @@ function aviandrDotClass(percent: number): string {
   return styles.dotOk
 }
 
+function PatientsEmptyState() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h2 className={styles.title}>Мои пациенты</h2>
+          <p className={styles.subtitle}>
+            Врачебная роль подтверждена · пациентов пока нет
+          </p>
+        </div>
+      </div>
+
+      <div className={styles.emptyLayout}>
+        <section className={styles.emptyCard}>
+          <span className={styles.accessBadge}>
+            <span className={styles.accessDot} aria-hidden />
+            Доступ активен
+          </span>
+
+          <h3 className={styles.emptyTitle}>Здесь появятся ваши пациенты</h3>
+          <p className={styles.emptyBody}>
+            Клиника ещё не закрепила за вами пациентов. Регистрация и активация
+            роли не открывают доступ ко всем медицинским картам.
+          </p>
+
+          <div className={styles.emptyInfo}>
+            <IconShield className={styles.emptyInfoIcon} size={18} aria-hidden />
+            <div>
+              <p className={styles.emptyInfoTitle}>Что дальше</p>
+              <p className={styles.emptyInfoBody}>
+                Когда клиника назначит вам пациентов, они появятся в этом списке
+                вместе с задачами и алертами.
+              </p>
+            </div>
+          </div>
+
+          <Link to="/profile" className={styles.profileBtn}>
+            Профиль и права
+          </Link>
+        </section>
+
+        <aside className={styles.roleCard}>
+          <IconShield className={styles.roleIcon} size={18} aria-hidden />
+          <div>
+            <p className={styles.roleTitle}>Врачебная роль подтверждена</p>
+            <p className={styles.roleBody}>
+              Роль и контуры доступны в профиле. Область доступа ограничена
+              закреплёнными пациентами.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
 export function PatientsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [filter, setFilter] = useState<PatientsFilter>('all')
 
+  const forceEmpty = searchParams.get('empty') === '1'
   const rows = useMemo(
     () => patients.filter((p) => matchesFilter(p, filter)),
     [filter],
   )
+
+  if (forceEmpty || patients.length === 0) {
+    return <PatientsEmptyState />
+  }
 
   return (
     <div className={styles.page}>
