@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 import { Sidebar } from '@/components/sidebar/Sidebar'
-import { TopBar, type BreadcrumbItem } from '@/components/topbar/TopBar'
+import {
+  TopBar,
+  type BreadcrumbItem,
+  type TopBarAction,
+} from '@/components/topbar/TopBar'
 import { getPatientCard } from '@/data/mockPatientCard'
 import { patients } from '@/data/mockPatients'
 import styles from './DoctorLayout.module.css'
@@ -43,9 +47,25 @@ export function DoctorLayout() {
   const topBar = useMemo((): {
     title?: string
     breadcrumbs?: BreadcrumbItem[]
+    action?: TopBarAction
+    hideSearch?: boolean
   } => {
+    if (pathname === '/profile' || pathname.startsWith('/profile/')) {
+      return {
+        breadcrumbs:
+          pageCrumbs && pageCrumbs.length > 0
+            ? pageCrumbs
+            : [
+                { label: 'Кабинет врача', to: '/' },
+                { label: 'Личный кабинет' },
+              ],
+        action: { label: 'Вернуться к работе', to: '/' },
+        hideSearch: true,
+      }
+    }
+
     if (pageCrumbs && pageCrumbs.length > 0) {
-      return { breadcrumbs: pageCrumbs }
+      return { breadcrumbs: pageCrumbs, hideSearch: true }
     }
 
     const reportMatch = pathname.match(/^\/patients\/([^/]+)\/report\/?$/)
@@ -143,7 +163,12 @@ export function DoctorLayout() {
       <div className={styles.app}>
         <Sidebar open={open} onToggle={() => setOpen((v) => !v)} />
         <div className={styles.main}>
-          <TopBar title={topBar.title} breadcrumbs={topBar.breadcrumbs} />
+          <TopBar
+            title={topBar.title}
+            breadcrumbs={topBar.breadcrumbs}
+            action={topBar.action}
+            hideSearch={topBar.hideSearch}
+          />
           <main className={styles.content}>
             <Outlet context={outletContext} />
           </main>
