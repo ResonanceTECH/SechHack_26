@@ -1,12 +1,19 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import styles from './SpecialistRegisterPage.module.css'
 
+type LocationState = {
+  email?: string
+  fullName?: string
+}
+
 export function SpecialistRegisterPage() {
   const navigate = useNavigate()
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
+  const location = useLocation()
+  const state = (location.state as LocationState | null) ?? null
+  const [fullName, setFullName] = useState(state?.fullName?.trim() || '')
+  const [email, setEmail] = useState(state?.email?.trim() || '')
   const [password, setPassword] = useState('')
   const [accepted, setAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,12 +36,11 @@ export function SpecialistRegisterPage() {
       setError('Примите условия и политику обработки данных')
       return
     }
-    navigate('/invite/doctor/qualification', {
+    navigate('/register/specialist/confirm-email', {
       replace: true,
       state: {
         email: email.trim(),
         fullName: fullName.trim(),
-        selfRegister: true,
       },
     })
   }
