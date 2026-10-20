@@ -1,15 +1,22 @@
+import { useState } from 'react'
 import { IconPlus } from '@/components/icons/NavIcons'
+import { InvitePatientModal } from '@/components/InvitePatientModal/InvitePatientModal'
 import styles from './InvitePatientButton.module.css'
 
-interface InvitePatientButtonProps {
-  onClick?: () => void
-}
+export function InvitePatientButton() {
+  const [open, setOpen] = useState(false)
 
-export function InvitePatientButton({ onClick }: InvitePatientButtonProps) {
   return (
-    <button type="button" className={styles.button} onClick={onClick}>
-      <IconPlus aria-hidden />
-      Пригласить пациента
-    </button>
+    <>
+      <button
+        type="button"
+        className={styles.button}
+        onClick={() => setOpen(true)}
+      >
+        <IconPlus aria-hidden />
+        Пригласить пациента
+      </button>
+      <InvitePatientModal open={open} onClose={() => setOpen(false)} />
+    </>
   )
 }
