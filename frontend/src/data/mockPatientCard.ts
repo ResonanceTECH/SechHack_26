@@ -13,7 +13,12 @@ export const mironovaCard: PatientCard = {
   leadDoctor: 'Смирнова Е. С.',
   badges: [
     { id: 'critical', label: 'Критично', tone: 'critical' },
-    { id: 'aviandr', label: 'Принимает Авиа', tone: 'aviandr' },
+    {
+      id: 'appointment',
+      label: 'Приём 24 окт, 14:00',
+      tone: 'appointment',
+      withCalendar: true,
+    },
   ],
   alert: {
     id: 'a1',

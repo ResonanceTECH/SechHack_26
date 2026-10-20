@@ -6,10 +6,22 @@ import type {
 } from '@/types/doctor'
 
 export const doctorProfile: DoctorProfile = {
-  fullName: 'Елена Сергеевна',
+  fullName: 'Смирнова Елена Сергеевна',
   shortName: 'Смирнова Е. С.',
   initials: 'ЕС',
   specialty: 'Врач-психиатр',
+  lastName: 'Смирнова',
+  firstName: 'Елена',
+  middleName: 'Сергеевна',
+  about:
+    'Врач-психиатр, работаю с пациентами с аффективными расстройствами. Предпочитаю ясный план и прозрачную обратную связь.',
+  email: 'e.smirnova@ravnovesie.ru',
+  phone: '+7 (916) 123-45-67',
+  clinicName: 'Клиника «Равновесие»',
+  specialtyLabel: 'психиатрия',
+  accreditationUntil: '12.2027',
+  verifiedByClinic: true,
+  prescriptionContourConfirmed: true,
 }
 
 export const dashboardStats: StatCardData[] = [
