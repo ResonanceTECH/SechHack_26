@@ -6,6 +6,8 @@ import { AnalyticsPage } from '@/pages/admin/analytics/AnalyticsPage'
 import { ApplicationsPage } from '@/pages/admin/applications/ApplicationsPage'
 import { AuditPage } from '@/pages/admin/audit/AuditPage'
 import { ConfirmRoleChangePage } from '@/pages/admin/confirm-role/ConfirmRoleChangePage'
+import { EmployeeCardPage } from '@/pages/admin/employee-card/EmployeeCardPage'
+import { RejectApplicationPage } from '@/pages/admin/reject-application/RejectApplicationPage'
 import { RequestClarificationPage } from '@/pages/admin/request-clarification/RequestClarificationPage'
 import { RolesAccessPage } from '@/pages/admin/roles/RolesAccessPage'
 import { SuspendAccessPage } from '@/pages/admin/suspend-access/SuspendAccessPage'
@@ -26,6 +28,7 @@ import { ConnectClinicReadyPage } from '@/pages/connect-clinic/ConnectClinicRead
 import { ConnectClinicSecurityPage } from '@/pages/connect-clinic/ConnectClinicSecurityPage'
 import { ConnectClinicStatusPage } from '@/pages/connect-clinic/ConnectClinicStatusPage'
 import { ConnectClinicVerifyPage } from '@/pages/connect-clinic/ConnectClinicVerifyPage'
+import { AdminInvitePage } from '@/pages/invite/AdminInvitePage'
 import { DoctorClarifyPage } from '@/pages/invite/DoctorClarifyPage'
 import { DoctorInvitePage } from '@/pages/invite/DoctorInvitePage'
 import { DoctorPendingPage } from '@/pages/invite/DoctorPendingPage'
@@ -71,6 +74,7 @@ export function AppRouter() {
           path="/register/specialist/confirm-email"
           element={<SpecialistConfirmEmailPage />}
         />
+        <Route path="/invite/admin" element={<AdminInvitePage />} />
         <Route path="/invite/doctor" element={<DoctorInvitePage />} />
         <Route
           path="/invite/doctor/qualification"
@@ -124,12 +128,17 @@ export function AppRouter() {
             element={<RequestClarificationPage />}
           />
           <Route
+            path="reject-application"
+            element={<RejectApplicationPage />}
+          />
+          <Route
             path="confirm-role"
             element={<ConfirmRoleChangePage />}
           />
           <Route path="suspend-access" element={<SuspendAccessPage />} />
           <Route path="roles" element={<RolesAccessPage />} />
           <Route path="employees" element={<EmployeesPage />} />
+          <Route path="employee-card" element={<EmployeeCardPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="settings" element={<SettingsPage />} />
