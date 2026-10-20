@@ -125,7 +125,7 @@ export function SettingsPage() {
               <Link to="/admin/employees" className={styles.linkBtn}>
                 Сотрудники и роли
               </Link>
-              <Link to="/admin/employees" className={styles.linkBtn}>
+              <Link to="/admin/roles" className={styles.linkBtn}>
                 Роли и границы доступа
               </Link>
             </div>
