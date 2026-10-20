@@ -32,6 +32,8 @@ import {
 import { CheckInSleepScreen } from "./src/screens/CheckInSleepScreen";
 import { CheckInSavedScreen } from "./src/screens/CheckInSavedScreen";
 import { AppointmentScreen } from "./src/screens/AppointmentScreen";
+import { RescheduleAppointmentScreen } from "./src/screens/RescheduleAppointmentScreen";
+import { RescheduleRequestSentScreen } from "./src/screens/RescheduleRequestSentScreen";
 import {
   scoreQuestionnaires,
   type InstrumentResult,
@@ -61,7 +63,17 @@ type Screen =
   | "checkInSleep"
   | "checkInSaved"
   | "appointment"
+  | "rescheduleAppointment"
+  | "rescheduleSent"
   | "qrScan";
+
+const RESCHEDULE_DAY_LABELS: Record<string, string> = {
+  "26": "Пн, 26 октября",
+  "27": "Вт, 27 октября",
+  "28": "Ср, 28 октября",
+  "29": "Чт, 29 октября",
+  "30": "Пт, 30 октября",
+};
 
 const DEMO_RESULTS = scoreQuestionnaires({
   "phq9-1": 2,
@@ -106,6 +118,8 @@ export default function App() {
   const [checkInMood, setCheckInMood] = useState<MoodId>(2);
   const [checkInAnxiety, setCheckInAnxiety] = useState<AnxietyId>(4);
   const [sleepFrom, setSleepFrom] = useState<"home" | "anxiety">("home");
+  const [rescheduleBack, setRescheduleBack] = useState<Screen>("home");
+  const [rescheduleSlot, setRescheduleSlot] = useState("Вт, 27 октября · 11:30");
 
   return (
     <SafeAreaProvider>
@@ -274,7 +288,10 @@ export default function App() {
           onNotifications={() => setScreen("notifications")}
           onQuestionnaire={() => setScreen("registerQuestionnaire")}
           onConfirmVisit={() => setScreen("appointment")}
-          onRescheduleVisit={() => setScreen("appointment")}
+          onRescheduleVisit={() => {
+            setRescheduleBack("home");
+            setScreen("rescheduleAppointment");
+          }}
           onAddAction={(action) => {
             if (action === "wellbeing") setScreen("checkInMood");
             if (action === "sleep") {
@@ -291,8 +308,27 @@ export default function App() {
           onBack={() => setScreen("home")}
           onDone={() => setScreen("home")}
           onReschedule={() => {
-            // TODO: reschedule flow
+            setRescheduleBack("appointment");
+            setScreen("rescheduleAppointment");
           }}
+        />
+      )}
+
+      {screen === "rescheduleAppointment" && (
+        <RescheduleAppointmentScreen
+          onBack={() => setScreen(rescheduleBack)}
+          onSubmit={({ dateId, time }) => {
+            const day = RESCHEDULE_DAY_LABELS[dateId] ?? "Вт, 27 октября";
+            setRescheduleSlot(`${day} · ${time}`);
+            setScreen("rescheduleSent");
+          }}
+        />
+      )}
+
+      {screen === "rescheduleSent" && (
+        <RescheduleRequestSentScreen
+          requestedSlot={rescheduleSlot}
+          onGoHome={() => setScreen("home")}
         />
       )}
 
