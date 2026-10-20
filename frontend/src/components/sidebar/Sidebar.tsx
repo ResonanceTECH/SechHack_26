@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   IconAlerts,
   IconDashboard,
@@ -9,6 +9,7 @@ import {
   IconSidebarToggle,
 } from '@/components/icons/NavIcons'
 import { doctorProfile } from '@/data/mockDoctor'
+import { setDoctorAuthed } from '@/lib/doctorAuth'
 import type { NavItemId } from '@/types/doctor'
 import styles from './Sidebar.module.css'
 
@@ -48,6 +49,13 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
+  const navigate = useNavigate()
+
+  function logout() {
+    setDoctorAuthed(false)
+    navigate('/login', { replace: true })
+  }
+
   return (
     <aside
       className={`${styles.sidebar}${open ? '' : ` ${styles.collapsed}`}`}
@@ -113,22 +121,26 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       </nav>
 
       <div className={styles.footer}>
-        <div
-          className={styles.avatar}
-          aria-hidden
+        <Link
+          to="/profile"
+          className={styles.footerProfile}
           title={`${doctorProfile.shortName} · ${doctorProfile.specialty}`}
+          aria-label={`Личный кабинет · ${doctorProfile.shortName}`}
         >
-          {doctorProfile.initials}
-        </div>
-        <div className={styles.footerMeta}>
-          <div className={styles.footerName}>{doctorProfile.shortName}</div>
-          <div className={styles.footerRole}>{doctorProfile.specialty}</div>
-        </div>
+          <div className={styles.avatar} aria-hidden>
+            {doctorProfile.initials}
+          </div>
+          <div className={styles.footerMeta}>
+            <div className={styles.footerName}>{doctorProfile.shortName}</div>
+            <div className={styles.footerRole}>{doctorProfile.specialty}</div>
+          </div>
+        </Link>
         <button
           type="button"
           className={styles.logout}
           aria-label="Выйти"
           title="Выйти"
+          onClick={logout}
         >
           <IconLogout aria-hidden />
         </button>
