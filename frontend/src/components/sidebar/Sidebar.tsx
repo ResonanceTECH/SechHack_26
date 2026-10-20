@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   IconAlerts,
   IconDashboard,
@@ -50,10 +50,22 @@ interface SidebarProps {
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   function logout() {
     setDoctorAuthed(false)
     navigate('/login', { replace: true })
+  }
+
+  function isNavActive(id: NavItemId, isActive: boolean) {
+    if (
+      id === 'dashboard' &&
+      (pathname.startsWith('/reports') ||
+        /^\/patients\/[^/]+\/report\/?$/.test(pathname))
+    ) {
+      return true
+    }
+    return isActive
   }
 
   return (
@@ -100,7 +112,11 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               title={item.label}
               aria-label={item.label}
               className={({ isActive }) =>
-                `${styles.link}${isActive ? ` ${styles.linkActive}` : ''}`
+                `${styles.link}${
+                  isNavActive(item.id, isActive)
+                    ? ` ${styles.linkActive}`
+                    : ''
+                }`
               }
             >
               <span className={styles.linkIcon}>

@@ -32,12 +32,121 @@
   gap: 16px;
 }
 
+.headerCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
 .title {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
   line-height: 1.2;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--info-soft);
+  color: var(--brand-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sentBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sentHeadline {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.sentPhone {
+  margin: 2px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.sentMeta {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.accessBox {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--info-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accessTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.accessBody {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+}
+
+.actionsStart {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btnSoft {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-cta-soft);
+  color: var(--brand-ink);
+  border: 1px solid transparent;
+  transition: background 0.15s ease;
+}
+
+.btnSoft:hover {
+  background: #dce5ff;
 }
 
 .close {
