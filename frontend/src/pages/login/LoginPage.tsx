@@ -83,7 +83,15 @@ export function LoginPage() {
             <button type="submit" className={styles.primaryBtn}>
               Войти
             </button>
-            <button type="button" className={styles.forgotLink}>
+            <button
+              type="button"
+              className={styles.forgotLink}
+              onClick={() =>
+                navigate('/login/forgot', {
+                  state: { email: email.trim() || undefined },
+                })
+              }
+            >
               Забыли пароль?
             </button>
           </div>
