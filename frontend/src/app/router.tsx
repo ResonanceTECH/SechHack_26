@@ -5,6 +5,10 @@ import { DoctorLayout } from '@/layouts/DoctorLayout'
 import { AnalyticsPage } from '@/pages/admin/analytics/AnalyticsPage'
 import { ApplicationsPage } from '@/pages/admin/applications/ApplicationsPage'
 import { AuditPage } from '@/pages/admin/audit/AuditPage'
+import { ConfirmRoleChangePage } from '@/pages/admin/confirm-role/ConfirmRoleChangePage'
+import { RequestClarificationPage } from '@/pages/admin/request-clarification/RequestClarificationPage'
+import { RolesAccessPage } from '@/pages/admin/roles/RolesAccessPage'
+import { SuspendAccessPage } from '@/pages/admin/suspend-access/SuspendAccessPage'
 import { EmployeesPage } from '@/pages/admin/employees/EmployeesPage'
 import { InviteAdminPage } from '@/pages/admin/invite-admin/InviteAdminPage'
 import { InviteDoctorPage } from '@/pages/admin/invite-doctor/InviteDoctorPage'
@@ -22,11 +26,18 @@ import { ConnectClinicReadyPage } from '@/pages/connect-clinic/ConnectClinicRead
 import { ConnectClinicSecurityPage } from '@/pages/connect-clinic/ConnectClinicSecurityPage'
 import { ConnectClinicStatusPage } from '@/pages/connect-clinic/ConnectClinicStatusPage'
 import { ConnectClinicVerifyPage } from '@/pages/connect-clinic/ConnectClinicVerifyPage'
+import { DoctorClarifyPage } from '@/pages/invite/DoctorClarifyPage'
 import { DoctorInvitePage } from '@/pages/invite/DoctorInvitePage'
 import { DoctorPendingPage } from '@/pages/invite/DoctorPendingPage'
 import { DoctorQualificationPage } from '@/pages/invite/DoctorQualificationPage'
+import { DoctorRejectedPage } from '@/pages/invite/DoctorRejectedPage'
+import { InviteInvalidPage } from '@/pages/invite/InviteInvalidPage'
 import { AdminLogin2faPage } from '@/pages/login/AdminLogin2faPage'
+import { ForgotPasswordPage } from '@/pages/login/ForgotPasswordPage'
+import { ForgotPasswordSentPage } from '@/pages/login/ForgotPasswordSentPage'
 import { LoginPage } from '@/pages/login/LoginPage'
+import { ResetPasswordPage } from '@/pages/login/ResetPasswordPage'
+import { SpecialistConfirmEmailPage } from '@/pages/register/SpecialistConfirmEmailPage'
 import { SpecialistRegisterPage } from '@/pages/register/SpecialistRegisterPage'
 import { PatientCardPage } from '@/pages/patient-card/PatientCardPage'
 import { PatientsPage } from '@/pages/patients/PatientsPage'
@@ -43,9 +54,22 @@ export function AppRouter() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/login/admin-2fa" element={<AdminLogin2faPage />} />
+        <Route path="/login/forgot" element={<ForgotPasswordPage />} />
+        <Route
+          path="/login/forgot/sent"
+          element={<ForgotPasswordSentPage />}
+        />
+        <Route
+          path="/login/forgot/reset"
+          element={<ResetPasswordPage />}
+        />
         <Route
           path="/register/specialist"
           element={<SpecialistRegisterPage />}
+        />
+        <Route
+          path="/register/specialist/confirm-email"
+          element={<SpecialistConfirmEmailPage />}
         />
         <Route path="/invite/doctor" element={<DoctorInvitePage />} />
         <Route
@@ -56,6 +80,15 @@ export function AppRouter() {
           path="/invite/doctor/pending"
           element={<DoctorPendingPage />}
         />
+        <Route
+          path="/invite/doctor/rejected"
+          element={<DoctorRejectedPage />}
+        />
+        <Route
+          path="/invite/doctor/clarify"
+          element={<DoctorClarifyPage />}
+        />
+        <Route path="/invite/invalid" element={<InviteInvalidPage />} />
         <Route path="/connect-clinic" element={<ConnectClinicPage />} />
         <Route
           path="/connect-clinic/verify"
@@ -86,6 +119,16 @@ export function AppRouter() {
           <Route path="invite-sent" element={<InviteSentPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="verify-doctor" element={<VerifyDoctorPage />} />
+          <Route
+            path="request-clarification"
+            element={<RequestClarificationPage />}
+          />
+          <Route
+            path="confirm-role"
+            element={<ConfirmRoleChangePage />}
+          />
+          <Route path="suspend-access" element={<SuspendAccessPage />} />
+          <Route path="roles" element={<RolesAccessPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="audit" element={<AuditPage />} />
