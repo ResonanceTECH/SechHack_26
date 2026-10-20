@@ -67,11 +67,27 @@ export function PatientCardPage() {
   const accessLog = useMemo(() => getPatientAccessLog(patientId), [patientId])
   const [tab, setTab] = useState<PatientCardTab>('overview')
   const [requestOpen, setRequestOpen] = useState(false)
+  const [questionnaireResultOpen, setQuestionnaireResultOpen] = useState(false)
   const closeRequest = useCallback(() => setRequestOpen(false), [])
   const openQuestionnaires = useCallback(() => setTab('questionnaires'), [])
+  const onQuestionnaireResultOpenChange = useCallback((open: boolean) => {
+    setQuestionnaireResultOpen(open)
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'questionnaires') setQuestionnaireResultOpen(false)
+  }, [tab])
 
   useEffect(() => {
     if (!card) return
+    if (tab === 'questionnaires' && questionnaireResultOpen) {
+      setBreadcrumbs([
+        { label: 'Пациенты', to: '/patients' },
+        { label: card.shortName, to: `/patients/${card.id}` },
+        { label: 'Результат опросника' },
+      ])
+      return () => setBreadcrumbs(null)
+    }
     const sub = tabCrumbLabel[tab]
     const crumbs = sub
       ? [
@@ -85,7 +101,7 @@ export function PatientCardPage() {
         ]
     setBreadcrumbs(crumbs)
     return () => setBreadcrumbs(null)
-  }, [card, tab, setBreadcrumbs])
+  }, [card, tab, questionnaireResultOpen, setBreadcrumbs])
 
   if (!card) {
     return <Navigate to="/patients" replace />
@@ -192,7 +208,10 @@ export function PatientCardPage() {
       </nav>
 
       {tab === 'questionnaires' ? (
-        <QuestionnairesTab data={questionnaires} />
+        <QuestionnairesTab
+          data={questionnaires}
+          onResultOpenChange={onQuestionnaireResultOpenChange}
+        />
       ) : tab === 'diary' ? (
         <DiaryTab data={diary} patientId={patientId} />
       ) : tab === 'program' ? (
