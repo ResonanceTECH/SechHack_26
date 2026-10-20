@@ -6,6 +6,15 @@ import { RegisterSmsScreen } from "./src/screens/RegisterSmsScreen";
 import { RegisterConsentScreen } from "./src/screens/RegisterConsentScreen";
 import { ConsentDocumentScreen } from "./src/screens/ConsentDocumentScreen";
 import { RegisterDoctorScreen } from "./src/screens/RegisterDoctorScreen";
+import { RegisterDoctorConfirmScreen } from "./src/screens/RegisterDoctorConfirmScreen";
+import { RegisterSurveyScreen } from "./src/screens/RegisterSurveyScreen";
+import { RegisterSurveyOwnWordsScreen } from "./src/screens/RegisterSurveyOwnWordsScreen";
+import {
+  RegisterMedsScreen,
+  type AllergyAnswer,
+  type MedicationItem,
+} from "./src/screens/RegisterMedsScreen";
+import { RegisterAddMedScreen } from "./src/screens/RegisterAddMedScreen";
 import { QrScanScreen } from "./src/screens/QrScanScreen";
 
 type Screen =
@@ -15,6 +24,11 @@ type Screen =
   | "registerConsent"
   | "consentDocument"
   | "registerDoctor"
+  | "registerDoctorConfirm"
+  | "registerSurvey"
+  | "registerSurveyOwnWords"
+  | "registerMeds"
+  | "registerAddMed"
   | "qrScan";
 
 function extractInviteCode(raw: string): string {
@@ -27,6 +41,13 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [phone, setPhone] = useState("+7 916 123-45-67");
   const [inviteCode, setInviteCode] = useState("RAV-2741");
+  const [surveyBack, setSurveyBack] = useState<Screen>("registerDoctor");
+  const [ownWords, setOwnWords] = useState(
+    "Последние месяцы постоянно тревожно, долго не могу уснуть, срываюсь на близких."
+  );
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [takingNothing, setTakingNothing] = useState(true);
+  const [allergy, setAllergy] = useState<AllergyAnswer>("no");
 
   return (
     <SafeAreaProvider>
@@ -78,10 +99,85 @@ export default function App() {
           onScanQr={() => setScreen("qrScan")}
           onFindDoctor={(code) => {
             setInviteCode(code);
-            // TODO: step 4
+            setScreen("registerDoctorConfirm");
           }}
           onSkip={() => {
-            // TODO: step 4 without doctor
+            setSurveyBack("registerDoctor");
+            setScreen("registerSurvey");
+          }}
+        />
+      )}
+
+      {screen === "registerDoctorConfirm" && (
+        <RegisterDoctorConfirmScreen
+          onBack={() => setScreen("registerDoctor")}
+          onAllow={() => {
+            setSurveyBack("registerDoctorConfirm");
+            setScreen("registerSurvey");
+          }}
+          onWrongDoctor={() => setScreen("registerDoctor")}
+        />
+      )}
+
+      {screen === "registerSurvey" && (
+        <RegisterSurveyScreen
+          onBack={() => setScreen(surveyBack)}
+          onContinue={() => setScreen("registerMeds")}
+          onOwnWords={() => setScreen("registerSurveyOwnWords")}
+        />
+      )}
+
+      {screen === "registerSurveyOwnWords" && (
+        <RegisterSurveyOwnWordsScreen
+          initialText={ownWords}
+          onBack={() => setScreen("registerSurvey")}
+          onSave={(text) => {
+            setOwnWords(text);
+            setScreen("registerSurvey");
+          }}
+          onRecordVoice={() => {
+            // TODO: voice input
+          }}
+        />
+      )}
+
+      {screen === "registerMeds" && (
+        <RegisterMedsScreen
+          medications={medications}
+          takingNothing={takingNothing}
+          allergy={allergy}
+          onTakingNothingChange={(value) => {
+            setTakingNothing(value);
+            if (value) setMedications([]);
+          }}
+          onAllergyChange={setAllergy}
+          onRemoveMedication={(id) => {
+            setMedications((prev) => {
+              const next = prev.filter((m) => m.id !== id);
+              if (next.length === 0) setTakingNothing(true);
+              return next;
+            });
+          }}
+          onBack={() => setScreen("registerSurvey")}
+          onAddMedication={() => setScreen("registerAddMed")}
+          onContinue={() => {
+            // TODO: step 5
+          }}
+        />
+      )}
+
+      {screen === "registerAddMed" && (
+        <RegisterAddMedScreen
+          onBack={() => setScreen("registerMeds")}
+          onAdd={(med) => {
+            setMedications((prev) =>
+              prev.some((m) => m.id === med.id) ? prev : [...prev, med]
+            );
+            setTakingNothing(false);
+            setScreen("registerMeds");
+          }}
+          onAddManual={() => {
+            // TODO: manual medication form
           }}
         />
       )}
@@ -92,7 +188,7 @@ export default function App() {
           onManualEntry={() => setScreen("registerDoctor")}
           onScanned={(data) => {
             setInviteCode(extractInviteCode(data));
-            setScreen("registerDoctor");
+            setScreen("registerDoctorConfirm");
           }}
         />
       )}
