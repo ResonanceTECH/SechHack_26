@@ -1,6 +1,10 @@
-import type { PreVisitReport } from '@/types/doctor'
+import type {
+  PreVisitReport,
+  PreVisitReportView,
+  PreVisitSummaryReport,
+} from '@/types/doctor'
 
-/** Миронова — референс D05 отчёта перед визитом */
+/** Миронова — детальный отчёт перед визитом */
 export const mironovaReport: PreVisitReport = {
   patientId: 'p1',
   shortName: 'Миронова Анна',
@@ -123,10 +127,47 @@ export const mironovaReport: PreVisitReport = {
     'Обсудить сон, гигиену сна. Решить вопрос о продлении курса до 6 недель. Повторить PHQ-9/GAD-7.',
 }
 
-const reportsByPatient: Record<string, PreVisitReport> = {
-  [mironovaReport.patientId]: mironovaReport,
+/** Кузнецов — упрощённый отчёт из списка */
+export const kuznetsovSummary: PreVisitSummaryReport = {
+  layout: 'summary',
+  patientId: 'p2',
+  shortName: 'Кузнецов Игорь',
+  visitLine: '18 октября · 10:00 · повторный, очно',
+  statusLabel: 'Отчёт готов',
+  metrics: [
+    {
+      id: 'phq9',
+      label: 'PHQ-9',
+      value: '16',
+      footnote: 'Последний результат в реестре',
+    },
+    {
+      id: 'gad7',
+      label: 'GAD-7',
+      value: '9',
+      footnote: 'Последний результат в реестре',
+    },
+    {
+      id: 'diary',
+      label: 'Дневник · 14 дней',
+      value: '71%',
+      footnote: 'Доля дней с отметками пациента',
+    },
+  ],
+  considerTitle: 'Что учесть перед приёмом',
+  considerBody:
+    'В реестре отмечен алерт скрининга гипомании. Клиническая оценка и решение остаются за врачом.',
+  dataFooter:
+    'Данные на 18 октября, 11:05. Отсутствие отметок не означает улучшение или ухудшение состояния.',
 }
 
-export function getPreVisitReport(patientId: string): PreVisitReport | undefined {
+const reportsByPatient: Record<string, PreVisitReportView> = {
+  [mironovaReport.patientId]: mironovaReport,
+  [kuznetsovSummary.patientId]: kuznetsovSummary,
+}
+
+export function getPreVisitReport(
+  patientId: string,
+): PreVisitReportView | undefined {
   return reportsByPatient[patientId]
 }

@@ -42,6 +42,54 @@ export const mironovaQuestionnaires: PatientQuestionnairesTab = {
       q9Label: '0 баллов · «Ни разу»',
     },
   ],
+  results: {
+    h1: {
+      id: 'h1',
+      filledAt: '18 октября · 10:42',
+      scores: [
+        {
+          id: 'phq9',
+          label: 'PHQ-9',
+          value: '14',
+          footnote: 'Сумма баллов · заполнено пациентом',
+        },
+        {
+          id: 'gad7',
+          label: 'GAD-7',
+          value: '12',
+          footnote: 'Сумма баллов · заполнено пациентом',
+        },
+      ],
+      q9Title: 'Вопрос 9 PHQ-9',
+      q9Value: '1 балл · «Несколько дней»',
+      alert: {
+        statusLabel: 'Алерт ожидает решения',
+        hint: 'Просмотр результата не заменяет оценку риска врачом.',
+        cta: 'Открыть связанный алерт',
+        ctaTo: '/alerts',
+      },
+    },
+    h2: {
+      id: 'h2',
+      filledAt: '4 октября · первичное',
+      scores: [
+        {
+          id: 'phq9',
+          label: 'PHQ-9',
+          value: '17',
+          footnote: 'Сумма баллов · заполнено пациентом',
+        },
+        {
+          id: 'gad7',
+          label: 'GAD-7',
+          value: '12',
+          footnote: 'Сумма баллов · заполнено пациентом',
+        },
+      ],
+      q9Title: 'Вопрос 9 PHQ-9',
+      q9Value: '0 баллов · «Ни разу»',
+    },
+  },
 }
 
 const byPatient: Record<string, PatientQuestionnairesTab> = {
