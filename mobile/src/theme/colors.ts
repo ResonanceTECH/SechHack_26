@@ -1,0 +1,15 @@
+export const colors = {
+  bgApp: "#F4F6FC",
+  gradientTop: "#8EAEFF",
+  gradientTopSoft: "rgba(201, 213, 255, 0.9)",
+  brand: "#3B78FF",
+  brandSoft: "#D9E4FF",
+  brandGlow: "rgba(142, 174, 255, 0.5)",
+  progressTrack: "rgba(27, 36, 64, 0.08)",
+  ink: "#1B2440",
+  muted: "#6E7690",
+  footer: "#A0A8BC",
+  white: "#FFFFFF",
+  inputBorder: "#3B78FF",
+  inputBg: "#FFFFFF",
+} as const;
