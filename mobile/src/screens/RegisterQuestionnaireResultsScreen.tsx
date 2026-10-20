@@ -1,4 +1,11 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type DimensionValue,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,7 +70,8 @@ function ClipboardIcon() {
 function ResultCard({ result }: { result: InstrumentResult }) {
   const tone = TONE_STYLES[result.tone];
   // marker sits in the middle of the severity band (0..4)
-  const markerLeft = `${((result.band + 0.5) / 5) * 100}%`;
+  const markerLeft =
+    `${((result.band + 0.5) / 5) * 100}%` as DimensionValue;
 
   return (
     <View style={styles.card}>
