@@ -49,6 +49,7 @@ export function DoctorLayout() {
     breadcrumbs?: BreadcrumbItem[]
     action?: TopBarAction
     hideSearch?: boolean
+    rightMeta?: string
   } => {
     if (pathname === '/profile' || pathname.startsWith('/profile/')) {
       return {
@@ -127,6 +128,17 @@ export function DoctorLayout() {
       }
     }
 
+    if (pathname === '/patients' || pathname === '/patients/') {
+      return {
+        breadcrumbs: [
+          { label: 'Кабинет врача', to: '/' },
+          { label: 'Мои пациенты' },
+        ],
+        hideSearch: true,
+        rightMeta: 'Клиника «Равновесие»',
+      }
+    }
+
     if (pathname === '/alerts' || pathname.startsWith('/alerts/')) {
       return { title: titles['/alerts'] }
     }
@@ -168,6 +180,7 @@ export function DoctorLayout() {
             breadcrumbs={topBar.breadcrumbs}
             action={topBar.action}
             hideSearch={topBar.hideSearch}
+            rightMeta={topBar.rightMeta}
           />
           <main className={styles.content}>
             <Outlet context={outletContext} />

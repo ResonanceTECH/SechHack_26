@@ -66,12 +66,68 @@ const pageMeta: Record<
     searchPlaceholder: 'Поиск...',
     compactTopBar: true,
   },
+  '/admin/request-clarification': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Запросить уточнение профиля' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/reject-application': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Отклонить заявку сотрудника' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/confirm-role': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Подтвердите изменение роли' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/suspend-access': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Приостановить доступ сотрудника' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/roles': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Роли и границы доступа' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
   '/admin/employees': {
     crumbs: [
       { label: 'Администрирование' },
       { label: 'Сотрудники и роли' },
     ],
     searchPlaceholder: 'Поиск сотрудника...',
+  },
+  '/admin/employee-card': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Карточка сотрудника' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/team': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Команда клиники' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
   },
   '/admin/analytics': {
     crumbs: [
@@ -81,7 +137,10 @@ const pageMeta: Record<
     searchPlaceholder: 'Поиск сотрудника...',
   },
   '/admin/audit': {
-    crumbs: [{ label: 'Администрирование' }, { label: 'Журнал аудита' }],
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Журнал доступа и приглашений' },
+    ],
     searchPlaceholder: 'Поиск по журналу...',
     compactTopBar: true,
   },
