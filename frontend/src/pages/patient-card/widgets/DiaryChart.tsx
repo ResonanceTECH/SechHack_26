@@ -3,6 +3,8 @@ import styles from './DiaryChart.module.css'
 
 interface DiaryChartProps {
   points: DiarySeriesPoint[]
+  /** overview — линия сна; diary — точки «Сон (плохо)» у оси */
+  variant?: 'overview' | 'diary'
 }
 
 const W = 640
@@ -44,11 +46,23 @@ function pathFor(
   return d
 }
 
-export function DiaryChart({ points }: DiaryChartProps) {
+export function DiaryChart({ points, variant = 'overview' }: DiaryChartProps) {
   const n = points.length
   const mood = pathFor(points, 'mood')
   const anxiety = pathFor(points, 'anxiety')
   const sleep = pathFor(points, 'sleep')
+  const diary = variant === 'diary'
+  const sleepBaseline = H - PAD.bottom - 4
+
+  const xLabels = diary
+    ? ([[0, '19 сен'], [29, '18 окт']] as const)
+    : ([
+        [0, '19 сен'],
+        [7, '26 сен'],
+        [14, '3 окт'],
+        [21, '10 окт'],
+        [29, '18 окт'],
+      ] as const)
 
   return (
     <div className={styles.wrap}>
@@ -58,7 +72,6 @@ export function DiaryChart({ points }: DiaryChartProps) {
         role="img"
         aria-label="График дневника за 30 дней"
       >
-        {/* Y grid */}
         {[2, 4, 6, 8, 10].map((v) => (
           <g key={v}>
             <line
@@ -74,7 +87,6 @@ export function DiaryChart({ points }: DiaryChartProps) {
           </g>
         ))}
 
-        {/* Gap bars + worsen zones */}
         {points.map((p, i) => {
           if (!p.gap && !p.worsenZone) return null
           const x = xAt(i, n)
@@ -94,11 +106,28 @@ export function DiaryChart({ points }: DiaryChartProps) {
           )
         })}
 
-        <path d={sleep} className={styles.sleep} fill="none" />
+        {!diary ? (
+          <path d={sleep} className={styles.sleep} fill="none" />
+        ) : null}
+
         <path d={anxiety} className={styles.anxiety} fill="none" />
         <path d={mood} className={styles.mood} fill="none" />
 
-        {/* End dots */}
+        {diary
+          ? points.map((p, i) => {
+              if (p.sleep == null || p.sleep > 5.5) return null
+              return (
+                <circle
+                  key={`sleep-${p.day}`}
+                  cx={xAt(i, n)}
+                  cy={sleepBaseline}
+                  r={3}
+                  className={styles.dotSleep}
+                />
+              )
+            })
+          : null}
+
         {(['mood', 'anxiety'] as const).map((key) => {
           const last = [...points]
             .map((p, i) => ({ p, i }))
@@ -116,21 +145,12 @@ export function DiaryChart({ points }: DiaryChartProps) {
           )
         })}
 
-        {/* X labels — 30 дней: 19 сен → 18 окт */}
-        {(
-          [
-            [0, '19 сен'],
-            [7, '26 сен'],
-            [14, '3 окт'],
-            [21, '10 окт'],
-            [29, '18 окт'],
-          ] as const
-        ).map(([i, label]) => (
+        {xLabels.map(([i, label]) => (
           <text
             key={label}
             x={xAt(i, n)}
             y={H - 8}
-            textAnchor="middle"
+            textAnchor={diary ? (i === 0 ? 'start' : 'end') : 'middle'}
             className={styles.axisX}
           >
             {label}

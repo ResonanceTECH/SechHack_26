@@ -78,7 +78,8 @@ export function DashboardPage() {
       <div className={styles.header}>
         <div>
           <h2 className={styles.greeting}>
-            Добрый день, {doctorProfile.fullName}
+            Добрый день, {doctorProfile.firstName}{' '}
+            {doctorProfile.middleName}
           </h2>
           <p className={styles.summary}>
             3 обязательных алерта · 5 приёмов сегодня

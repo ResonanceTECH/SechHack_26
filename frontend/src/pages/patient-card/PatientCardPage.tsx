@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import {
+  IconCalendar,
+  IconChat,
   IconAlertTriangle,
   IconFile,
   IconNotebook,
@@ -8,10 +10,30 @@ import {
   IconPill,
   IconPlus,
 } from '@/components/icons/NavIcons'
+import { RequestQuestionnaireModal } from '@/components/RequestQuestionnaireModal/RequestQuestionnaireModal'
 import { getPatientCard } from '@/data/mockPatientCard'
+import { getPatientDiary } from '@/data/mockDiary'
+import { getPatientMedications } from '@/data/mockPatientMedications'
+import { getPatientProgram } from '@/data/mockProgram'
+import { getPatientQuestionnaires } from '@/data/mockQuestionnaires'
+import { getPatientVisits } from '@/data/mockVisits'
+import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
 import type { PatientCardTab } from '@/types/doctor'
 import { DiaryChart } from './widgets/DiaryChart'
+import { DiaryTab } from './widgets/DiaryTab'
+import { MedicationsTab } from './widgets/MedicationsTab'
+import { ProgramTab } from './widgets/ProgramTab'
+import { QuestionnairesTab } from './widgets/QuestionnairesTab'
+import { VisitsTab } from './widgets/VisitsTab'
 import styles from './PatientCardPage.module.css'
+
+const tabCrumbLabel: Partial<Record<PatientCardTab, string>> = {
+  questionnaires: 'Опросники',
+  diary: 'Дневник',
+  program: 'Программа',
+  medications: 'Препараты',
+  visits: 'Визиты и заметки',
+}
 
 const tabs: Array<{ id: PatientCardTab; label: string }> = [
   { id: 'overview', label: 'Обзор' },
@@ -25,9 +47,41 @@ const tabs: Array<{ id: PatientCardTab; label: string }> = [
 
 export function PatientCardPage() {
   const navigate = useNavigate()
+  const { setBreadcrumbs } = useOutletContext<DoctorOutletContext>()
   const { patientId = '' } = useParams()
   const card = useMemo(() => getPatientCard(patientId), [patientId])
+  const questionnaires = useMemo(
+    () => getPatientQuestionnaires(patientId),
+    [patientId],
+  )
+  const diary = useMemo(() => getPatientDiary(patientId), [patientId])
+  const program = useMemo(() => getPatientProgram(patientId), [patientId])
+  const medications = useMemo(
+    () => getPatientMedications(patientId),
+    [patientId],
+  )
+  const visits = useMemo(() => getPatientVisits(patientId), [patientId])
   const [tab, setTab] = useState<PatientCardTab>('overview')
+  const [requestOpen, setRequestOpen] = useState(false)
+  const closeRequest = useCallback(() => setRequestOpen(false), [])
+  const openQuestionnaires = useCallback(() => setTab('questionnaires'), [])
+
+  useEffect(() => {
+    if (!card) return
+    const sub = tabCrumbLabel[tab]
+    const crumbs = sub
+      ? [
+          { label: 'Пациенты', to: '/patients' },
+          { label: card.shortName, to: `/patients/${card.id}` },
+          { label: sub },
+        ]
+      : [
+          { label: 'Пациенты', to: '/patients' },
+          { label: card.shortName },
+        ]
+    setBreadcrumbs(crumbs)
+    return () => setBreadcrumbs(null)
+  }, [card, tab, setBreadcrumbs])
 
   if (!card) {
     return <Navigate to="/patients" replace />
@@ -35,6 +89,13 @@ export function PatientCardPage() {
 
   return (
     <div className={styles.page}>
+      <RequestQuestionnaireModal
+        open={requestOpen}
+        onClose={closeRequest}
+        patientName={card.fullName}
+        patientInitials={card.initials}
+      />
+
       <header className={styles.profile}>
         <div className={styles.profileMain}>
           <div className={styles.avatar} aria-hidden>
@@ -52,7 +113,11 @@ export function PatientCardPage() {
                   key={badge.id}
                   className={`${styles.badge} ${styles[`badge_${badge.tone}`]}`}
                 >
-                  <span className={styles.badgeDot} aria-hidden />
+                  {badge.withCalendar ? (
+                    <IconCalendar size={14} aria-hidden />
+                  ) : (
+                    <span className={styles.badgeDot} aria-hidden />
+                  )}
                   {badge.label}
                 </span>
               ))}
@@ -61,13 +126,17 @@ export function PatientCardPage() {
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.btnGhost}>
+          <button
+            type="button"
+            className={styles.btnSoft}
+            onClick={() => setRequestOpen(true)}
+          >
             <IconNotebook size={17} aria-hidden />
             Запросить опросник
           </button>
           <button
             type="button"
-            className={styles.btnGhost}
+            className={styles.btnSoft}
             onClick={() => navigate(`/exercises/${patientId}`)}
           >
             <IconPlus size={17} aria-hidden />
@@ -79,7 +148,7 @@ export function PatientCardPage() {
             onClick={() => navigate(`/patients/${patientId}/report`)}
           >
             <IconFile size={17} aria-hidden />
-            Отчёт перед визитом
+            Открыть отчёт
           </button>
           <button
             type="button"
@@ -88,6 +157,14 @@ export function PatientCardPage() {
           >
             <IconPencil size={17} aria-hidden />
             План лечения
+          </button>
+          <button
+            type="button"
+            className={styles.btnGhost}
+            onClick={() => navigate(`/patients/${patientId}/messages`)}
+          >
+            <IconChat size={17} aria-hidden />
+            Сообщения
           </button>
         </div>
       </header>
@@ -110,7 +187,21 @@ export function PatientCardPage() {
         })}
       </nav>
 
-      {tab !== 'overview' ? (
+      {tab === 'questionnaires' ? (
+        <QuestionnairesTab data={questionnaires} />
+      ) : tab === 'diary' ? (
+        <DiaryTab data={diary} patientId={patientId} />
+      ) : tab === 'program' ? (
+        <ProgramTab data={program} patientId={patientId} />
+      ) : tab === 'medications' ? (
+        <MedicationsTab data={medications} patientId={patientId} />
+      ) : tab === 'visits' ? (
+        <VisitsTab
+          data={visits}
+          patientId={patientId}
+          onOpenQuestionnaires={openQuestionnaires}
+        />
+      ) : tab !== 'overview' ? (
         <div className={styles.placeholder}>
           Раздел «{tabs.find((t) => t.id === tab)?.label}» — в разработке
           <Link to="/patients" className={styles.backLink}>

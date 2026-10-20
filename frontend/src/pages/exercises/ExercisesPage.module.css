@@ -89,22 +89,19 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
   gap: 10px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
-  align-content: stretch;
+  overflow: auto;
+  align-content: start;
 }
 
 .grid > li {
-  min-height: 0;
   display: flex;
 }
 
 .card {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -234,7 +231,6 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  margin-top: auto;
 }
 
 /* ── Assign panel: flush with library, no scroll ───── */

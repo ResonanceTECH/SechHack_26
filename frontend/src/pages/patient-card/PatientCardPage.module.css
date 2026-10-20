@@ -9,9 +9,9 @@
 /* ——— Profile header ——— */
 .profile {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
   padding: 4px 0 18px;
 }
 
@@ -20,7 +20,6 @@
   align-items: flex-start;
   gap: 20px;
   min-width: 0;
-  flex: 1;
 }
 
 .avatar {
@@ -39,7 +38,6 @@
 
 .profileInfo {
   min-width: 0;
-  max-width: 320px;
   padding-top: 2px;
 }
 
@@ -100,15 +98,20 @@
   color: var(--brand-ink);
 }
 
+.badge_appointment {
+  background: #eef1f8;
+  color: var(--ink-secondary);
+}
+
 .actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
-  flex-shrink: 0;
-  width: 400px;
 }
 
 .btnGhost,
+.btnSoft,
 .btnPrimary {
   display: inline-flex;
   align-items: center;
@@ -125,6 +128,16 @@
     background 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+.btnSoft {
+  background: var(--bg-cta-soft);
+  border: 1px solid transparent;
+  color: var(--brand-ink);
+}
+
+.btnSoft:hover {
+  background: #dce5ff;
 }
 
 .btnGhost {
@@ -666,16 +679,4 @@
     grid-template-columns: 1fr;
   }
 
-  .profile {
-    flex-wrap: wrap;
-  }
-
-  .profileInfo {
-    max-width: none;
-  }
-
-  .actions {
-    width: 100%;
-    max-width: 400px;
-  }
 }
