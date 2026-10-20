@@ -80,7 +80,7 @@ export function InviteSentPage() {
               onClick={() =>
                 navigate(
                   state?.kind === 'admin'
-                    ? '/connect-clinic/activate'
+                    ? '/invite/admin'
                     : '/invite/doctor',
                   { state: { email } },
                 )
