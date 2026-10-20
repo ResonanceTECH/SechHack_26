@@ -13,6 +13,7 @@ import { LoginPage } from '@/pages/login/LoginPage'
 import { PatientCardPage } from '@/pages/patient-card/PatientCardPage'
 import { PatientsPage } from '@/pages/patients/PatientsPage'
 import { PreVisitReportPage } from '@/pages/pre-visit-report/PreVisitReportPage'
+import { PreVisitReportsPage } from '@/pages/pre-visit-reports/PreVisitReportsPage'
 import { MedicationsPage } from '@/pages/medications/MedicationsPage'
 import { MessagesPage } from '@/pages/messages/MessagesPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
@@ -40,6 +41,7 @@ export function AppRouter() {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path="reports" element={<PreVisitReportsPage />} />
           <Route path="patients" element={<PatientsPage />} />
           <Route path="patients/:patientId" element={<PatientCardPage />} />
           <Route
