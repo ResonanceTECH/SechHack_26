@@ -2,17 +2,19 @@
   /* App canvas — design frame 1440×900 */
   --bg-app: #f4f6fc;
   --bg-surface: #ffffff;
-  --bg-sidebar: #f7f8fc;
+  --bg-sidebar: #ffffff;
   --bg-nav-active: #e8eeff;
   --bg-search: #eef1f8;
   --bg-alert-critical: #fdecec;
   --bg-alert-warn: #fff6e5;
   --bg-cta-soft: #e8eeff;
+  --bg-suggest: #eef3ff;
+  --bg-photo: #f3c9b0;
 
-  --brand: #3b78ff;
-  --brand-hover: #2f66e0;
+  --brand: #0059ff;
+  --brand-hover: #0048d6;
   --brand-soft: #d9e4ff;
-  --brand-ink: #1a4fd6;
+  --brand-ink: #0046cc;
 
   --ink: #1b2440;
   --ink-secondary: #3d4663;
@@ -20,6 +22,7 @@
   --footer: #a0a8bc;
   --border: rgba(27, 36, 64, 0.08);
   --border-strong: rgba(27, 36, 64, 0.12);
+  --border-danger: rgba(229, 77, 77, 0.55);
 
   --danger: #e54d4d;
   --danger-soft: #fdecec;
@@ -27,8 +30,13 @@
   --success-soft: #e6f6ef;
   --warning: #e6a317;
   --warning-soft: #fff6e5;
-  --info: #3b78ff;
+  --info: #0059ff;
   --info-soft: #e8eeff;
+  --violet: #7b6cf0;
+  --violet-soft: #efeaff;
+  --tag-rash: #fff1c9;
+  --tag-itch: #ffe0c2;
+  --tag-drowsy: #e8f0ff;
 
   --radius-sm: 8px;
   --radius-md: 12px;
