@@ -29,6 +29,11 @@
   color: var(--muted);
 }
 
+.inviteWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .addBtn {
   display: inline-flex;
   align-items: center;
@@ -41,11 +46,41 @@
   font-size: 14px;
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(0, 89, 255, 0.22);
-  flex-shrink: 0;
 }
 
 .addBtn:hover {
   background: var(--brand-hover);
+}
+
+.inviteMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-card), 0 8px 24px rgba(27, 36, 64, 0.1);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inviteItem {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.inviteItem:hover {
+  background: var(--bg-cta-soft);
+  color: var(--brand);
 }
 
 .body {

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useOutletContext } from 'react-router-dom'
 import {
   IconCancel,
   IconLink,
@@ -78,10 +78,30 @@ function Toggle({
 export function EmployeesPage() {
   const { searchQuery } = useOutletContext<AdminOutletContext>()
   const [selectedId, setSelectedId] = useState(defaultSelectedEmployeeId)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const inviteRef = useRef<HTMLDivElement>(null)
   const [draft, setDraft] = useState<EmployeeRow | null>(() => {
     const row = employees.find((e) => e.id === defaultSelectedEmployeeId)
     return row ? { ...row } : null
   })
+
+  useEffect(() => {
+    if (!inviteOpen) return
+    function onPointerDown(e: PointerEvent) {
+      if (!inviteRef.current?.contains(e.target as Node)) {
+        setInviteOpen(false)
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setInviteOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [inviteOpen])
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -125,10 +145,38 @@ export function EmployeesPage() {
             {clinicInfo.contourCount} контура доступа
           </p>
         </div>
-        <button type="button" className={styles.addBtn}>
-          <IconPlus aria-hidden />
-          Добавить сотрудника
-        </button>
+        <div className={styles.inviteWrap} ref={inviteRef}>
+          <button
+            type="button"
+            className={styles.addBtn}
+            aria-expanded={inviteOpen}
+            aria-haspopup="menu"
+            onClick={() => setInviteOpen((v) => !v)}
+          >
+            <IconPlus aria-hidden />
+            Пригласить сотрудника
+          </button>
+          {inviteOpen ? (
+            <div className={styles.inviteMenu} role="menu">
+              <Link
+                to="/admin/invite-doctor"
+                role="menuitem"
+                className={styles.inviteItem}
+                onClick={() => setInviteOpen(false)}
+              >
+                Пригласить врача
+              </Link>
+              <Link
+                to="/admin/invite-admin"
+                role="menuitem"
+                className={styles.inviteItem}
+                onClick={() => setInviteOpen(false)}
+              >
+                Пригласить администратора
+              </Link>
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <div className={styles.body}>
