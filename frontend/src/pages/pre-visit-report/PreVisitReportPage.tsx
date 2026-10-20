@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useOutletContext, useParams } from 'react-router-dom'
 import {
   IconAlertTriangle,
@@ -9,8 +9,10 @@ import {
   IconPill,
   IconTrendChart,
 } from '@/components/icons/NavIcons'
+import { ReportPreviewModal } from '@/components/ReportPreviewModal/ReportPreviewModal'
 import { getPatientCard } from '@/data/mockPatientCard'
 import { getPreVisitReport } from '@/data/mockPreVisitReport'
+import { getReportPreview } from '@/data/mockReportPreview'
 import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
 import {
   isPreVisitSummary,
@@ -78,6 +80,9 @@ function DetailedReportView({
   displayName: string
 }) {
   const [notes, setNotes] = useState(report.notes)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const preview = useMemo(() => getReportPreview(patientId), [patientId])
+  const closePreview = useCallback(() => setPreviewOpen(false), [])
 
   useEffect(() => {
     setNotes(report.notes)
@@ -85,6 +90,14 @@ function DetailedReportView({
 
   return (
     <div className={styles.page}>
+      {preview ? (
+        <ReportPreviewModal
+          open={previewOpen}
+          onClose={closePreview}
+          preview={preview}
+        />
+      ) : null}
+
       <header className={styles.header}>
         <div className={styles.headerMain}>
           <div className={styles.avatar} aria-hidden>
@@ -105,7 +118,14 @@ function DetailedReportView({
             <IconArrowLeft aria-hidden />
             К карточке
           </Link>
-          <button type="button" className={styles.btnPrimary}>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={() => {
+              if (preview) setPreviewOpen(true)
+            }}
+            disabled={!preview}
+          >
             <IconDownload aria-hidden />
             Сформировать PDF
           </button>
