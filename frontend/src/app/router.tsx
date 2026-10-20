@@ -7,6 +7,7 @@ import { ApplicationsPage } from '@/pages/admin/applications/ApplicationsPage'
 import { AuditPage } from '@/pages/admin/audit/AuditPage'
 import { ConfirmRoleChangePage } from '@/pages/admin/confirm-role/ConfirmRoleChangePage'
 import { EmployeeCardPage } from '@/pages/admin/employee-card/EmployeeCardPage'
+import { ClinicTeamPage } from '@/pages/admin/team/ClinicTeamPage'
 import { RejectApplicationPage } from '@/pages/admin/reject-application/RejectApplicationPage'
 import { RequestClarificationPage } from '@/pages/admin/request-clarification/RequestClarificationPage'
 import { RolesAccessPage } from '@/pages/admin/roles/RolesAccessPage'
@@ -139,6 +140,7 @@ export function AppRouter() {
           <Route path="roles" element={<RolesAccessPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="employee-card" element={<EmployeeCardPage />} />
+          <Route path="team" element={<ClinicTeamPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="settings" element={<SettingsPage />} />
