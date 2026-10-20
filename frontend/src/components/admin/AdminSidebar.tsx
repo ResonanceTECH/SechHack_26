@@ -66,9 +66,11 @@ export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
         pathname.startsWith('/admin/applications') ||
         pathname.startsWith('/admin/verify-doctor') ||
         pathname.startsWith('/admin/request-clarification') ||
+        pathname.startsWith('/admin/reject-application') ||
         pathname.startsWith('/admin/confirm-role') ||
         pathname.startsWith('/admin/suspend-access') ||
-        pathname.startsWith('/admin/roles'))
+        pathname.startsWith('/admin/roles') ||
+        pathname.startsWith('/admin/employee-card'))
     ) {
       return true
     }
