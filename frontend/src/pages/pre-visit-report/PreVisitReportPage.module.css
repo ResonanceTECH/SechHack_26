@@ -6,6 +6,149 @@
   padding-bottom: 8px;
 }
 
+/* ——— Summary layout (список отчётов → карточка) ——— */
+.summaryTop {
+  display: flex;
+  align-items: center;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 650;
+  box-shadow: 0 1px 2px rgba(27, 36, 64, 0.04);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.backBtn:hover {
+  background: #f7f8fc;
+  border-color: rgba(27, 36, 64, 0.18);
+}
+
+.summaryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.summaryTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.summaryName {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.summaryVisit {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.summaryStatus {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--footer);
+}
+
+.summaryMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summaryMetric {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.summaryMetricLabel {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.summaryMetricValue {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.summaryMetricFoot {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.considerCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px 16px;
+}
+
+.considerTitle {
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.considerBody {
+  margin: 14px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  line-height: 1.5;
+}
+
+.considerFoot {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 /* ——— Header ——— */
 .header {
   display: flex;
@@ -488,8 +631,9 @@
 }
 
 @media (max-width: 1100px) {
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .metrics,
+  .summaryMetrics {
+    grid-template-columns: 1fr;
   }
 
   .grid {

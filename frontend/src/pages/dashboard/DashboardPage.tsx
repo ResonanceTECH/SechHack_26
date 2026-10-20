@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { InvitePatientButton } from '@/components/InvitePatientButton/InvitePatientButton'
 import {
   IconAlerts,
@@ -46,6 +47,7 @@ const toneIcon = {
 } as const
 
 export function DashboardPage() {
+  const navigate = useNavigate()
   const [filter, setFilter] = useState<AttentionFilter>('all')
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
@@ -86,7 +88,11 @@ export function DashboardPage() {
           </p>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btnSecondary}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={() => navigate('/reports')}
+          >
             <IconFile aria-hidden />
             Отчёты перед визитами
           </button>

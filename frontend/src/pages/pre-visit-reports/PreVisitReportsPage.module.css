@@ -1,0 +1,277 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  padding-bottom: 8px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.segBtn,
+.segActive {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.segBtn {
+  background: transparent;
+  color: var(--muted);
+}
+
+.segBtn:hover {
+  color: var(--ink-secondary);
+}
+
+.segActive {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 120, 255, 0.22);
+}
+
+.rangeMeta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 8px 8px 4px;
+  min-width: 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table thead th {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table thead th:first-child {
+  width: 24%;
+}
+
+.table thead th:nth-child(2) {
+  width: 16%;
+}
+
+.table thead th:nth-child(3) {
+  width: 18%;
+}
+
+.table thead th:nth-child(4) {
+  width: 22%;
+}
+
+.table thead th:last-child {
+  width: 140px;
+}
+
+.table tbody td {
+  padding: 16px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.patientName {
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.patientKind {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.dateCell {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+}
+
+.ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.readyDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.readyOk {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.readyLow {
+  background: var(--warning-soft);
+  color: #b87a00;
+}
+
+.attChip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.attDanger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.attWarn {
+  background: var(--warning-soft);
+  color: #b87a00;
+}
+
+.attPlain {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.attNone {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--footer);
+}
+
+.actionCell {
+  text-align: right;
+}
+
+.openBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(27, 36, 64, 0.04);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.openBtn:hover {
+  background: #f7f8fc;
+  border-color: rgba(27, 36, 64, 0.18);
+}
+
+.footer {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .table {
+    table-layout: auto;
+  }
+}

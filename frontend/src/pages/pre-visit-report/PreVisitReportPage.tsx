@@ -12,7 +12,12 @@ import {
 import { getPatientCard } from '@/data/mockPatientCard'
 import { getPreVisitReport } from '@/data/mockPreVisitReport'
 import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
-import type { AttentionIcon } from '@/types/doctor'
+import {
+  isPreVisitSummary,
+  type AttentionIcon,
+  type PreVisitReport,
+  type PreVisitSummaryReport,
+} from '@/types/doctor'
 import styles from './PreVisitReportPage.module.css'
 
 const attentionIcon: Record<AttentionIcon, typeof IconTrendChart> = {
@@ -27,33 +32,56 @@ const priorityLabel = {
   optional: 'Желательно',
 } as const
 
-export function PreVisitReportPage() {
-  const { patientId = '' } = useParams()
-  const { setBreadcrumbs } = useOutletContext<DoctorOutletContext>()
-  const report = useMemo(() => getPreVisitReport(patientId), [patientId])
-  const card = useMemo(() => getPatientCard(patientId), [patientId])
-  const [notes, setNotes] = useState(report?.notes ?? '')
+function SummaryReportView({ report }: { report: PreVisitSummaryReport }) {
+  return (
+    <div className={styles.page}>
+      <div className={styles.summaryTop}>
+        <Link to="/reports" className={styles.backBtn}>
+          <IconArrowLeft aria-hidden />
+          К списку отчётов
+        </Link>
+      </div>
+
+      <header className={styles.summaryHeader}>
+        <h2 className={styles.summaryTitle}>Отчёт перед визитом</h2>
+        <p className={styles.summaryName}>{report.shortName}</p>
+        <p className={styles.summaryVisit}>{report.visitLine}</p>
+        <p className={styles.summaryStatus}>{report.statusLabel}</p>
+      </header>
+
+      <section className={styles.summaryMetrics} aria-label="Показатели">
+        {report.metrics.map((m) => (
+          <article key={m.id} className={styles.summaryMetric}>
+            <span className={styles.summaryMetricLabel}>{m.label}</span>
+            <span className={styles.summaryMetricValue}>{m.value}</span>
+            <span className={styles.summaryMetricFoot}>{m.footnote}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className={styles.considerCard} aria-label={report.considerTitle}>
+        <h3 className={styles.considerTitle}>{report.considerTitle}</h3>
+        <p className={styles.considerBody}>{report.considerBody}</p>
+        <p className={styles.considerFoot}>{report.dataFooter}</p>
+      </section>
+    </div>
+  )
+}
+
+function DetailedReportView({
+  report,
+  patientId,
+  displayName,
+}: {
+  report: PreVisitReport
+  patientId: string
+  displayName: string
+}) {
+  const [notes, setNotes] = useState(report.notes)
 
   useEffect(() => {
-    if (!report) return
-    const shortName = report.shortName
-    setBreadcrumbs([
-      { label: 'Пациенты', to: '/patients' },
-      { label: shortName, to: `/patients/${patientId}` },
-      { label: 'Отчёт перед визитом' },
-    ])
-    return () => setBreadcrumbs(null)
-  }, [patientId, report, setBreadcrumbs])
-
-  useEffect(() => {
-    if (report) setNotes(report.notes)
-  }, [report])
-
-  if (!report) {
-    return <Navigate to={patientId ? `/patients/${patientId}` : '/patients'} replace />
-  }
-
-  const displayName = card?.shortName ?? report.shortName
+    setNotes(report.notes)
+  }, [report.notes])
 
   return (
     <div className={styles.page}>
@@ -231,5 +259,51 @@ export function PreVisitReportPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export function PreVisitReportPage() {
+  const { patientId = '' } = useParams()
+  const { setBreadcrumbs } = useOutletContext<DoctorOutletContext>()
+  const report = useMemo(() => getPreVisitReport(patientId), [patientId])
+  const card = useMemo(() => getPatientCard(patientId), [patientId])
+
+  useEffect(() => {
+    if (!report) return
+    if (isPreVisitSummary(report)) {
+      setBreadcrumbs([
+        { label: 'Отчёты перед визитами', to: '/reports' },
+        { label: 'Отчёт пациента' },
+      ])
+    } else {
+      setBreadcrumbs([
+        { label: 'Пациенты', to: '/patients' },
+        { label: report.shortName, to: `/patients/${patientId}` },
+        { label: 'Отчёт перед визитом' },
+      ])
+    }
+    return () => setBreadcrumbs(null)
+  }, [patientId, report, setBreadcrumbs])
+
+  if (!report) {
+    return (
+      <Navigate
+        to={patientId ? `/patients/${patientId}` : '/reports'}
+        replace
+      />
+    )
+  }
+
+  if (isPreVisitSummary(report)) {
+    return <SummaryReportView report={report} />
+  }
+
+  const displayName = card?.shortName ?? report.shortName
+  return (
+    <DetailedReportView
+      report={report}
+      patientId={patientId}
+      displayName={displayName}
+    />
   )
 }

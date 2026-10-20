@@ -12,6 +12,7 @@ import {
 } from '@/components/icons/NavIcons'
 import { RequestQuestionnaireModal } from '@/components/RequestQuestionnaireModal/RequestQuestionnaireModal'
 import { getPatientCard } from '@/data/mockPatientCard'
+import { getPatientAccessLog } from '@/data/mockAccessLog'
 import { getPatientDiary } from '@/data/mockDiary'
 import { getPatientMedications } from '@/data/mockPatientMedications'
 import { getPatientProgram } from '@/data/mockProgram'
@@ -19,6 +20,7 @@ import { getPatientQuestionnaires } from '@/data/mockQuestionnaires'
 import { getPatientVisits } from '@/data/mockVisits'
 import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
 import type { PatientCardTab } from '@/types/doctor'
+import { AccessTab } from './widgets/AccessTab'
 import { DiaryChart } from './widgets/DiaryChart'
 import { DiaryTab } from './widgets/DiaryTab'
 import { MedicationsTab } from './widgets/MedicationsTab'
@@ -33,6 +35,7 @@ const tabCrumbLabel: Partial<Record<PatientCardTab, string>> = {
   program: 'Программа',
   medications: 'Препараты',
   visits: 'Визиты и заметки',
+  access: 'Журнал доступа',
 }
 
 const tabs: Array<{ id: PatientCardTab; label: string }> = [
@@ -61,6 +64,7 @@ export function PatientCardPage() {
     [patientId],
   )
   const visits = useMemo(() => getPatientVisits(patientId), [patientId])
+  const accessLog = useMemo(() => getPatientAccessLog(patientId), [patientId])
   const [tab, setTab] = useState<PatientCardTab>('overview')
   const [requestOpen, setRequestOpen] = useState(false)
   const closeRequest = useCallback(() => setRequestOpen(false), [])
@@ -201,6 +205,8 @@ export function PatientCardPage() {
           patientId={patientId}
           onOpenQuestionnaires={openQuestionnaires}
         />
+      ) : tab === 'access' ? (
+        <AccessTab data={accessLog} />
       ) : tab !== 'overview' ? (
         <div className={styles.placeholder}>
           Раздел «{tabs.find((t) => t.id === tab)?.label}» — в разработке
