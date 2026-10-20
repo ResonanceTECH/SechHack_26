@@ -1,20 +1,41 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01Icon,
+  Alert02Icon,
   ArrowDown01Icon,
+  ArrowLeft01Icon,
   ArrowUp01Icon,
   BookOpen01Icon,
+  Calendar03Icon,
+  Call02Icon,
+  Cancel01Icon,
+  ChartLineData01Icon,
+  Chat01Icon,
   CompassIcon,
+  Download01Icon,
   EqualSignIcon,
+  ExternalLinkIcon,
+  FavouriteIcon,
   File01Icon,
   FilterIcon,
   Home01Icon,
+  InformationCircleIcon,
+  Leaf01Icon,
   Logout01Icon,
+  LungsIcon,
+  MailSend01Icon,
+  MoreHorizontalIcon,
+  Notebook01Icon,
   Notification01Icon,
+  PencilEdit01Icon,
   PillIcon,
   Search01Icon,
   SidebarLeft01Icon,
+  SquareLock02Icon,
+  Tick02Icon,
+  UserIcon,
   UserGroupIcon,
+  WalkingIcon,
 } from '@hugeicons/core-free-icons'
 import type { ComponentProps } from 'react'
 
@@ -119,6 +140,154 @@ export function IconCompass(props: IconProps) {
       icon={CompassIcon}
       {...props}
     />
+  )
+}
+
+export function IconPencil(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={16}
+      icon={PencilEdit01Icon}
+      {...props}
+    />
+  )
+}
+
+export function IconAlertTriangle(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={Alert02Icon} {...props} />
+  )
+}
+
+export function IconPill(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={18} icon={PillIcon} {...props} />
+}
+
+export function IconCall(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={16} icon={Call02Icon} {...props} />
+}
+
+export function IconChat(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={16} icon={Chat01Icon} {...props} />
+}
+
+export function IconUser(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={16} icon={UserIcon} {...props} />
+}
+
+export function IconTick(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={16} icon={Tick02Icon} {...props} />
+}
+
+export function IconArrowLeft(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={16} icon={ArrowLeft01Icon} {...props} />
+  )
+}
+
+export function IconDownload(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={16} icon={Download01Icon} {...props} />
+  )
+}
+
+export function IconCalendar(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={16} icon={Calendar03Icon} {...props} />
+  )
+}
+
+export function IconTrendChart(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={16}
+      icon={ChartLineData01Icon}
+      {...props}
+    />
+  )
+}
+
+export function IconLungs(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={18} icon={LungsIcon} {...props} />
+}
+
+export function IconHeart(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={FavouriteIcon} {...props} />
+  )
+}
+
+export function IconNotebook(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={Notebook01Icon} {...props} />
+  )
+}
+
+export function IconLeaf(props: IconProps) {
+  return <HugeiconsIcon {...defaults} size={18} icon={Leaf01Icon} {...props} />
+}
+
+export function IconWalk(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={WalkingIcon} {...props} />
+  )
+}
+
+export function IconCancel(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={14} icon={Cancel01Icon} {...props} />
+  )
+}
+
+export function IconExternalLink(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={16}
+      icon={ExternalLinkIcon}
+      {...props}
+    />
+  )
+}
+
+export function IconInfo(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={14}
+      icon={InformationCircleIcon}
+      {...props}
+    />
+  )
+}
+
+export function IconLock(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={14}
+      icon={SquareLock02Icon}
+      {...props}
+    />
+  )
+}
+
+export function IconMore(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={18}
+      icon={MoreHorizontalIcon}
+      {...props}
+    />
+  )
+}
+
+export function IconSend(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={16} icon={MailSend01Icon} {...props} />
   )
 }
 

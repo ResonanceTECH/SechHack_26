@@ -2,11 +2,10 @@
   height: var(--topbar-height);
   min-height: var(--topbar-height);
   display: grid;
-  grid-template-columns: 180px 1fr auto;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 1fr);
   align-items: center;
   gap: 24px;
-  padding: 0 28px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 24px 0 20px;
   background: transparent;
 }
 
@@ -17,14 +16,52 @@
   letter-spacing: -0.01em;
 }
 
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  min-width: 0;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.crumbSep {
+  margin: 0 8px;
+  color: var(--footer);
+  font-weight: 500;
+}
+
+.crumbLink,
+.crumbMuted {
+  color: var(--muted);
+}
+
+.crumbLink:hover {
+  color: var(--brand);
+}
+
+.crumbCurrent {
+  color: var(--ink);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
 .search {
   justify-self: center;
-  width: min(420px, 100%);
+  width: 360px;
+  max-width: 100%;
   height: 40px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
   background: var(--bg-search);
   color: var(--muted);
@@ -44,27 +81,8 @@
   color: var(--muted);
 }
 
-.right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.bell {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--ink-secondary);
-  position: relative;
-}
-
-.bell:hover {
-  background: rgba(27, 36, 64, 0.05);
-}
-
 .datetime {
+  justify-self: end;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-secondary);
