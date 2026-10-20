@@ -329,11 +329,35 @@ export interface QuestionnaireHistoryRow {
   q9Danger?: boolean
 }
 
+export interface QuestionnaireResultScore {
+  id: string
+  label: string
+  value: string
+  footnote: string
+}
+
+export interface QuestionnaireResultAlert {
+  statusLabel: string
+  hint: string
+  cta: string
+  ctaTo: string
+}
+
+export interface QuestionnaireResultDetail {
+  id: string
+  filledAt: string
+  scores: QuestionnaireResultScore[]
+  q9Title: string
+  q9Value: string
+  alert?: QuestionnaireResultAlert
+}
+
 export interface PatientQuestionnairesTab {
   summary: QuestionnaireSummaryCard[]
   historyTitle: string
   historyHint: string
   history: QuestionnaireHistoryRow[]
+  results: Record<string, QuestionnaireResultDetail>
 }
 
 /** Вкладка «Дневник» в карточке пациента */
@@ -467,6 +491,31 @@ export interface PatientVisitsTab {
   history: VisitHistoryRow[]
 }
 
+/** Вкладка «Журнал доступа» */
+export interface AccessLogRow {
+  id: string
+  time: string
+  who: string
+  action: string
+  basis: string
+}
+
+export interface AccessViewer {
+  initials: string
+  fullName: string
+  roleLine: string
+  accessBadge: string
+  footerNote: string
+}
+
+export interface PatientAccessTab {
+  title: string
+  subtitle: string
+  viewOnlyBadge: string
+  rows: AccessLogRow[]
+  viewer: AccessViewer
+}
+
 export interface ProgramTask {
   id: string
   title: string
@@ -581,6 +630,68 @@ export interface PreVisitReport {
   questions: PatientQuestion[]
   alerts: PeriodAlert[]
   notes: string
+}
+
+/** Упрощённый отчёт (референс списка отчётов → карточка) */
+export interface PreVisitSummaryMetric {
+  id: string
+  label: string
+  value: string
+  footnote: string
+}
+
+export interface PreVisitSummaryReport {
+  layout: 'summary'
+  patientId: string
+  shortName: string
+  visitLine: string
+  statusLabel: string
+  metrics: PreVisitSummaryMetric[]
+  considerTitle: string
+  considerBody: string
+  dataFooter: string
+}
+
+export type PreVisitReportView = PreVisitReport | PreVisitSummaryReport
+
+export function isPreVisitSummary(
+  report: PreVisitReportView,
+): report is PreVisitSummaryReport {
+  return 'layout' in report && report.layout === 'summary'
+}
+
+/** Список «Отчёты перед визитами» */
+export type PreVisitListRange = 'today' | 'week'
+
+export type ReportReadiness = 'ready' | 'low_data'
+
+export type ReportAttentionTone = 'danger' | 'warning' | 'plain' | 'none'
+
+export interface PreVisitListAttention {
+  label: string
+  tone: ReportAttentionTone
+}
+
+export interface PreVisitListRow {
+  id: string
+  patientId: string
+  patientName: string
+  visitKind: string
+  visitAt: string
+  /** ISO date for filtering: YYYY-MM-DD */
+  visitDate: string
+  readiness: ReportReadiness
+  readinessLabel: string
+  attention: PreVisitListAttention
+}
+
+export interface PreVisitReportsList {
+  title: string
+  subtitle: string
+  footer: string
+  weekRangeLabel: string
+  todayRangeLabel: string
+  rows: PreVisitListRow[]
 }
 
 export type ExerciseCategory =

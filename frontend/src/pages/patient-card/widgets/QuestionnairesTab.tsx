@@ -1,11 +1,37 @@
+import { useEffect, useState } from 'react'
 import type { PatientQuestionnairesTab } from '@/types/doctor'
+import { QuestionnaireResultView } from './QuestionnaireResultView'
 import styles from './QuestionnairesTab.module.css'
 
 interface QuestionnairesTabProps {
   data: PatientQuestionnairesTab
+  onResultOpenChange?: (open: boolean) => void
 }
 
-export function QuestionnairesTab({ data }: QuestionnairesTabProps) {
+export function QuestionnairesTab({
+  data,
+  onResultOpenChange,
+}: QuestionnairesTabProps) {
+  const [resultId, setResultId] = useState<string | null>(null)
+  const result = resultId ? data.results[resultId] : null
+
+  useEffect(() => {
+    onResultOpenChange?.(result != null)
+  }, [result, onResultOpenChange])
+
+  useEffect(() => {
+    return () => onResultOpenChange?.(false)
+  }, [onResultOpenChange])
+
+  if (result) {
+    return (
+      <QuestionnaireResultView
+        result={result}
+        onBack={() => setResultId(null)}
+      />
+    )
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.summaryRow}>
@@ -51,7 +77,13 @@ export function QuestionnairesTab({ data }: QuestionnairesTabProps) {
                     {row.q9Label}
                   </td>
                   <td className={styles.actionCell}>
-                    <button type="button" className={styles.openBtn}>
+                    <button
+                      type="button"
+                      className={styles.openBtn}
+                      onClick={() => {
+                        if (data.results[row.id]) setResultId(row.id)
+                      }}
+                    >
                       Открыть
                     </button>
                   </td>
