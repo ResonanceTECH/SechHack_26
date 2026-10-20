@@ -7,16 +7,29 @@ export type BreadcrumbItem = {
   to?: string
 }
 
+export type TopBarAction = {
+  label: string
+  to: string
+}
+
 interface TopBarProps {
   title?: string
   breadcrumbs?: BreadcrumbItem[]
+  action?: TopBarAction
+  hideSearch?: boolean
 }
 
-export function TopBar({ title, breadcrumbs }: TopBarProps) {
+export function TopBar({
+  title,
+  breadcrumbs,
+  action,
+  hideSearch = false,
+}: TopBarProps) {
   const hasCrumbs = breadcrumbs != null && breadcrumbs.length > 0
+  const compact = hideSearch || action != null
 
   return (
-    <header className={styles.topbar}>
+    <header className={compact ? `${styles.topbar} ${styles.compact}` : styles.topbar}>
       {hasCrumbs ? (
         <nav className={styles.crumbs} aria-label="Навигация">
           {breadcrumbs.map((item, i) => {
@@ -47,18 +60,30 @@ export function TopBar({ title, breadcrumbs }: TopBarProps) {
         <h1 className={styles.title}>{title ?? 'Кабинет врача'}</h1>
       )}
 
-      <label className={styles.search}>
-        <IconSearch aria-hidden />
-        <input
-          type="search"
-          placeholder="Поиск пациента, препарата..."
-          aria-label="Поиск пациента, препарата"
-        />
-      </label>
+      {!compact ? (
+        <>
+          <label className={styles.search}>
+            <IconSearch aria-hidden />
+            <input
+              type="search"
+              placeholder="Поиск пациента, препарата..."
+              aria-label="Поиск пациента, препарата"
+            />
+          </label>
 
-      <time className={styles.datetime} dateTime="2025-10-18T11:05">
-        Вс, 18 октября · 11:05
-      </time>
+          <time className={styles.datetime} dateTime="2026-10-18T11:05">
+            18 октября 2026 · 11:05
+          </time>
+        </>
+      ) : action ? (
+        <Link to={action.to} className={styles.actionBtn}>
+          {action.label}
+        </Link>
+      ) : (
+        <time className={styles.datetime} dateTime="2026-10-18T11:05">
+          18 октября 2026 · 11:05
+        </time>
+      )}
     </header>
   )
 }
