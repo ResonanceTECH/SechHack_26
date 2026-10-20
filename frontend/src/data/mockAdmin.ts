@@ -6,10 +6,23 @@ import type {
 } from '@/types/admin'
 
 export const adminProfile: AdminProfile = {
-  fullName: 'Полина Андреевна Орлова',
+  fullName: 'Орлова Полина Андреевна',
   shortName: 'Орлова П. А.',
   initials: 'ОП',
   role: 'Администратор',
+  lastName: 'Орлова',
+  firstName: 'Полина',
+  middleName: 'Андреевна',
+  about:
+    'Администратор клиники. По вопросам доступов, ролей сотрудников и настроек контуров — через рабочую почту.',
+  email: 'orlova@ravnovesie.ru',
+  phone: '+7 (916) 555-01-22',
+  clinicName: 'Клиника «Равновесие»',
+  roleDescription:
+    'Полный доступ к настройкам клиники, сотрудникам и журналу аудита.',
+  accessSummary: 'Сотрудники · аналитика · аудит · настройки клиники',
+  verifiedByClinic: true,
+  inClinicSince: 2021,
 }
 
 export const clinicInfo: ClinicInfo = {
