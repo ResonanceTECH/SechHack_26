@@ -35,6 +35,7 @@ import {
   Search01Icon,
   SecurityIcon,
   Shield01Icon,
+  ShieldCheckIcon,
   SidebarLeft01Icon,
   SlidersHorizontalIcon,
   SquareLock02Icon,
@@ -318,6 +319,17 @@ export function IconClinicSettings(props: IconProps) {
 export function IconShield(props: IconProps) {
   return (
     <HugeiconsIcon {...defaults} size={18} icon={Shield01Icon} {...props} />
+  )
+}
+
+export function IconShieldCheck(props: IconProps) {
+  return (
+    <HugeiconsIcon
+      {...defaults}
+      size={18}
+      icon={ShieldCheckIcon}
+      {...props}
+    />
   )
 }
 
