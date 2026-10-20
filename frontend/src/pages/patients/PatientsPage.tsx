@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { InvitePatientButton } from '@/components/InvitePatientButton/InvitePatientButton'
 import {
   IconFilter,
@@ -98,6 +99,7 @@ function aviandrDotClass(percent: number): string {
 }
 
 export function PatientsPage() {
+  const navigate = useNavigate()
   const [filter, setFilter] = useState<PatientsFilter>('all')
 
   const rows = useMemo(
@@ -162,6 +164,15 @@ export function PatientsPage() {
                 className={
                   patient.status === 'critical' ? styles.rowCritical : undefined
                 }
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(`/patients/${patient.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    navigate(`/patients/${patient.id}`)
+                  }
+                }}
               >
                 <td>
                   <div className={styles.patient}>
