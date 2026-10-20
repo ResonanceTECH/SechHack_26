@@ -25,11 +25,24 @@ export type ContourAccess = 'full' | 'settings' | 'none'
 
 export type PrescriptionAccess = 'prescriptions' | 'none'
 
+export type ProfileTabId = 'personal' | 'security' | 'notifications'
+
 export interface AdminProfile {
   fullName: string
   shortName: string
   initials: string
   role: string
+  lastName: string
+  firstName: string
+  middleName: string
+  about: string
+  email: string
+  phone: string
+  clinicName: string
+  roleDescription: string
+  accessSummary: string
+  verifiedByClinic: boolean
+  inClinicSince: number
 }
 
 export interface ClinicInfo {

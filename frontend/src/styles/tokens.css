@@ -1,6 +1,7 @@
 :root {
   /* App canvas — design frame 1440×900 */
   --bg-app: #f4f6fc;
+  --bg-auth-aside: #0f1b33;
   --bg-surface: #ffffff;
   --bg-sidebar: #ffffff;
   --bg-nav-active: #e8eeff;
