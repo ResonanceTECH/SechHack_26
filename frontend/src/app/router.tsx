@@ -1,5 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AdminLayout } from '@/layouts/AdminLayout'
 import { DoctorLayout } from '@/layouts/DoctorLayout'
+import { AdminPlaceholderPage } from '@/pages/admin/AdminPlaceholderPage'
+import { AnalyticsPage } from '@/pages/admin/analytics/AnalyticsPage'
+import { EmployeesPage } from '@/pages/admin/employees/EmployeesPage'
 import { AdverseEventAlertPage } from '@/pages/alerts/AdverseEventAlertPage'
 import { AlertsPage } from '@/pages/alerts/AlertsPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
@@ -15,6 +19,14 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="employees" replace />} />
+          <Route path="employees" element={<EmployeesPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="audit" element={<AdminPlaceholderPage />} />
+          <Route path="settings" element={<AdminPlaceholderPage />} />
+        </Route>
+
         <Route element={<DoctorLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="patients" element={<PatientsPage />} />
