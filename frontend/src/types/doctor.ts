@@ -632,6 +632,29 @@ export interface PreVisitReport {
   notes: string
 }
 
+/** Предпросмотр отчёта (PDF) */
+export interface ReportPreviewRow {
+  id: string
+  indicator: string
+  current: string
+  previous: string
+}
+
+export interface ReportPreviewAlert {
+  title: string
+  body: string
+}
+
+export interface ReportPreview {
+  patientId: string
+  fullName: string
+  periodLine: string
+  visitLine: string
+  rows: ReportPreviewRow[]
+  alert?: ReportPreviewAlert
+  footerNote: string
+}
+
 /** Упрощённый отчёт (референс списка отчётов → карточка) */
 export interface PreVisitSummaryMetric {
   id: string
