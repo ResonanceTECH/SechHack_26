@@ -7,6 +7,124 @@ export type NavItemId =
 
 export type AlertPriority = 'mandatory' | 'optional'
 
+export type AlertQueueTab = 'new' | 'in_progress' | 'closed'
+
+export type AlertRiskLevel = 'low' | 'medium' | 'high'
+
+export type AlertRoutingId = 'earlier_visit' | 'emergency' | 'observe'
+
+export type AlertTimelineTone = 'done' | 'pending'
+
+export interface AlertQueueItem {
+  id: string
+  patientId: string
+  patientShortName: string
+  patientFullName: string
+  patientAge: number
+  initials: string
+  avatarTone: 'rose' | 'amber' | 'blue' | 'green' | 'violet' | 'teal'
+  timeLabel: string
+  summary: string
+  priority: AlertPriority
+  tab: AlertQueueTab
+  /** Если задан — клик ведёт на отдельный экран */
+  detailRoute?: string
+  selectedTone?: 'critical'
+}
+
+export interface AlertDataRow {
+  id: string
+  label: string
+  value: string
+  valueTone?: 'danger' | 'warning' | 'brand' | 'muted'
+}
+
+export interface AlertTimelineStep {
+  id: string
+  time?: string
+  text: string
+  tone: AlertTimelineTone
+}
+
+export interface AlertRoutingOption {
+  id: AlertRoutingId
+  title: string
+  subtitle?: string
+}
+
+export interface AlertDetail {
+  id: string
+  priority: AlertPriority
+  statusChip: string
+  title: string
+  meta: string
+  dataRows: AlertDataRow[]
+  timeline: AlertTimelineStep[]
+  routing: AlertRoutingOption[]
+  commentDefault: string
+  riskDefault: AlertRiskLevel
+  routingDefault: AlertRoutingId
+}
+
+export type AlertChipTone = 'danger' | 'violet' | 'muted'
+
+export type AlertSymptomTone = 'rash' | 'itch' | 'drowsy'
+
+export type TherapyActionId = 'suspend' | 'continue' | 'replace'
+
+export interface AlertChip {
+  id: string
+  label: string
+  tone: AlertChipTone
+}
+
+export interface AlertSymptomTag {
+  id: string
+  label: string
+  tone: AlertSymptomTone
+}
+
+export interface AlertReportField {
+  id: string
+  label: string
+  value: string
+  italic?: boolean
+}
+
+export interface AlertEvidenceItem {
+  id: string
+  tag: string
+  text: string
+}
+
+export interface TherapyActionOption {
+  id: TherapyActionId
+  title: string
+  subtitle?: string
+}
+
+/** Карточка нежелательного явления (экран алертов) */
+export interface AdverseEventAlert {
+  id: string
+  patientId: string
+  patientFullName: string
+  patientAge: number
+  crumbKind: string
+  chips: AlertChip[]
+  title: string
+  subtitle: string
+  report: {
+    sourceLabel: string
+    symptoms: AlertSymptomTag[]
+    fields: AlertReportField[]
+  }
+  evidence: AlertEvidenceItem[]
+  suggestion: string
+  therapyOptions: TherapyActionOption[]
+  therapyDefault: TherapyActionId
+  registerDefault: boolean
+}
+
 export type AppointmentStatus =
   | 'report_ready'
   | 'screening_done'
@@ -81,4 +199,363 @@ export interface PatientRow {
   diaryPercent: number
   aviandrPercent: number | null
   nextVisit: string
+}
+
+export type PatientCardTab =
+  | 'overview'
+  | 'questionnaires'
+  | 'diary'
+  | 'program'
+  | 'medications'
+  | 'visits'
+  | 'access'
+
+export type MessageAvatarTone =
+  | 'rose'
+  | 'amber'
+  | 'blue'
+  | 'green'
+  | 'violet'
+  | 'teal'
+
+export type ChatMessageKind = 'incoming' | 'outgoing' | 'system'
+
+export interface DialogListItem {
+  id: string
+  patientId: string
+  patientShortName: string
+  patientFullName: string
+  initials: string
+  avatarTone: MessageAvatarTone
+  preview: string
+  timeLabel: string
+  unread?: number
+}
+
+export interface ChatTextMessage {
+  id: string
+  kind: 'incoming' | 'outgoing'
+  text: string
+  /** CSS placeholder for attached photo (incoming) */
+  photo?: boolean
+}
+
+export interface ChatSystemCard {
+  id: string
+  kind: 'system'
+  text: string
+  ctaLabel: string
+  ctaTo: string
+}
+
+export type ChatMessage = ChatTextMessage | ChatSystemCard
+
+export interface ChatThread {
+  patientId: string
+  patientFullName: string
+  subtitle: string
+  messages: ChatMessage[]
+  quickReplies: string[]
+  footerNote: string
+}
+
+export type ProgramTaskStatus = 'not_started' | 'in_progress' | 'done'
+
+export interface PatientBadge {
+  id: string
+  label: string
+  tone: 'critical' | 'aviandr' | 'info'
+}
+
+export interface PatientAlertBanner {
+  id: string
+  priorityLabel: string
+  title: string
+  body: string
+  cta: string
+}
+
+export interface DiarySeriesPoint {
+  day: number
+  mood: number | null
+  anxiety: number | null
+  sleep: number | null
+  gap?: boolean
+  worsenZone?: boolean
+}
+
+export interface QuestionnaireSnapshot {
+  id: string
+  code: string
+  score: number
+  max: number
+  previous: number
+  trend: ScoreTrend
+  trendLabel: string
+  dates: [string, string]
+  bars: [number, number]
+  note?: string
+}
+
+export interface ProgramTask {
+  id: string
+  title: string
+  status: ProgramTaskStatus
+  statusLabel: string
+  progressLabel?: string
+}
+
+export interface MedicationCard {
+  id: string
+  name: string
+  dose: string
+  schedule: string
+  adherence: number
+  sideEffects: string
+  warnings: string
+  contourLabel: string
+}
+
+export interface SystemSummary {
+  title: string
+  body: string
+  basedOn: string
+  decisionNote: string
+}
+
+export interface PatientCard {
+  id: string
+  fullName: string
+  shortName: string
+  initials: string
+  age: number
+  diagnosisCode: string
+  inProgramSince: string
+  leadDoctor: string
+  badges: PatientBadge[]
+  alert: PatientAlertBanner | null
+  diary: {
+    title: string
+    footnote: string
+    points: DiarySeriesPoint[]
+  }
+  questionnaires: QuestionnaireSnapshot[]
+  program: {
+    title: string
+    weekProgress: number
+    weekLabel: string
+    tasks: ProgramTask[]
+  }
+  medication: MedicationCard | null
+  summary: SystemSummary
+}
+
+export type MetricBadgeTone =
+  | 'success'
+  | 'muted'
+  | 'info'
+  | 'warning'
+  | 'aviandr'
+
+export interface ReportMetric {
+  id: string
+  label: string
+  value: string
+  footnote: string
+  badge: string
+  badgeTone: MetricBadgeTone
+}
+
+export type AttentionIcon = 'trend' | 'alert' | 'pill' | 'calendar'
+
+export interface AttentionItemReport {
+  id: string
+  icon: AttentionIcon
+  text: string
+  meta?: string
+}
+
+export type SleepDayTone = 'ok' | 'bad' | 'hard' | 'empty'
+
+export interface SleepDay {
+  id: string
+  tone: SleepDayTone
+  label?: string
+}
+
+export interface PatientQuestion {
+  id: string
+  text: string
+}
+
+export interface PeriodAlert {
+  id: string
+  priority: AlertPriority
+  title: string
+  when: string
+}
+
+export interface PreVisitReport {
+  patientId: string
+  shortName: string
+  initials: string
+  periodLabel: string
+  appointmentLabel: string
+  generatedLabel: string
+  metrics: ReportMetric[]
+  attention: AttentionItemReport[]
+  sleep: {
+    title: string
+    days: SleepDay[]
+  }
+  questions: PatientQuestion[]
+  alerts: PeriodAlert[]
+  notes: string
+}
+
+export type ExerciseCategory =
+  | 'breathing'
+  | 'thought_diary'
+  | 'behavioral'
+  | 'relaxation'
+
+export type ExerciseIconTone =
+  | 'blue'
+  | 'rose'
+  | 'amber'
+  | 'green'
+  | 'teal'
+  | 'violet'
+
+export type ExerciseIconId =
+  | 'lungs'
+  | 'heart'
+  | 'notebook'
+  | 'calendar'
+  | 'leaf'
+  | 'walk'
+
+export interface ExerciseItem {
+  id: string
+  title: string
+  category: ExerciseCategory
+  categoryLabel: string
+  durationMin: number
+  description: string
+  icon: ExerciseIconId
+  iconTone: ExerciseIconTone
+}
+
+export type AssignFrequency = 'daily' | 'every_other_day' | 'weekly'
+
+export type AssignReminder = 'morning' | 'evening' | 'daytime'
+
+export interface ExerciseAssignPatient {
+  id: string
+  shortName: string
+  initials: string
+  age: number
+  programLabel: string
+}
+
+/* ── Препараты · ГРЛС ─────────────────────────────── */
+
+export type MedicationBadgeTone = 'rx' | 'monitor' | 'grls'
+
+export type InteractionSeverity = 'mandatory' | 'preferred'
+
+export interface MedicationBadge {
+  id: string
+  label: string
+  tone: MedicationBadgeTone
+}
+
+export interface MedicationDoseRow {
+  id: string
+  label: string
+  value: string
+}
+
+export interface MedicationAdverseRow {
+  id: string
+  label: string
+  value: string
+  valueTone?: 'warn' | 'ink'
+}
+
+export interface MedicationInteraction {
+  id: string
+  severity: InteractionSeverity
+  severityLabel: string
+  body: string
+  footer: string
+}
+
+export interface GrlsMedication {
+  id: string
+  tradeName: string
+  shortName: string
+  innLine: string
+  category: string
+  badges: MedicationBadge[]
+  grlsUrl: string
+  indications: string[]
+  indicationsFooter: string
+  contraindications: string[]
+  dosage: MedicationDoseRow[]
+  adverse: MedicationAdverseRow[]
+  adverseNote: string
+  interactions: MedicationInteraction[]
+}
+
+/** D07 — план лечения */
+export type PlanFieldLock = 'locked' | 'editable'
+
+export interface PlanDoseField {
+  id: string
+  label: string
+  value: string
+  lock: PlanFieldLock
+}
+
+export interface PlanDrugBlock {
+  contourLabel: string
+  title: string
+  schedule: string
+  statusLabel: string
+  fields: PlanDoseField[]
+  validationNote: string
+}
+
+export type PlanExerciseStatus = 'new' | 'active'
+
+export interface PlanExerciseItem {
+  id: string
+  title: string
+  status: PlanExerciseStatus
+  statusLabel: string
+}
+
+export type SafetyTone = 'critical' | 'warning' | 'caution'
+
+export interface PlanSafetyCheck {
+  id: string
+  tone: SafetyTone
+  priorityLabel: string
+  title: string
+  historyLabel: string
+  historyOk: boolean
+}
+
+export interface TreatmentPlan {
+  patientId: string
+  shortName: string
+  initials: string
+  draftLabel: string
+  versionLabel: string
+  drug: PlanDrugBlock
+  exercises: PlanExerciseItem[]
+  recommendations: string[]
+  safety: PlanSafetyCheck[]
+  consentDefault: boolean
 }

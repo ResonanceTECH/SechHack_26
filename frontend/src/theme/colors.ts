@@ -2,9 +2,9 @@
 export const colors = {
   bgApp: '#F4F6FC',
   bgSurface: '#FFFFFF',
-  bgSidebar: '#F7F8FC',
+  bgSidebar: '#FFFFFF',
   bgNavActive: '#E8EEFF',
-  brand: '#3B78FF',
+  brand: '#0059FF',
   brandSoft: '#D9E4FF',
   ink: '#1B2440',
   muted: '#6E7690',
