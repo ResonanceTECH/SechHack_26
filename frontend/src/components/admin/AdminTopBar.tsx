@@ -13,6 +13,8 @@ interface AdminTopBarProps {
   searchPlaceholder?: string
   searchValue?: string
   onSearchChange?: (value: string) => void
+  /** Hide search + bell — matches audit/settings refs */
+  compact?: boolean
 }
 
 export function AdminTopBar({
@@ -20,11 +22,14 @@ export function AdminTopBar({
   searchPlaceholder = 'Поиск сотрудника...',
   searchValue,
   onSearchChange,
+  compact = false,
 }: AdminTopBarProps) {
   const hasCrumbs = breadcrumbs != null && breadcrumbs.length > 0
 
   return (
-    <header className={styles.topbar}>
+    <header
+      className={`${styles.topbar}${compact ? ` ${styles.topbarCompact}` : ''}`}
+    >
       {hasCrumbs ? (
         <nav className={styles.crumbs} aria-label="Навигация">
           {breadcrumbs.map((item, i) => {
@@ -55,26 +60,30 @@ export function AdminTopBar({
         <h1 className={styles.title}>Администрирование</h1>
       )}
 
-      <label className={styles.search}>
-        <IconSearch aria-hidden />
-        <input
-          type="search"
-          placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
-          value={searchValue}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-        />
-      </label>
+      {!compact ? (
+        <label className={styles.search}>
+          <IconSearch aria-hidden />
+          <input
+            type="search"
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+            value={searchValue}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+          />
+        </label>
+      ) : null}
 
       <div className={styles.right}>
-        <button
-          type="button"
-          className={styles.bell}
-          aria-label="Уведомления"
-          title="Уведомления"
-        >
-          <IconBell aria-hidden />
-        </button>
+        {!compact ? (
+          <button
+            type="button"
+            className={styles.bell}
+            aria-label="Уведомления"
+            title="Уведомления"
+          >
+            <IconBell aria-hidden />
+          </button>
+        ) : null}
         <span className={styles.clinic}>{clinicInfo.name}</span>
       </div>
     </header>
