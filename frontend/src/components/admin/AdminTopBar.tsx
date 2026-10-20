@@ -8,6 +8,11 @@ export type AdminBreadcrumbItem = {
   to?: string
 }
 
+export type AdminTopBarAction = {
+  label: string
+  to: string
+}
+
 interface AdminTopBarProps {
   breadcrumbs?: AdminBreadcrumbItem[]
   searchPlaceholder?: string
@@ -15,6 +20,7 @@ interface AdminTopBarProps {
   onSearchChange?: (value: string) => void
   /** Hide search + bell — matches audit/settings refs */
   compact?: boolean
+  action?: AdminTopBarAction
 }
 
 export function AdminTopBar({
@@ -23,12 +29,14 @@ export function AdminTopBar({
   searchValue,
   onSearchChange,
   compact = false,
+  action,
 }: AdminTopBarProps) {
   const hasCrumbs = breadcrumbs != null && breadcrumbs.length > 0
+  const withAction = action != null
 
   return (
     <header
-      className={`${styles.topbar}${compact ? ` ${styles.topbarCompact}` : ''}`}
+      className={`${styles.topbar}${compact || withAction ? ` ${styles.topbarCompact}` : ''}`}
     >
       {hasCrumbs ? (
         <nav className={styles.crumbs} aria-label="Навигация">
@@ -60,32 +68,40 @@ export function AdminTopBar({
         <h1 className={styles.title}>Администрирование</h1>
       )}
 
-      {!compact ? (
-        <label className={styles.search}>
-          <IconSearch aria-hidden />
-          <input
-            type="search"
-            placeholder={searchPlaceholder}
-            aria-label={searchPlaceholder}
-            value={searchValue}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-          />
-        </label>
-      ) : null}
+      {action ? (
+        <Link to={action.to} className={styles.actionBtn}>
+          {action.label}
+        </Link>
+      ) : (
+        <>
+          {!compact ? (
+            <label className={styles.search}>
+              <IconSearch aria-hidden />
+              <input
+                type="search"
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+              />
+            </label>
+          ) : null}
 
-      <div className={styles.right}>
-        {!compact ? (
-          <button
-            type="button"
-            className={styles.bell}
-            aria-label="Уведомления"
-            title="Уведомления"
-          >
-            <IconBell aria-hidden />
-          </button>
-        ) : null}
-        <span className={styles.clinic}>{clinicInfo.name}</span>
-      </div>
+          <div className={styles.right}>
+            {!compact ? (
+              <button
+                type="button"
+                className={styles.bell}
+                aria-label="Уведомления"
+                title="Уведомления"
+              >
+                <IconBell aria-hidden />
+              </button>
+            ) : null}
+            <span className={styles.clinic}>{clinicInfo.name}</span>
+          </div>
+        </>
+      )}
     </header>
   )
 }

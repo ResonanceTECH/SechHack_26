@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   IconAnalytics,
   IconAudit,
@@ -49,6 +49,28 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  function logout() {
+    navigate('/login', { replace: true })
+  }
+
+  function isNavActive(id: AdminNavItemId, isActive: boolean): boolean {
+    if (
+      id === 'employees' &&
+      (pathname.startsWith('/admin/welcome') ||
+        pathname.startsWith('/admin/invite-doctor') ||
+        pathname.startsWith('/admin/invite-admin') ||
+        pathname.startsWith('/admin/invite-sent') ||
+        pathname.startsWith('/admin/applications') ||
+        pathname.startsWith('/admin/verify-doctor'))
+    ) {
+      return true
+    }
+    return isActive
+  }
+
   return (
     <aside
       className={`${styles.sidebar}${open ? '' : ` ${styles.collapsed}`}`}
@@ -92,7 +114,7 @@ export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
               title={item.label}
               aria-label={item.label}
               className={({ isActive }) =>
-                `${styles.link}${isActive ? ` ${styles.linkActive}` : ''}`
+                `${styles.link}${isNavActive(item.id, isActive) ? ` ${styles.linkActive}` : ''}`
               }
             >
               <span className={styles.linkIcon}>
@@ -105,22 +127,26 @@ export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
       </nav>
 
       <div className={styles.footer}>
-        <div
-          className={styles.avatar}
-          aria-hidden
+        <Link
+          to="/admin/profile"
+          className={styles.footerProfile}
           title={`${adminProfile.shortName} · ${adminProfile.role}`}
+          aria-label={`Личный кабинет · ${adminProfile.shortName}`}
         >
-          {adminProfile.initials}
-        </div>
-        <div className={styles.footerMeta}>
-          <div className={styles.footerName}>{adminProfile.shortName}</div>
-          <div className={styles.footerRole}>{adminProfile.role}</div>
-        </div>
+          <div className={styles.avatar} aria-hidden>
+            {adminProfile.initials}
+          </div>
+          <div className={styles.footerMeta}>
+            <div className={styles.footerName}>{adminProfile.shortName}</div>
+            <div className={styles.footerRole}>{adminProfile.role}</div>
+          </div>
+        </Link>
         <button
           type="button"
           className={styles.logout}
           aria-label="Выйти"
           title="Выйти"
+          onClick={logout}
         >
           <IconLogout aria-hidden />
         </button>
