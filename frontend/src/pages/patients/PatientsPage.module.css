@@ -1,0 +1,537 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chip,
+.chipActive {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chip {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+}
+
+.chip:hover {
+  background: rgba(59, 120, 255, 0.06);
+  color: var(--ink-secondary);
+}
+
+.chipActive {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 120, 255, 0.22);
+}
+
+.filtersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.filtersBtn:hover {
+  background: #f8f9fd;
+}
+
+.tableCard {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #f8f9fd;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 20px;
+  width: 22%;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 12%;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3),
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 10%;
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 18%;
+}
+
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  width: 10%;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 20px;
+  width: 14%;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: #fafbff;
+}
+
+.rowCritical {
+  background: #fff1f1 !important;
+}
+
+.rowCritical:hover {
+  background: #ffeaea !important;
+}
+
+.patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 750;
+  flex-shrink: 0;
+}
+
+.rose {
+  background: #fde2e2;
+  color: #c53d3d;
+}
+
+.amber {
+  background: #ffe8c7;
+  color: #b56a00;
+}
+
+.blue {
+  background: #dce6ff;
+  color: #2f5fd0;
+}
+
+.green {
+  background: #d8f3e6;
+  color: #1f8a5a;
+}
+
+.violet {
+  background: #ebe4ff;
+  color: #6b4fd0;
+}
+
+.teal {
+  background: #d7f3f1;
+  color: #1f8a82;
+}
+
+.patientMeta {
+  min-width: 0;
+}
+
+.patientName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.patientSub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status_critical {
+  color: var(--danger);
+}
+
+.status_attention {
+  color: #d4890a;
+}
+
+.status_new {
+  color: var(--brand);
+}
+
+.status_stable {
+  color: var(--success);
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scoreValue {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.scoreDelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.deltaUp {
+  color: var(--danger);
+}
+
+.deltaDown {
+  color: var(--success);
+}
+
+.deltaSame {
+  color: var(--muted);
+}
+
+.diary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diaryTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: #eef1f8;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.diaryFill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.barOk {
+  background: var(--brand);
+}
+
+.barMid {
+  background: #6b8fff;
+}
+
+.barWarn {
+  background: #f0a04b;
+}
+
+.diaryValue {
+  width: 36px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  flex-shrink: 0;
+}
+
+.aviandr {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.aviandrDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotOk {
+  background: #7c6cf0;
+}
+
+.dotMid {
+  background: #9b8cf5;
+}
+
+.dotWarn {
+  background: #f0a04b;
+}
+
+.empty {
+  color: var(--footer);
+  font-weight: 600;
+}
+
+.nextVisit {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+}
+
+/* —— Empty state (no assigned patients) —— */
+.emptyLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 16px;
+  align-items: start;
+}
+
+.emptyCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.accessBadge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: #1f7a52;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.accessDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.emptyBody {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+.emptyInfo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #edeffc;
+  margin-top: 4px;
+}
+
+.emptyInfoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-secondary);
+}
+
+.emptyInfoTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.emptyInfoBody {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.profileBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  margin-top: 4px;
+  border-radius: 12px;
+  background: #e8eeff;
+  color: #2654e8;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease;
+}
+
+.profileBtn:hover {
+  background: #dce5ff;
+}
+
+.roleCard {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: #edeffc;
+}
+
+.roleIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-secondary);
+}
+
+.roleTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.roleBody {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .emptyLayout {
+    grid-template-columns: 1fr;
+  }
+}

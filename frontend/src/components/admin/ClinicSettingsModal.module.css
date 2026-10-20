@@ -1,0 +1,206 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(27, 36, 64, 0.32);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.dialog {
+  width: min(440px, 100%);
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 56px rgba(27, 36, 64, 0.18);
+  padding: 28px 28px 24px;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.head {
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.optional {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.input {
+  height: 48px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--footer);
+}
+
+.input:focus {
+  border-color: rgba(0, 89, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 89, 255, 0.12);
+}
+
+.timezone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.tzLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tzValue {
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.hoursBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hoursLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hoursRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.hoursBtn,
+.hoursActive {
+  height: 42px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.hoursBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+}
+
+.hoursBtn:hover {
+  background: #f8f9fd;
+}
+
+.hoursActive {
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 89, 255, 0.22);
+}
+
+.hoursNote {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--footer);
+  line-height: 1.45;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btnCancel,
+.btnSave,
+.btnSaveActive {
+  height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 750;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btnCancel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+}
+
+.btnCancel:hover {
+  background: #f8f9fd;
+}
+
+.btnSave {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--footer);
+  cursor: not-allowed;
+}
+
+.btnSaveActive {
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 89, 255, 0.22);
+}
+
+.btnSaveActive:hover {
+  background: var(--brand-hover);
+}

@@ -1,0 +1,66 @@
+:root {
+  /* App canvas — design frame 1440×900 */
+  --bg-app: #f4f6fc;
+  --bg-auth-aside: #0f1b33;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-nav-active: #e8eeff;
+  --bg-search: #eef1f8;
+  --bg-alert-critical: #fdecec;
+  --bg-alert-warn: #fff6e5;
+  --bg-cta-soft: #e8eeff;
+  --bg-suggest: #eef3ff;
+  --bg-photo: #f3c9b0;
+
+  --brand: #0059ff;
+  --brand-hover: #0048d6;
+  --brand-soft: #d9e4ff;
+  --brand-ink: #0046cc;
+
+  --ink: #1b2440;
+  --ink-secondary: #3d4663;
+  --muted: #6e7690;
+  --footer: #a0a8bc;
+  --border: rgba(27, 36, 64, 0.08);
+  --border-strong: rgba(27, 36, 64, 0.12);
+  --border-danger: rgba(229, 77, 77, 0.55);
+
+  --danger: #e54d4d;
+  --danger-soft: #fdecec;
+  --success: #2f9e6d;
+  --success-soft: #e6f6ef;
+  --warning: #e6a317;
+  --warning-soft: #fff6e5;
+  --info: #0059ff;
+  --info-soft: #e8eeff;
+  --violet: #7b6cf0;
+  --violet-soft: #efeaff;
+  --tag-rash: #fff1c9;
+  --tag-itch: #ffe0c2;
+  --tag-drowsy: #e8f0ff;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(27, 36, 64, 0.04),
+    0 4px 16px rgba(27, 36, 64, 0.04);
+  --shadow-soft: 0 2px 8px rgba(27, 36, 64, 0.06);
+
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 72px;
+  --topbar-height: 64px;
+  --app-width: 1440px;
+  --app-height: 900px;
+
+  --font: 'Manrope', system-ui, -apple-system, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+}

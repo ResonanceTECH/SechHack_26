@@ -1,0 +1,140 @@
+.loginLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease;
+}
+
+.loginLink:hover {
+  background: #f7f8fc;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin-top: -2px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-secondary);
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 89, 255, 0.15);
+}
+
+.fileField {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 10px 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fileName {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--bg-cta-soft);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fileBtn:hover {
+  background: var(--brand-soft);
+}
+
+.hint {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: 48px;
+  margin-top: 4px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: 0 6px 16px rgba(0, 89, 255, 0.28);
+  transition: background 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: var(--brand-hover);
+}
