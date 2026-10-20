@@ -15,8 +15,57 @@ const pageMeta: Record<
     crumbs: AdminBreadcrumbItem[]
     searchPlaceholder: string
     compactTopBar?: boolean
+    action?: { label: string; to: string }
   }
 > = {
+  '/admin/welcome': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Добро пожаловать в клинику' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/invite-doctor': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Пригласить врача' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/invite-admin': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Пригласить администратора' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/invite-sent': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Приглашение отправлено' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/applications': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Заявки и проверка сотрудников' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
+  '/admin/verify-doctor': {
+    crumbs: [
+      { label: 'Администрирование' },
+      { label: 'Проверка врача и назначение роли' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+  },
   '/admin/employees': {
     crumbs: [
       { label: 'Администрирование' },
@@ -43,6 +92,15 @@ const pageMeta: Record<
     ],
     searchPlaceholder: 'Поиск...',
     compactTopBar: true,
+  },
+  '/admin/profile': {
+    crumbs: [
+      { label: 'Администрирование', to: '/admin/employees' },
+      { label: 'Личный кабинет' },
+    ],
+    searchPlaceholder: 'Поиск...',
+    compactTopBar: true,
+    action: { label: 'Вернуться к работе', to: '/admin/employees' },
   },
 }
 
@@ -112,6 +170,7 @@ export function AdminLayout() {
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
             compact={meta.compactTopBar}
+            action={meta.action}
           />
           <main className={styles.content}>
             <Outlet context={outletContext} />
