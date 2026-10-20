@@ -113,3 +113,12 @@
   color: var(--ink-secondary);
   white-space: nowrap;
 }
+
+.rightMeta {
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}

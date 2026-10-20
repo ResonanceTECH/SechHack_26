@@ -17,6 +17,8 @@ interface TopBarProps {
   breadcrumbs?: BreadcrumbItem[]
   action?: TopBarAction
   hideSearch?: boolean
+  /** Right-side meta, e.g. clinic name */
+  rightMeta?: string
 }
 
 export function TopBar({
@@ -24,9 +26,10 @@ export function TopBar({
   breadcrumbs,
   action,
   hideSearch = false,
+  rightMeta,
 }: TopBarProps) {
   const hasCrumbs = breadcrumbs != null && breadcrumbs.length > 0
-  const compact = hideSearch || action != null
+  const compact = hideSearch || action != null || rightMeta != null
 
   return (
     <header className={compact ? `${styles.topbar} ${styles.compact}` : styles.topbar}>
@@ -79,6 +82,8 @@ export function TopBar({
         <Link to={action.to} className={styles.actionBtn}>
           {action.label}
         </Link>
+      ) : rightMeta ? (
+        <span className={styles.rightMeta}>{rightMeta}</span>
       ) : (
         <time className={styles.datetime} dateTime="2026-10-18T11:05">
           18 октября 2026 · 11:05
