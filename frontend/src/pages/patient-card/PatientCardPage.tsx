@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   IconAlertTriangle,
-  IconChat,
+  IconFile,
+  IconNotebook,
   IconPencil,
   IconPill,
   IconPlus,
@@ -60,15 +61,8 @@ export function PatientCardPage() {
         </div>
 
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.btnGhost}
-            onClick={() => navigate(`/patients/${patientId}/messages`)}
-          >
-            <IconChat aria-hidden />
-            Сообщения
-          </button>
           <button type="button" className={styles.btnGhost}>
+            <IconNotebook size={17} aria-hidden />
             Запросить опросник
           </button>
           <button
@@ -76,7 +70,7 @@ export function PatientCardPage() {
             className={styles.btnGhost}
             onClick={() => navigate(`/exercises/${patientId}`)}
           >
-            <IconPlus aria-hidden />
+            <IconPlus size={17} aria-hidden />
             Назначить упражнение
           </button>
           <button
@@ -84,6 +78,7 @@ export function PatientCardPage() {
             className={styles.btnGhost}
             onClick={() => navigate(`/patients/${patientId}/report`)}
           >
+            <IconFile size={17} aria-hidden />
             Отчёт перед визитом
           </button>
           <button
@@ -91,7 +86,7 @@ export function PatientCardPage() {
             className={styles.btnPrimary}
             onClick={() => navigate(`/patients/${patientId}/plan`)}
           >
-            <IconPencil aria-hidden />
+            <IconPencil size={17} aria-hidden />
             План лечения
           </button>
         </div>
@@ -137,7 +132,11 @@ export function PatientCardPage() {
                   <strong>{card.alert.title}.</strong> {card.alert.body}
                 </div>
               </div>
-              <button type="button" className={styles.alertCta}>
+              <button
+                type="button"
+                className={styles.alertCta}
+                onClick={() => navigate('/alerts')}
+              >
                 {card.alert.cta}
               </button>
             </aside>

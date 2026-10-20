@@ -11,37 +11,40 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   padding: 4px 0 18px;
 }
 
 .profileMain {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 20px;
   min-width: 0;
+  flex: 1;
 }
 
 .avatar {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   background: #d9e4ff;
   color: var(--brand-ink);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .profileInfo {
   min-width: 0;
+  max-width: 320px;
   padding-top: 2px;
 }
 
 .name {
+  margin: 0;
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -50,11 +53,11 @@
 }
 
 .meta {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .badges {
@@ -98,29 +101,30 @@
 }
 
 .actions {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   flex-shrink: 0;
-  padding-top: 4px;
+  width: 400px;
 }
 
 .btnGhost,
 .btnPrimary {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(27, 36, 64, 0.04);
   transition:
     background 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btnGhost {
@@ -663,10 +667,15 @@
   }
 
   .profile {
-    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .profileInfo {
+    max-width: none;
   }
 
   .actions {
-    justify-content: flex-start;
+    width: 100%;
+    max-width: 400px;
   }
 }
