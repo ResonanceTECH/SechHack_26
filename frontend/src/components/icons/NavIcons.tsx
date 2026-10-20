@@ -13,6 +13,7 @@ import {
   ChartLineData01Icon,
   Chat01Icon,
   CompassIcon,
+  Copy01Icon,
   Download01Icon,
   EqualSignIcon,
   ExternalLinkIcon,
@@ -323,6 +324,18 @@ export function IconShield(props: IconProps) {
 export function IconLink(props: IconProps) {
   return (
     <HugeiconsIcon {...defaults} size={18} icon={Link01Icon} {...props} />
+  )
+}
+
+export function IconCopy(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={16} icon={Copy01Icon} {...props} />
+  )
+}
+
+export function IconClose(props: IconProps) {
+  return (
+    <HugeiconsIcon {...defaults} size={18} icon={Cancel01Icon} {...props} />
   )
 }
 
