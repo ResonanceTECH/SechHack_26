@@ -64,7 +64,11 @@ export function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
         pathname.startsWith('/admin/invite-admin') ||
         pathname.startsWith('/admin/invite-sent') ||
         pathname.startsWith('/admin/applications') ||
-        pathname.startsWith('/admin/verify-doctor'))
+        pathname.startsWith('/admin/verify-doctor') ||
+        pathname.startsWith('/admin/request-clarification') ||
+        pathname.startsWith('/admin/confirm-role') ||
+        pathname.startsWith('/admin/suspend-access') ||
+        pathname.startsWith('/admin/roles'))
     ) {
       return true
     }
