@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { IconDownload } from '@/components/icons/NavIcons'
 import type { ReportPreview } from '@/types/doctor'
 import styles from './ReportPreviewModal.module.css'
 
@@ -7,6 +8,36 @@ interface ReportPreviewModalProps {
   open: boolean
   onClose: () => void
   preview: ReportPreview
+}
+
+function downloadPreviewPdf(preview: ReportPreview) {
+  const lines = [
+    'Клинический компас — отчёт перед визитом',
+    '',
+    preview.fullName,
+    preview.periodLine,
+    preview.visitLine,
+    '',
+    'Показатель | Текущее значение | Предыдущее',
+    ...preview.rows.map(
+      (r) => `${r.indicator} | ${r.current} | ${r.previous}`,
+    ),
+    '',
+    preview.alert
+      ? `${preview.alert.title}\n${preview.alert.body}`
+      : '',
+    '',
+    preview.footerNote,
+  ]
+  const blob = new Blob([lines.filter(Boolean).join('\n')], {
+    type: 'application/pdf',
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `otchet-${preview.patientId}.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export function ReportPreviewModal({
@@ -54,9 +85,19 @@ export function ReportPreviewModal({
           <h2 id={titleId} className={styles.title}>
             Предпросмотр отчёта
           </h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose}>
-            Закрыть
-          </button>
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.closeBtn} onClick={onClose}>
+              Закрыть
+            </button>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={() => downloadPreviewPdf(preview)}
+            >
+              <IconDownload aria-hidden />
+              Скачать PDF
+            </button>
+          </div>
         </header>
 
         <div className={styles.body}>

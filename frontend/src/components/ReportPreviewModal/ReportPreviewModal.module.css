@@ -40,20 +40,45 @@
   color: var(--ink);
 }
 
-.closeBtn {
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.closeBtn,
+.downloadBtn {
   height: 36px;
   padding: 0 14px;
   border-radius: 12px;
-  background: var(--bg-cta-soft);
-  color: var(--brand-ink);
   font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: background 0.15s ease;
+}
+
+.closeBtn {
+  background: var(--bg-cta-soft);
+  color: var(--brand-ink);
 }
 
 .closeBtn:hover {
   background: #dce5ff;
+}
+
+.downloadBtn {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 120, 255, 0.22);
+}
+
+.downloadBtn:hover {
+  background: var(--brand-hover);
 }
 
 .body {
