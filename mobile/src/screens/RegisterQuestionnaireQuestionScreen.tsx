@@ -28,6 +28,7 @@ type Props = {
   onClose?: () => void;
   onComplete?: (answers: Record<string, number | null>) => void;
   onCrisisHelp?: (progress: QuestionnaireProgress) => void;
+  onNoAnswer?: (progress: QuestionnaireProgress) => void;
 };
 
 export function RegisterQuestionnaireQuestionScreen({
@@ -37,6 +38,7 @@ export function RegisterQuestionnaireQuestionScreen({
   onClose,
   onComplete,
   onCrisisHelp,
+  onNoAnswer,
 }: Props) {
   const insets = useSafeAreaInsets();
   const total = QUESTIONNAIRE_QUESTIONS.length;
@@ -222,12 +224,17 @@ export function RegisterQuestionnaireQuestionScreen({
         <View style={styles.footer}>
           <Pressable
             accessibilityRole="button"
-            disabled={!canNext}
-            onPress={() => goNext(answers)}
+            onPress={() => {
+              if (!canNext) {
+                onNoAnswer?.({ index, answers });
+                return;
+              }
+              goNext(answers);
+            }}
             style={({ pressed }) => [
               styles.btnPrimary,
-              !canNext && styles.btnDisabled,
-              pressed && canNext && styles.pressed,
+              !canNext && !onNoAnswer && styles.btnDisabled,
+              pressed && styles.pressed,
             ]}
           >
             <Text style={styles.btnPrimaryText}>Далее</Text>

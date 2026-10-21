@@ -14,9 +14,10 @@ import { colors } from "../theme/colors";
 type Props = {
   onStart?: () => void;
   onLogin?: () => void;
+  onErrorsDemo?: () => void;
 };
 
-export function WelcomeScreen({ onStart, onLogin }: Props) {
+export function WelcomeScreen({ onStart, onLogin, onErrorsDemo }: Props) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const logoSize = height < 700 ? 96 : 120;
@@ -70,6 +71,19 @@ export function WelcomeScreen({ onStart, onLogin }: Props) {
           <Text style={styles.disclaimer}>
             Не ставит диагноз и не заменяет приём врача
           </Text>
+
+          {onErrorsDemo ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onErrorsDemo}
+              style={({ pressed }) => [
+                styles.errorsDemo,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.errorsDemoText}>Ошибки · прототип</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </ScreenGradient>
@@ -147,5 +161,15 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.footer,
     textAlign: "center",
+  },
+  errorsDemo: {
+    alignSelf: "center",
+    paddingVertical: 4,
+  },
+  errorsDemoText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+    color: colors.brand,
   },
 });

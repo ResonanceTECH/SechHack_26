@@ -13,14 +13,25 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OtpInput } from "../components/OtpInput";
 import { ScreenGradient } from "../components/ScreenGradient";
 import { StepProgress } from "../components/StepProgress";
+import { AlertBanner } from "../components/errors/ErrorChrome";
 import { colors } from "../theme/colors";
 import { maskRuPhone } from "../utils/phone";
+
+/** Demo correct code until backend auth is wired */
+const DEMO_OK = "1234";
+const DEMO_EXPIRED = "0000";
+const DEMO_RATE = "9999";
+
+type SmsError = "wrong" | "expired" | "rate" | null;
 
 type Props = {
   phone: string;
   onBack?: () => void;
   onChangePhone?: () => void;
   onConfirm?: (code: string) => void;
+  onWrongCode?: () => void;
+  onCodeExpired?: () => void;
+  onRateLimited?: () => void;
 };
 
 function formatTimer(sec: number) {
@@ -34,10 +45,15 @@ export function RegisterSmsScreen({
   onBack,
   onChangePhone,
   onConfirm,
+  onWrongCode,
+  onCodeExpired,
+  onRateLimited,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(42);
+  const [error, setError] = useState<SmsError>(null);
+  const [attemptsLeft, setAttemptsLeft] = useState(2);
   const canSubmit = code.length === 4;
 
   useEffect(() => {
@@ -45,6 +61,57 @@ export function RegisterSmsScreen({
     const id = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearInterval(id);
   }, [secondsLeft]);
+
+  const submit = () => {
+    if (!canSubmit) return;
+
+    if (code === DEMO_RATE) {
+      setError("rate");
+      onRateLimited?.();
+      return;
+    }
+    if (code === DEMO_EXPIRED) {
+      setError("expired");
+      onCodeExpired?.();
+      return;
+    }
+    if (code !== DEMO_OK) {
+      const next = Math.max(0, attemptsLeft - 1);
+      setAttemptsLeft(next);
+      setError("wrong");
+      if (next <= 0) {
+        onRateLimited?.();
+        return;
+      }
+      onWrongCode?.();
+      return;
+    }
+
+    setError(null);
+    onConfirm?.(code);
+  };
+
+  const primaryLabel =
+    error === "expired"
+      ? "Получить новый код"
+      : error === "wrong"
+        ? "Ввести код заново"
+        : "Подтвердить";
+
+  const onPrimary = () => {
+    if (error === "expired") {
+      setCode("");
+      setError(null);
+      setSecondsLeft(42);
+      return;
+    }
+    if (error === "wrong") {
+      setCode("");
+      setError(null);
+      return;
+    }
+    submit();
+  };
 
   return (
     <ScreenGradient soft>
@@ -98,7 +165,14 @@ export function RegisterSmsScreen({
             </Text>
 
             <View style={styles.otpWrap}>
-              <OtpInput value={code} onChange={setCode} />
+              <OtpInput
+                value={code}
+                onChange={(v) => {
+                  setCode(v);
+                  if (error === "wrong" || error === "expired") setError(null);
+                }}
+                error={error === "wrong" || error === "expired"}
+              />
             </View>
 
             <View style={styles.metaRow}>
@@ -121,18 +195,38 @@ export function RegisterSmsScreen({
                 <Text style={styles.link}>Изменить номер</Text>
               </Pressable>
             </View>
+
+            {error === "wrong" ? (
+              <View style={styles.alertWrap}>
+                <AlertBanner
+                  title="Код не подошёл"
+                  body={`Проверьте четыре цифры и попробуйте снова. Осталось ${attemptsLeft} попытки.`}
+                />
+              </View>
+            ) : null}
+            {error === "expired" ? (
+              <View style={styles.alertWrap}>
+                <AlertBanner
+                  title="Срок действия кода истёк"
+                  body="Запросите новое SMS. Используйте код из последнего сообщения."
+                />
+              </View>
+            ) : null}
           </View>
 
           <Pressable
-            disabled={!canSubmit}
-            onPress={() => onConfirm?.(code)}
+            disabled={!canSubmit && error !== "expired" && error !== "wrong"}
+            onPress={onPrimary}
             style={({ pressed }) => [
               styles.btnPrimary,
-              !canSubmit && styles.btnDisabled,
-              pressed && canSubmit && styles.pressed,
+              !canSubmit &&
+                error !== "expired" &&
+                error !== "wrong" &&
+                styles.btnDisabled,
+              pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.btnPrimaryText}>Подтвердить</Text>
+            <Text style={styles.btnPrimaryText}>{primaryLabel}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -213,6 +307,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: "600",
     color: colors.brand,
+  },
+  alertWrap: {
+    marginTop: 16,
   },
   btnPrimary: {
     height: 56,

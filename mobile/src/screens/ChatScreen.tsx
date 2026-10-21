@@ -22,6 +22,10 @@ type Props = {
   onBack?: () => void;
   onMedPaused?: () => void;
   onAttach?: (action: ChatAttachAction) => void;
+  online?: boolean;
+  onSendFailed?: () => void;
+  onUploadFailed?: () => void;
+  onMicDenied?: () => void;
 };
 
 const QUICK = [
@@ -228,7 +232,15 @@ type OutgoingMsg =
   | { id: string; kind: "text"; text: string }
   | { id: string; kind: "voice"; seconds: number };
 
-export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
+export function ChatScreen({
+  onBack,
+  onMedPaused,
+  onAttach,
+  online = true,
+  onSendFailed,
+  onUploadFailed,
+  onMicDenied,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const [attachOpen, setAttachOpen] = useState(false);
@@ -256,6 +268,10 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
   }, [recording]);
 
   const startRecording = () => {
+    if (!online) {
+      onMicDenied?.();
+      return;
+    }
     setRecording(true);
   };
 
@@ -280,6 +296,10 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
   const sendText = () => {
     const body = text.trim();
     if (!body) return;
+    if (!online) {
+      onSendFailed?.();
+      return;
+    }
     setOutgoing((prev) => [
       ...prev,
       { id: `t-${Date.now()}`, kind: "text", text: body },
@@ -532,7 +552,17 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
       <ChatAttachSheet
         visible={attachOpen}
         onClose={() => setAttachOpen(false)}
-        onSelect={onAttach}
+        onSelect={(action) => {
+          setAttachOpen(false);
+          if (
+            (action === "camera" || action === "gallery") &&
+            !online
+          ) {
+            onUploadFailed?.();
+            return;
+          }
+          onAttach?.(action);
+        }}
       />
     </ScreenGradient>
   );

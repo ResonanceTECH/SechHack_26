@@ -19,12 +19,18 @@ type Props = {
   onClose?: () => void;
   onManualEntry?: () => void;
   onScanned?: (data: string) => void;
+  onCameraDenied?: () => void;
 };
 
 const FRAME = 260;
 const INNER = 120;
 
-export function QrScanScreen({ onClose, onManualEntry, onScanned }: Props) {
+export function QrScanScreen({
+  onClose,
+  onManualEntry,
+  onScanned,
+  onCameraDenied,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [locked, setLocked] = useState(false);
@@ -67,12 +73,18 @@ export function QrScanScreen({ onClose, onManualEntry, onScanned }: Props) {
     const res = await requestPermission();
     setSheetVisible(false);
     if (!res.granted && !res.canAskAgain) {
+      onCameraDenied?.();
       await Linking.openSettings();
+      return;
+    }
+    if (!res.granted) {
+      onCameraDenied?.();
     }
   }
 
   function handleDeny() {
     setSheetVisible(false);
+    onCameraDenied?.();
   }
 
   return (
