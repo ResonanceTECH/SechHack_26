@@ -47,20 +47,19 @@ function DiaryIcon({ active }: { active?: boolean }) {
 
 function TreatmentIcon({ active }: { active?: boolean }) {
   const c = active ? colors.brand : colors.muted;
+  // horizontal capsule — reads cleanly at tab size
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24">
-      {/* diagonal capsule — matches med cards */}
       <Path
-        d="M8.2 15.8 C6.3 13.9 6.3 10.8 8.2 8.9 L10.9 6.2 C12.8 4.3 15.9 4.3 17.8 6.2 C19.7 8.1 19.7 11.2 17.8 13.1 L15.1 15.8 C13.2 17.7 10.1 17.7 8.2 15.8 Z"
+        d="M7 9.5 H17 A3.5 3.5 0 0 1 17 16.5 H7 A3.5 3.5 0 0 1 7 9.5 Z"
         stroke={c}
-        strokeWidth={1.8}
+        strokeWidth={1.9}
         fill="none"
-        strokeLinejoin="round"
       />
       <Path
-        d="M9.6 9.6 L14.4 14.4"
+        d="M12 9.5 V16.5"
         stroke={c}
-        strokeWidth={1.8}
+        strokeWidth={1.9}
         strokeLinecap="round"
       />
     </Svg>
