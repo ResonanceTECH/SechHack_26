@@ -183,8 +183,20 @@ export default function App() {
   const [questionnaireProgress, setQuestionnaireProgress] =
     useState<QuestionnaireProgress>({ index: 0, answers: {} });
   const [medPaused, setMedPaused] = useState(false);
+  const [medicationBack, setMedicationBack] = useState<Screen>("treatment");
+  const [breathingBack, setBreathingBack] = useState<Screen>("treatment");
   const [questionnairesBack, setQuestionnairesBack] =
     useState<Screen>("diary");
+
+  const openMedication = (back: Screen = "treatment") => {
+    setMedicationBack(back);
+    setScreen("medication");
+  };
+
+  const openBreathing = (back: Screen = "treatment") => {
+    setBreathingBack(back);
+    setScreen("breathing");
+  };
   const [morningDose, setMorningDose] =
     useState<MedicationDoseState>("pending");
   const [eveningDose, setEveningDose] =
@@ -212,6 +224,7 @@ export default function App() {
       setSymptomBack(from);
       setScreen("symptomSelect");
     }
+    if (action === "medication") openMedication(from);
     if (action === "message") setScreen("chat");
   };
 
@@ -498,6 +511,7 @@ export default function App() {
           onAddAction={addActionFrom("home")}
           onTab={goTab}
           onMood={() => setScreen("checkInMood")}
+          onTakeMed={() => openMedication("home")}
         />
       )}
 
@@ -505,8 +519,8 @@ export default function App() {
         <TreatmentScreen
           onTab={goTab}
           onAddAction={addActionFrom("treatment")}
-          onMedication={() => setScreen("medication")}
-          onBreathing={() => setScreen("breathing")}
+          onMedication={() => openMedication("treatment")}
+          onBreathing={() => openBreathing("treatment")}
           onQuestionnaires={() => {
             setQuestionnairesBack("treatment");
             setScreen("questionnaires");
@@ -520,7 +534,7 @@ export default function App() {
           morning={morningDose}
           evening={medPaused ? "paused" : eveningDose}
           paused={medPaused}
-          onBack={() => setScreen("treatment")}
+          onBack={() => setScreen(medicationBack)}
           onInstruction={() => setScreen("medicationInstruction")}
           onTakeMorning={() => setMorningDose("taken")}
           onSkipMorning={() => setScreen("skipDose")}
@@ -554,8 +568,8 @@ export default function App() {
 
       {screen === "breathing" && (
         <BreathingScreen
-          onBack={() => setScreen("treatment")}
-          onDone={() => setScreen("treatment")}
+          onBack={() => setScreen(breathingBack)}
+          onDone={() => setScreen(breathingBack)}
         />
       )}
 
@@ -659,7 +673,7 @@ export default function App() {
             setMedPaused(true);
             setMorningDose("taken");
             setEveningDose("paused");
-            setScreen("medication");
+            openMedication("chat");
           }}
           onAttach={(action) => {
             if (action === "symptom") {
@@ -772,9 +786,7 @@ export default function App() {
         <CheckInSavedScreen
           onGoHome={() => setScreen("home")}
           onTellDoctor={() => setScreen("chat")}
-          onBreathing={() => {
-            // TODO: breathing exercise
-          }}
+          onBreathing={() => openBreathing("checkInSaved")}
         />
       )}
 
