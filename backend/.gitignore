@@ -1,0 +1,13 @@
+# ---- Python (новый FastAPI-бэкенд) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Общий секретный файл (также игнорируется корневым .gitignore)
+.env
