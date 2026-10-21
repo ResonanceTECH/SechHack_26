@@ -15,6 +15,7 @@ type TabId = "home" | "diary" | "treatment" | "chat";
 type Props = {
   name?: string;
   initials?: string;
+  onProfile?: () => void;
   onSos?: () => void;
   onNotifications?: () => void;
   onMood?: (value: number) => void;
@@ -244,6 +245,7 @@ function ChatIcon() {
 export function HomeScreen({
   name = "Анна",
   initials = "АМ",
+  onProfile,
   onSos,
   onNotifications,
   onMood,
@@ -275,7 +277,15 @@ export function HomeScreen({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <View style={styles.profile}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Профиль"
+              onPress={onProfile}
+              style={({ pressed }) => [
+                styles.profile,
+                pressed && styles.pressed,
+              ]}
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </View>
@@ -283,7 +293,7 @@ export function HomeScreen({
                 <Text style={styles.greeting}>{greetingForNow()}</Text>
                 <Text style={styles.name}>{name}</Text>
               </View>
-            </View>
+            </Pressable>
 
             <View style={styles.headerActions}>
               <Pressable

@@ -366,6 +366,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "600",
+    textAlign: "center",
+    width: "100%",
   },
   btnPrimary: {
     height: 56,
