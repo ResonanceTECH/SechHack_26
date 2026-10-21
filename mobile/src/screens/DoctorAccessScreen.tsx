@@ -1,16 +1,10 @@
 import { useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenGradient } from "../components/ScreenGradient";
+import { Toggle } from "../components/Toggle";
 import { colors } from "../theme/colors";
 
 type Props = {
@@ -256,16 +250,11 @@ export function DoctorAccessScreen({ onBack, onWriteDoctor }: Props) {
                     <Text style={styles.accessTitle}>{row.title}</Text>
                     <Text style={styles.accessSub}>{row.sub}</Text>
                   </View>
-                  <Switch
+                  <Toggle
                     value={toggles[row.id]}
                     onValueChange={(v) =>
                       setToggles((prev) => ({ ...prev, [row.id]: v }))
                     }
-                    trackColor={{
-                      false: "rgba(27,36,64,0.12)",
-                      true: colors.brand,
-                    }}
-                    thumbColor={colors.white}
                   />
                 </View>
               </View>

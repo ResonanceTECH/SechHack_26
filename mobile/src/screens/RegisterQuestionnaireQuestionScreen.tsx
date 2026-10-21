@@ -16,14 +16,23 @@ import {
 } from "../data/questionnaires";
 import { colors } from "../theme/colors";
 
+export type QuestionnaireProgress = {
+  index: number;
+  answers: Record<string, number | null>;
+};
+
 type Props = {
+  initialIndex?: number;
+  initialAnswers?: Record<string, number | null>;
   onBack?: () => void;
   onClose?: () => void;
   onComplete?: (answers: Record<string, number | null>) => void;
-  onCrisisHelp?: () => void;
+  onCrisisHelp?: (progress: QuestionnaireProgress) => void;
 };
 
 export function RegisterQuestionnaireQuestionScreen({
+  initialIndex = 0,
+  initialAnswers,
   onBack,
   onClose,
   onComplete,
@@ -31,8 +40,10 @@ export function RegisterQuestionnaireQuestionScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const total = QUESTIONNAIRE_QUESTIONS.length;
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number | null>>({});
+  const [index, setIndex] = useState(initialIndex);
+  const [answers, setAnswers] = useState<Record<string, number | null>>(
+    () => initialAnswers ?? {}
+  );
 
   const question = QUESTIONNAIRE_QUESTIONS[index];
   const selected = answers[question.id];
@@ -179,7 +190,7 @@ export function RegisterQuestionnaireQuestionScreen({
           {question.id === "phq9-9" ? (
             <Pressable
               accessibilityRole="button"
-              onPress={onCrisisHelp}
+              onPress={() => onCrisisHelp?.({ index, answers })}
               style={({ pressed }) => [
                 styles.helpBanner,
                 pressed && styles.pressed,

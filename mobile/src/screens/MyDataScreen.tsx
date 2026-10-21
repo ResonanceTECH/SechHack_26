@@ -1,16 +1,10 @@
 import { useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenGradient } from "../components/ScreenGradient";
+import { Toggle } from "../components/Toggle";
 import { colors } from "../theme/colors";
 
 type Props = {
@@ -172,16 +166,11 @@ export function MyDataScreen({
                     <Text style={styles.rowTitle}>{item.title}</Text>
                     <Text style={styles.rowSub}>{item.sub}</Text>
                   </View>
-                  <Switch
+                  <Toggle
                     value={toggles[item.id]}
                     onValueChange={(v) =>
                       setToggles((prev) => ({ ...prev, [item.id]: v }))
                     }
-                    trackColor={{
-                      false: "rgba(27,36,64,0.12)",
-                      true: colors.brand,
-                    }}
-                    thumbColor={colors.white}
                   />
                 </View>
               </View>

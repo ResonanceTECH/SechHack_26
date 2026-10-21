@@ -224,20 +224,29 @@ function formatTimer(sec: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+type OutgoingMsg =
+  | { id: string; kind: "text"; text: string }
+  | { id: string; kind: "voice"; seconds: number };
+
 export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const [attachOpen, setAttachOpen] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [seconds, setSeconds] = useState(7);
+  const [seconds, setSeconds] = useState(0);
+  const [outgoing, setOutgoing] = useState<OutgoingMsg[]>([]);
+  /** long-press toggles: send ↔ voice */
+  const [actionMode, setActionMode] = useState<"send" | "voice">("send");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const longPressed = useRef(false);
 
   useEffect(() => {
     if (!recording) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
-    setSeconds(7);
+    setSeconds(0);
     timerRef.current = setInterval(() => {
       setSeconds((s) => s + 1);
     }, 1000);
@@ -252,12 +261,50 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
 
   const cancelRecording = () => {
     setRecording(false);
-    setSeconds(7);
+    setSeconds(0);
   };
 
   const sendRecording = () => {
+    const dur = Math.max(1, seconds);
+    setOutgoing((prev) => [
+      ...prev,
+      { id: `v-${Date.now()}`, kind: "voice", seconds: dur },
+    ]);
     setRecording(false);
-    setSeconds(7);
+    setSeconds(0);
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollToEnd({ animated: true })
+    );
+  };
+
+  const sendText = () => {
+    const body = text.trim();
+    if (!body) return;
+    setOutgoing((prev) => [
+      ...prev,
+      { id: `t-${Date.now()}`, kind: "text", text: body },
+    ]);
+    setText("");
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollToEnd({ animated: true })
+    );
+  };
+
+  const toggleActionMode = () => {
+    longPressed.current = true;
+    setActionMode((m) => (m === "send" ? "voice" : "send"));
+  };
+
+  const onActionPress = () => {
+    if (longPressed.current) {
+      longPressed.current = false;
+      return;
+    }
+    if (actionMode === "send") {
+      sendText();
+      return;
+    }
+    startRecording();
   };
 
   return (
@@ -298,6 +345,7 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
         </View>
 
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -356,6 +404,25 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
             </View>
             <Chevron />
           </Pressable>
+
+          {outgoing.map((msg) =>
+            msg.kind === "text" ? (
+              <View key={msg.id} style={styles.outWrap}>
+                <View style={styles.outBubble}>
+                  <Text style={styles.outText}>{msg.text}</Text>
+                </View>
+              </View>
+            ) : (
+              <View key={msg.id} style={styles.outWrap}>
+                <View style={[styles.outBubble, styles.voiceBubble]}>
+                  <MicIcon />
+                  <Text style={styles.outText}>
+                    Голосовое · {formatTimer(msg.seconds)}
+                  </Text>
+                </View>
+              </View>
+            )
+          )}
         </ScrollView>
 
         {!recording ? (
@@ -396,21 +463,32 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
                   placeholderTextColor={colors.footer}
                   style={styles.input}
                   multiline
+                  blurOnSubmit={false}
+                  onSubmitEditing={sendText}
                 />
               </View>
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Голосовое сообщение"
-                onPress={startRecording}
+                accessibilityLabel={
+                  actionMode === "send"
+                    ? "Отправить сообщение. Удерживайте, чтобы перейти к голосу"
+                    : "Записать голос. Удерживайте, чтобы перейти к отправке текста"
+                }
+                onPress={onActionPress}
+                onLongPress={toggleActionMode}
+                delayLongPress={280}
                 style={({ pressed }) => [
                   styles.micBtn,
                   pressed && styles.pressed,
                 ]}
               >
-                <MicIcon />
+                {actionMode === "send" ? <SendIcon /> : <MicIcon />}
               </Pressable>
             </View>
+            <Text style={styles.composerHint}>
+              Удерживайте — сменить режим
+            </Text>
           </View>
         ) : (
           <View style={styles.recordWrap}>
@@ -446,7 +524,7 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
               </Pressable>
             </View>
             <Text style={styles.recordHint}>
-              Отпустите, чтобы отправить · расшифровка увидит врач
+              Отправьте или отмените · расшифровку увидит врач
             </Text>
           </View>
         )}
@@ -540,6 +618,11 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.white,
   },
+  voiceBubble: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   photo: {
     width: 168,
     height: 120,
@@ -625,6 +708,13 @@ const styles = StyleSheet.create({
   composer: {
     gap: 10,
     paddingTop: 4,
+  },
+  composerHint: {
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.footer,
+    marginBottom: 2,
   },
   quickRow: {
     flexDirection: "row",

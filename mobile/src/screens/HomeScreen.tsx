@@ -7,10 +7,9 @@ import {
   AddEntrySheet,
   type AddEntryAction,
 } from "../components/AddEntrySheet";
+import { MainTabBar, type MainTabId } from "../components/MainTabBar";
 import { ScreenGradient } from "../components/ScreenGradient";
 import { colors } from "../theme/colors";
-
-type TabId = "home" | "diary" | "treatment" | "chat";
 
 type Props = {
   name?: string;
@@ -24,7 +23,7 @@ type Props = {
   onConfirmVisit?: () => void;
   onRescheduleVisit?: () => void;
   onAddAction?: (action: AddEntryAction) => void;
-  onTab?: (tab: TabId) => void;
+  onTab?: (tab: MainTabId) => void;
 };
 
 const MOODS = [
@@ -176,67 +175,6 @@ function CalendarIcon() {
         stroke={colors.white}
         strokeWidth={1.8}
         strokeLinecap="round"
-      />
-    </Svg>
-  );
-}
-
-function HomeIcon({ active }: { active?: boolean }) {
-  const c = active ? colors.brand : colors.muted;
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path
-        d="M4 11 L12 4 L20 11 V20 H14 V14 H10 V20 H4 Z"
-        stroke={c}
-        strokeWidth={1.8}
-        fill="none"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function DiaryIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path
-        d="M7 4 H18 V20 H7 C5.9 20 5 19.1 5 18 V6 C5 4.9 5.9 4 7 4 Z"
-        stroke={colors.muted}
-        strokeWidth={1.8}
-        fill="none"
-      />
-      <Path
-        d="M9 8 H15 M9 12 H15"
-        stroke={colors.muted}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-    </Svg>
-  );
-}
-
-function TreatmentIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path
-        d="M8.5 15.5 L15.5 8.5 C17 7 19.5 7 21 8.5 C22.5 10 22.5 12.5 21 14 L14 21 C12.5 22.5 10 22.5 8.5 21 C7 19.5 7 17 8.5 15.5 Z"
-        stroke={colors.muted}
-        strokeWidth={1.8}
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path
-        d="M5 6.5 C5 5.1 6.1 4 7.5 4 H16.5 C17.9 4 19 5.1 19 6.5 V13.5 C19 14.9 17.9 16 16.5 16 H10 L6 19.5 V16 H7.5 C6.1 16 5 14.9 5 13.5 Z"
-        stroke={colors.muted}
-        strokeWidth={1.8}
-        fill="none"
-        strokeLinejoin="round"
       />
     </Svg>
   );
@@ -420,60 +358,11 @@ export function HomeScreen({
           </View>
         </ScrollView>
 
-        <View style={styles.tabBar}>
-          <Pressable
-            style={styles.tabItem}
-            onPress={() => onTab?.("home")}
-          >
-            <View style={styles.tabActiveWrap}>
-              <HomeIcon active />
-            </View>
-            <Text style={styles.tabLabelActive}>Главная</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.tabItem}
-            onPress={() => onTab?.("diary")}
-          >
-            <DiaryIcon />
-            <Text style={styles.tabLabel}>Дневник</Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Добавить"
-            onPress={() => setAddOpen(true)}
-            style={({ pressed }) => [
-              styles.addBtn,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path
-                d="M12 5 V19 M5 12 H19"
-                stroke={colors.white}
-                strokeWidth={2.4}
-                strokeLinecap="round"
-              />
-            </Svg>
-          </Pressable>
-
-          <Pressable
-            style={styles.tabItem}
-            onPress={() => onTab?.("treatment")}
-          >
-            <TreatmentIcon />
-            <Text style={styles.tabLabel}>Лечение</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.tabItem}
-            onPress={() => onTab?.("chat")}
-          >
-            <ChatIcon />
-            <Text style={styles.tabLabel}>Чат</Text>
-          </Pressable>
-        </View>
+        <MainTabBar
+          active="home"
+          onTab={onTab}
+          onAdd={() => setAddOpen(true)}
+        />
       </View>
 
       <AddEntrySheet
@@ -751,59 +640,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 15,
     fontWeight: "700",
-  },
-  tabBar: {
-    marginTop: 8,
-    backgroundColor: colors.white,
-    borderRadius: 28,
-    minHeight: 68,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#1B2440",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  tabItem: {
-    width: 64,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-  },
-  tabActiveWrap: {
-    width: 40,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.brandSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.muted,
-  },
-  tabLabelActive: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.brand,
-  },
-  addBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -18,
-    shadowColor: colors.brand,
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
   },
   pressed: { opacity: 0.88 },
 });
