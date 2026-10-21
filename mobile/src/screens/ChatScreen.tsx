@@ -486,7 +486,7 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
               </Pressable>
             </View>
             <Text style={styles.composerHint}>
-              Микрофон — нажать · удерживать — сменить иконку
+              Удерживайте — сменить режим ввода
             </Text>
           </View>
         ) : (
