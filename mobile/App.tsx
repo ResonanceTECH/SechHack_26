@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
+import {
+  ErrorsCatalogScreen,
+  ErrorFlowScreen,
+  type ErrorDemoId,
+} from "./src/screens/errors";
+import { useNetworkStatus } from "./src/hooks/useNetworkStatus";
 import { RegisterPhoneScreen } from "./src/screens/RegisterPhoneScreen";
 import { RegisterSmsScreen } from "./src/screens/RegisterSmsScreen";
 import { RegisterConsentScreen } from "./src/screens/RegisterConsentScreen";
@@ -118,7 +124,9 @@ type Screen =
   | "appointment"
   | "rescheduleAppointment"
   | "rescheduleSent"
-  | "qrScan";
+  | "qrScan"
+  | "errorsCatalog"
+  | ErrorDemoId;
 
 const RESCHEDULE_DAY_LABELS: Record<string, string> = {
   "26": "Пн, 26 октября",
@@ -153,8 +161,35 @@ function extractInviteCode(raw: string): string {
   return (match?.[0] ?? text).toUpperCase();
 }
 
+const ERROR_DEMO_IDS: ErrorDemoId[] = [
+  "generic",
+  "offline",
+  "service",
+  "checkInSaveFailed",
+  "checkInRetrySuccess",
+  "phoneIncomplete",
+  "smsWrong",
+  "smsExpired",
+  "rateLimit",
+  "inviteInvalid",
+  "sessionExpired",
+  "reloginPhone",
+  "reloginSms",
+  "messageFailed",
+  "photoFailed",
+  "micUnavailable",
+  "cameraUnavailable",
+  "cameraSettings",
+  "questionnaireNoAnswer",
+];
+
+function isErrorDemoId(s: Screen): s is ErrorDemoId {
+  return (ERROR_DEMO_IDS as string[]).includes(s);
+}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
+  const [errorBack, setErrorBack] = useState<Screen>("errorsCatalog");
   const [phone, setPhone] = useState("+7 916 123-45-67");
   const [inviteCode, setInviteCode] = useState("RAV-2741");
   const [surveyBack, setSurveyBack] = useState<Screen>("registerDoctor");
@@ -187,6 +222,17 @@ export default function App() {
   const [breathingBack, setBreathingBack] = useState<Screen>("treatment");
   const [questionnairesBack, setQuestionnairesBack] =
     useState<Screen>("diary");
+  const { online, refresh: refreshNetwork } = useNetworkStatus();
+
+  const openError = (id: ErrorDemoId, back: Screen = "errorsCatalog") => {
+    setErrorBack(back);
+    setScreen(id);
+  };
+
+  const openErrorsCatalog = (back: Screen = "welcome") => {
+    setErrorBack(back);
+    setScreen("errorsCatalog");
+  };
 
   const openMedication = (back: Screen = "treatment") => {
     setMedicationBack(back);
@@ -252,13 +298,61 @@ export default function App() {
     return "Симптомы";
   })();
 
+  const errorActions = useMemo(
+    () => ({
+      phone,
+      onBack: () => setScreen(errorBack),
+      onDemoAll: () => openErrorsCatalog(errorBack),
+      onHome: () => setScreen("home"),
+      onDiary: () => setScreen("diary"),
+      onChat: () => setScreen("chat"),
+      onSafetyPlan: () => {
+        setSafetyPlanBack("home");
+        setScreen("safetyPlan");
+      },
+      onCheckIn: () => {
+        setSleepFrom("home");
+        setScreen("checkInSleep");
+      },
+      onRegisterPhone: () => setScreen("registerPhone"),
+      onRegisterDoctor: () => setScreen("registerDoctor"),
+      onReloginPhone: () => openError("reloginPhone", errorBack),
+      onReloginSms: (nextPhone: string) => {
+        setPhone(nextPhone);
+        openError("reloginSms", "reloginPhone");
+      },
+      onReloginDone: () => setScreen("home"),
+      onCameraSettings: () => openError("cameraSettings", errorBack),
+      onCameraGranted: () => setScreen("qrScan"),
+      onRetryNetwork: async () => {
+        const ok = await refreshNetwork();
+        if (ok) setScreen("home");
+      },
+      onCheckInRetrySuccess: () => openError("checkInRetrySuccess", "home"),
+      onQuestionnaireReturn: () => setScreen(errorBack),
+    }),
+    [phone, errorBack, refreshNetwork]
+  );
+
   return (
     <SafeAreaProvider>
       {screen === "welcome" && (
         <WelcomeScreen
           onStart={() => setScreen("registerPhone")}
-          onLogin={() => setScreen("registerPhone")}
+          onLogin={() => openError("reloginPhone", "welcome")}
+          onErrorsDemo={() => openErrorsCatalog("welcome")}
         />
+      )}
+
+      {screen === "errorsCatalog" && (
+        <ErrorsCatalogScreen
+          onBack={() => setScreen(errorBack === "errorsCatalog" ? "welcome" : errorBack)}
+          onOpen={(id) => openError(id, "errorsCatalog")}
+        />
+      )}
+
+      {isErrorDemoId(screen) && (
+        <ErrorFlowScreen id={screen} actions={errorActions} />
       )}
 
       {screen === "registerPhone" && (
@@ -277,6 +371,7 @@ export default function App() {
           onBack={() => setScreen("registerPhone")}
           onChangePhone={() => setScreen("registerPhone")}
           onConfirm={() => setScreen("registerConsent")}
+          onRateLimited={() => openError("rateLimit", "registerSms")}
         />
       )}
 
@@ -304,7 +399,16 @@ export default function App() {
           onBack={() => setScreen("registerConsent")}
           onScanQr={() => setScreen("qrScan")}
           onFindDoctor={(code) => {
-            setInviteCode(code);
+            const normalized = code.trim().toUpperCase();
+            setInviteCode(normalized);
+            if (
+              normalized.startsWith("BAD") ||
+              normalized.startsWith("EXP") ||
+              normalized === "INVALID"
+            ) {
+              openError("inviteInvalid", "registerDoctor");
+              return;
+            }
             setScreen("registerDoctorConfirm");
           }}
           onSkip={() => {
@@ -408,6 +512,10 @@ export default function App() {
             setSafetyPlanBack("registerQuestionnaireRun");
             setScreen("safetyPlan");
           }}
+          onNoAnswer={(progress) => {
+            setQuestionnaireProgress(progress);
+            openError("questionnaireNoAnswer", "registerQuestionnaireRun");
+          }}
           onComplete={(answers) => {
             setQuestionnaireProgress({ index: 0, answers: {} });
             setResults(scoreQuestionnaires(answers));
@@ -450,6 +558,10 @@ export default function App() {
             setQuestionnaireProgress(progress);
             setSafetyPlanBack("followUpQuestionnaireRun");
             setScreen("safetyPlan");
+          }}
+          onNoAnswer={(progress) => {
+            setQuestionnaireProgress(progress);
+            openError("questionnaireNoAnswer", "followUpQuestionnaireRun");
           }}
           onComplete={(answers) => {
             setQuestionnaireProgress({ index: 0, answers: {} });
@@ -668,6 +780,7 @@ export default function App() {
 
       {screen === "chat" && (
         <ChatScreen
+          online={online}
           onBack={() => setScreen("home")}
           onMedPaused={() => {
             setMedPaused(true);
@@ -675,6 +788,9 @@ export default function App() {
             setEveningDose("paused");
             openMedication("chat");
           }}
+          onSendFailed={() => openError("messageFailed", "chat")}
+          onUploadFailed={() => openError("photoFailed", "chat")}
+          onMicDenied={() => openError("micUnavailable", "chat")}
           onAttach={(action) => {
             if (action === "symptom") {
               setSymptomBack("chat");
@@ -778,12 +894,20 @@ export default function App() {
             setScreen(sleepFrom === "anxiety" ? "checkInAnxiety" : "home")
           }
           onClose={() => setScreen("home")}
-          onSave={() => setScreen("checkInSaved")}
+          onSave={async () => {
+            const ok = online ? true : await refreshNetwork();
+            if (!ok) {
+              openError("checkInSaveFailed", "checkInSleep");
+              return;
+            }
+            setScreen("checkInSaved");
+          }}
         />
       )}
 
       {screen === "checkInSaved" && (
         <CheckInSavedScreen
+          offline={!online}
           onGoHome={() => setScreen("home")}
           onTellDoctor={() => setScreen("chat")}
           onBreathing={() => openBreathing("checkInSaved")}
@@ -794,6 +918,9 @@ export default function App() {
         <QrScanScreen
           onClose={() => setScreen("registerDoctor")}
           onManualEntry={() => setScreen("registerDoctor")}
+          onCameraDenied={() =>
+            openError("cameraUnavailable", "registerDoctor")
+          }
           onScanned={(data) => {
             setInviteCode(extractInviteCode(data));
             setScreen("registerDoctorConfirm");
