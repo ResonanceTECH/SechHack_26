@@ -18,6 +18,16 @@ import { RegisterAddMedScreen } from "./src/screens/RegisterAddMedScreen";
 import { RegisterQuestionnaireIntroScreen } from "./src/screens/RegisterQuestionnaireIntroScreen";
 import { RegisterQuestionnaireQuestionScreen } from "./src/screens/RegisterQuestionnaireQuestionScreen";
 import { RegisterQuestionnaireResultsScreen } from "./src/screens/RegisterQuestionnaireResultsScreen";
+import { FollowUpQuestionnaireIntroScreen } from "./src/screens/FollowUpQuestionnaireIntroScreen";
+import { QuestionnaireClarificationScreen } from "./src/screens/QuestionnaireClarificationScreen";
+import { FollowUpQuestionnaireResultsScreen } from "./src/screens/FollowUpQuestionnaireResultsScreen";
+import {
+  SymptomSelectScreen,
+  type SymptomId,
+} from "./src/screens/SymptomSelectScreen";
+import { SymptomDetailScreen } from "./src/screens/SymptomDetailScreen";
+import { EmergencyHelpScreen } from "./src/screens/EmergencyHelpScreen";
+import { ChatScreen } from "./src/screens/ChatScreen";
 import { RegisterReadyScreen } from "./src/screens/RegisterReadyScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
@@ -56,6 +66,14 @@ type Screen =
   | "registerQuestionnaireRun"
   | "registerQuestionnaireResults"
   | "registerReady"
+  | "followUpQuestionnaire"
+  | "followUpQuestionnaireRun"
+  | "followUpClarification"
+  | "followUpResults"
+  | "symptomSelect"
+  | "symptomDetail"
+  | "emergencyHelp"
+  | "chat"
   | "home"
   | "notifications"
   | "checkInMood"
@@ -120,6 +138,34 @@ export default function App() {
   const [sleepFrom, setSleepFrom] = useState<"home" | "anxiety">("home");
   const [rescheduleBack, setRescheduleBack] = useState<Screen>("home");
   const [rescheduleSlot, setRescheduleSlot] = useState("Вт, 27 октября · 11:30");
+  const [followUpAlert, setFollowUpAlert] = useState(true);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<SymptomId[]>([]);
+  const [emergencyBack, setEmergencyBack] = useState<Screen>("home");
+  const [symptomBack, setSymptomBack] = useState<Screen>("home");
+
+  const symptomDetailTitle = (() => {
+    const hasRash = selectedSymptoms.includes("rash");
+    const hasItch = selectedSymptoms.includes("itch");
+    if (hasRash && hasItch) return "Сыпь и зуд";
+    if (hasRash) return "Сыпь";
+    if (hasItch) return "Зуд";
+    if (selectedSymptoms.length === 1) {
+      const map: Partial<Record<SymptomId, string>> = {
+        drowsiness: "Сонливость",
+        dizziness: "Головокружение",
+        weakness: "Слабость",
+        nausea: "Тошнота",
+        headache: "Головная боль",
+        restless: "Не могу усидеть",
+        insomnia: "Бессонница",
+        anxietyUp: "Тревога сильнее",
+        swelling: "Отёк лица или губ",
+        breathing: "Трудно дышать",
+      };
+      return map[selectedSymptoms[0]] ?? "Симптом";
+    }
+    return "Симптомы";
+  })();
 
   return (
     <SafeAreaProvider>
@@ -283,10 +329,66 @@ export default function App() {
         <RegisterReadyScreen onGoHome={() => setScreen("home")} />
       )}
 
+      {screen === "followUpQuestionnaire" && (
+        <FollowUpQuestionnaireIntroScreen
+          onBack={() => setScreen("home")}
+          onClose={() => setScreen("home")}
+          onStart={() => setScreen("followUpQuestionnaireRun")}
+          onRemindLater={() => setScreen("home")}
+        />
+      )}
+
+      {screen === "followUpQuestionnaireRun" && (
+        <RegisterQuestionnaireQuestionScreen
+          onBack={() => setScreen("followUpQuestionnaire")}
+          onClose={() => setScreen("home")}
+          onCrisisHelp={() => {
+            // TODO: crisis resources
+          }}
+          onComplete={(answers) => {
+            setResults(scoreQuestionnaires(answers));
+            const q9 = answers["phq9-9"];
+            if (q9 != null && q9 > 0) {
+              setFollowUpAlert(true);
+              setScreen("followUpClarification");
+              return;
+            }
+            setFollowUpAlert(false);
+            setScreen("followUpResults");
+          }}
+        />
+      )}
+
+      {screen === "followUpClarification" && (
+        <QuestionnaireClarificationScreen
+          onBack={() => setScreen("followUpQuestionnaireRun")}
+          onClose={() => setScreen("home")}
+          onComplete={(answers) => {
+            setFollowUpAlert(
+              answers.method === "yes" ||
+                answers.intent === "yes" ||
+                answers.protective === "no"
+            );
+            setScreen("followUpResults");
+          }}
+        />
+      )}
+
+      {screen === "followUpResults" && (
+        <FollowUpQuestionnaireResultsScreen
+          showDoctorAlert={followUpAlert}
+          onGoHome={() => setScreen("home")}
+        />
+      )}
+
       {screen === "home" && (
         <HomeScreen
+          onSos={() => {
+            setEmergencyBack("home");
+            setScreen("emergencyHelp");
+          }}
           onNotifications={() => setScreen("notifications")}
-          onQuestionnaire={() => setScreen("registerQuestionnaire")}
+          onQuestionnaire={() => setScreen("followUpQuestionnaire")}
           onConfirmVisit={() => setScreen("appointment")}
           onRescheduleVisit={() => {
             setRescheduleBack("home");
@@ -298,9 +400,58 @@ export default function App() {
               setSleepFrom("home");
               setScreen("checkInSleep");
             }
+            if (action === "symptom") {
+              setSymptomBack("home");
+              setScreen("symptomSelect");
+            }
+            if (action === "message") setScreen("chat");
+          }}
+          onTab={(tab) => {
+            if (tab === "chat") setScreen("chat");
           }}
           onMood={() => setScreen("checkInMood")}
         />
+      )}
+
+      {screen === "chat" && (
+        <ChatScreen
+          onBack={() => setScreen("home")}
+          onAttach={(action) => {
+            if (action === "symptom") {
+              setSymptomBack("chat");
+              setScreen("symptomSelect");
+            }
+          }}
+        />
+      )}
+
+      {screen === "symptomSelect" && (
+        <SymptomSelectScreen
+          onBack={() => setScreen(symptomBack)}
+          onContinue={(selected) => {
+            setSelectedSymptoms(selected);
+            setScreen("symptomDetail");
+          }}
+          onOwnWords={() => {
+            // TODO: free-text symptom
+          }}
+          onUrgent={() => {
+            setEmergencyBack("symptomSelect");
+            setScreen("emergencyHelp");
+          }}
+        />
+      )}
+
+      {screen === "symptomDetail" && (
+        <SymptomDetailScreen
+          title={symptomDetailTitle}
+          onBack={() => setScreen("symptomSelect")}
+          onSend={() => setScreen(symptomBack)}
+        />
+      )}
+
+      {screen === "emergencyHelp" && (
+        <EmergencyHelpScreen onClose={() => setScreen(emergencyBack)} />
       )}
 
       {screen === "appointment" && (
@@ -375,9 +526,7 @@ export default function App() {
       {screen === "checkInSaved" && (
         <CheckInSavedScreen
           onGoHome={() => setScreen("home")}
-          onTellDoctor={() => {
-            // TODO: chat with doctor
-          }}
+          onTellDoctor={() => setScreen("chat")}
           onBreathing={() => {
             // TODO: breathing exercise
           }}
