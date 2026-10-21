@@ -13,19 +13,39 @@ import Svg, { Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenGradient } from "../components/ScreenGradient";
 import { StepProgress } from "../components/StepProgress";
+import { AlertBanner } from "../components/errors/ErrorChrome";
 import { colors } from "../theme/colors";
 import { formatRuPhone, isRuPhoneComplete } from "../utils/phone";
 
 type Props = {
   onBack?: () => void;
   onContinue?: (phone: string) => void;
+  /** Incomplete number submitted — open recovery screen or show inline */
+  onIncomplete?: (phone: string) => void;
+  showInlineError?: boolean;
 };
 
-export function RegisterPhoneScreen({ onBack, onContinue }: Props) {
+export function RegisterPhoneScreen({
+  onBack,
+  onContinue,
+  onIncomplete,
+  showInlineError = false,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState("+7 916 123-45-67");
   const [focused, setFocused] = useState(false);
+  const [error, setError] = useState(showInlineError);
   const canSubmit = isRuPhoneComplete(phone);
+
+  const submit = () => {
+    if (!canSubmit) {
+      setError(true);
+      onIncomplete?.(phone);
+      return;
+    }
+    setError(false);
+    onContinue?.(phone);
+  };
 
   return (
     <ScreenGradient soft>
@@ -73,15 +93,24 @@ export function RegisterPhoneScreen({ onBack, onContinue }: Props) {
               <StepProgress step={1} total={5} label="Аккаунт" />
             </View>
 
-            <Text style={styles.title}>Ваш номер телефона</Text>
+            <Text style={styles.title}>
+              {error ? "Проверьте номер" : "Ваш номер телефона"}
+            </Text>
             <Text style={styles.subtitle}>
-              Пришлём код в SMS — пароль не нужен.
+              {error
+                ? "В номере не хватает цифр. После кода +7 нужно ввести 10 цифр."
+                : "Пришлём код в SMS — пароль не нужен."}
             </Text>
 
-            <Text style={styles.label}>Телефон</Text>
+            <Text style={styles.label}>
+              {error ? "Номер телефона" : "Телефон"}
+            </Text>
             <TextInput
               value={phone}
-              onChangeText={(v) => setPhone(formatRuPhone(v))}
+              onChangeText={(v) => {
+                setPhone(formatRuPhone(v));
+                if (error) setError(false);
+              }}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               keyboardType="phone-pad"
@@ -89,47 +118,63 @@ export function RegisterPhoneScreen({ onBack, onContinue }: Props) {
               autoComplete="tel"
               placeholder="+7"
               placeholderTextColor={colors.footer}
-              style={[styles.input, focused && styles.inputFocused]}
+              style={[
+                styles.input,
+                focused && !error && styles.inputFocused,
+                error && styles.inputError,
+              ]}
             />
 
-            <View style={styles.privacy}>
-              <Svg width={14} height={14} viewBox="0 0 24 24">
-                <Path
-                  d="M6 10 V8 a6 6 0 0 1 12 0 v2"
-                  stroke={colors.footer}
-                  strokeWidth={1.8}
-                  strokeLinecap="round"
-                  fill="none"
+            {error ? (
+              <View style={styles.alertWrap}>
+                <AlertBanner
+                  title="Введите номер полностью"
+                  body="Код подтверждения ещё не отправлен. Исправьте номер, чтобы получить SMS."
                 />
-                <Path
-                  d="M5 10 h14 v10 a2 2 0 0 1 -2 2 H7 a2 2 0 0 1 -2 -2 Z"
-                  stroke={colors.footer}
-                  strokeWidth={1.8}
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-              <Text style={styles.privacyText}>
-                Номер увидят только ваш врач и клиника.
-              </Text>
-            </View>
+              </View>
+            ) : (
+              <View style={styles.privacy}>
+                <Svg width={14} height={14} viewBox="0 0 24 24">
+                  <Path
+                    d="M6 10 V8 a6 6 0 0 1 12 0 v2"
+                    stroke={colors.footer}
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  <Path
+                    d="M5 10 h14 v10 a2 2 0 0 1 -2 2 H7 a2 2 0 0 1 -2 -2 Z"
+                    stroke={colors.footer}
+                    strokeWidth={1.8}
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </Svg>
+                <Text style={styles.privacyText}>
+                  Номер увидят только ваш врач и клиника.
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.footer}>
             <Pressable
-              disabled={!canSubmit}
-              onPress={() => onContinue?.(phone)}
+              onPress={submit}
               style={({ pressed }) => [
                 styles.btnPrimary,
-                !canSubmit && styles.btnDisabled,
-                pressed && canSubmit && styles.pressed,
+                !canSubmit && !error && styles.btnDisabled,
+                pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.btnPrimaryText}>Получить код</Text>
+              <Text style={styles.btnPrimaryText}>
+                {error ? "Исправить номер" : "Получить код"}
+              </Text>
             </Pressable>
-            <Text style={styles.legal}>
-              Нажимая, вы принимаете условия использования
-            </Text>
+            {!error ? (
+              <Text style={styles.legal}>
+                Нажимая, вы принимаете условия использования
+              </Text>
+            ) : null}
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -210,6 +255,12 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     borderColor: colors.brand,
+  },
+  inputError: {
+    borderColor: colors.error,
+  },
+  alertWrap: {
+    marginTop: 12,
   },
   privacy: {
     marginTop: 12,

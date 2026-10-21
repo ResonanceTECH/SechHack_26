@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
   Easing,
   Modal,
+  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +12,10 @@ import {
 import Svg, { Circle, Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
+
+const SHEET_OFFSCREEN = 560;
+const DISMISS_DY = 96;
+const DISMISS_VY = 0.85;
 
 export type AddEntryAction =
   | "wellbeing"
@@ -101,11 +106,19 @@ function MoonIcon() {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24">
       <Path
-        d="M15.5 3.5 C11.5 4 8.5 7.5 8.5 12 C8.5 16.5 11.8 20.2 16.2 20.6 C13.2 22.2 9.5 21.5 7.2 19.2 C4.2 16.2 4 11.5 6.8 8.2 C8.5 6.2 11.2 4.8 14.2 4.5 C14.6 4 15.1 3.7 15.5 3.5 Z"
+        d="M14.2 3.8 C10.2 4.4 7.2 7.9 7.2 12.1 C7.2 16.6 10.7 20.3 15.2 20.7 C12.1 22.2 8.4 21.4 6.1 19 C3.2 16 3.1 11.2 5.9 7.9 C7.7 5.8 10.5 4.4 13.6 4.1 C13.8 4 14 3.9 14.2 3.8 Z"
         stroke={colors.brand}
         strokeWidth={1.8}
         fill="none"
         strokeLinejoin="round"
+      />
+      <Path
+        d="M17.2 6.2 L17.8 7.6 L19.2 8.2 L17.8 8.8 L17.2 10.2 L16.6 8.8 L15.2 8.2 L16.6 7.6 Z"
+        fill={colors.brand}
+      />
+      <Path
+        d="M19.8 11.5 L20.15 12.3 L21 12.6 L20.15 12.9 L19.8 13.7 L19.45 12.9 L18.6 12.6 L19.45 12.3 Z"
+        fill={colors.brand}
       />
     </Svg>
   );
@@ -136,13 +149,13 @@ function PillIcon() {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24">
       <Path
-        d="M8.5 15.5 L15.5 8.5 C17 7 19.5 7 21 8.5 C22.5 10 22.5 12.5 21 14 L14 21 C12.5 22.5 10 22.5 8.5 21 C7 19.5 7 17 8.5 15.5 Z"
+        d="M7 9.5 H17 A3.5 3.5 0 0 1 17 16.5 H7 A3.5 3.5 0 0 1 7 9.5 Z"
         stroke={pillPurple}
         strokeWidth={1.8}
         fill="none"
       />
       <Path
-        d="M11 13 L13.5 10.5"
+        d="M12 9.5 V16.5"
         stroke={pillPurple}
         strokeWidth={1.8}
         strokeLinecap="round"
@@ -182,29 +195,97 @@ function Chevron() {
 
 export function AddEntrySheet({ visible, onClose, onSelect }: Props) {
   const insets = useSafeAreaInsets();
-  const slide = useRef(new Animated.Value(520)).current;
+  const slide = useRef(new Animated.Value(SHEET_OFFSCREEN)).current;
   const fade = useRef(new Animated.Value(0)).current;
+  const dragY = useRef(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const animateOpen = () => {
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const animateClose = (then?: () => void) => {
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slide, {
+        toValue: SHEET_OFFSCREEN,
+        duration: 240,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) then?.();
+    });
+  };
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(fade, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slide, {
-          toValue: 0,
-          duration: 280,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start();
+      dragY.current = 0;
+      animateOpen();
     } else {
-      slide.setValue(520);
+      slide.setValue(SHEET_OFFSCREEN);
       fade.setValue(0);
     }
-  }, [visible, fade, slide]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) =>
+          Math.abs(g.dy) > 4 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderGrant: () => {
+          slide.stopAnimation((v) => {
+            dragY.current = typeof v === "number" ? v : 0;
+          });
+        },
+        onPanResponderMove: (_, g) => {
+          const next = Math.max(0, dragY.current + g.dy);
+          slide.setValue(next);
+          fade.setValue(Math.max(0, 1 - next / 360));
+        },
+        onPanResponderRelease: (_, g) => {
+          const next = Math.max(0, dragY.current + g.dy);
+          if (next > DISMISS_DY || g.vy > DISMISS_VY) {
+            animateClose(() => onCloseRef.current());
+            return;
+          }
+          Animated.parallel([
+            Animated.spring(slide, {
+              toValue: 0,
+              useNativeDriver: true,
+              bounciness: 4,
+              speed: 14,
+            }),
+            Animated.timing(fade, {
+              toValue: 1,
+              duration: 160,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        },
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   return (
     <Modal
@@ -216,7 +297,10 @@ export function AddEntrySheet({ visible, onClose, onSelect }: Props) {
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, { opacity: fade }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => animateClose(() => onCloseRef.current())}
+          />
         </Animated.View>
 
         <Animated.View
@@ -228,7 +312,9 @@ export function AddEntrySheet({ visible, onClose, onSelect }: Props) {
             },
           ]}
         >
-          <View style={styles.handle} />
+          <View style={styles.handleHit} {...pan.panHandlers}>
+            <View style={styles.handle} />
+          </View>
           <Text style={styles.title}>Что отметить?</Text>
 
           <View style={styles.list}>
@@ -278,13 +364,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 10,
   },
+  handleHit: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 4,
+    paddingBottom: 14,
+    marginHorizontal: -8,
+  },
   handle: {
-    alignSelf: "center",
     width: 40,
     height: 4,
     borderRadius: 2,
     backgroundColor: "rgba(27, 36, 64, 0.12)",
-    marginBottom: 18,
   },
   title: {
     fontSize: 24,
