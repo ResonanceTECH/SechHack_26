@@ -1,5 +1,4 @@
-import { StyleSheet, View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+import { Image, StyleSheet, View } from "react-native";
 import { colors } from "../theme/colors";
 
 type Props = {
@@ -42,24 +41,15 @@ export function CompassLogo({ size = 120 }: Props) {
           },
         ]}
       >
-        <Svg width={size * 0.46} height={size * 0.46} viewBox="0 0 64 64">
-          <Circle
-            cx="32"
-            cy="32"
-            r="27"
-            stroke={colors.brand}
-            strokeWidth="3.2"
-            fill="none"
-          />
-          {/* tilted compass diamond */}
-          <Path
-            d="M38 12 L50 38 L26 52 L14 26 Z"
-            stroke={colors.brand}
-            strokeWidth="3.2"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </Svg>
+        <Image
+          source={require("../../assets/compass-in-circle.png")}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+          }}
+          resizeMode="cover"
+        />
       </View>
     </View>
   );
@@ -84,6 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
     shadowColor: "#8EAEFF",
     shadowOpacity: 0.35,
     shadowRadius: 24,
