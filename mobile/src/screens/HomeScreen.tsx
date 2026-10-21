@@ -113,13 +113,13 @@ function PillIcon() {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24">
       <Path
-        d="M8.5 15.5 L15.5 8.5 C17 7 19.5 7 21 8.5 C22.5 10 22.5 12.5 21 14 L14 21 C12.5 22.5 10 22.5 8.5 21 C7 19.5 7 17 8.5 15.5 Z"
+        d="M7 9.5 H17 A3.5 3.5 0 0 1 17 16.5 H7 A3.5 3.5 0 0 1 7 9.5 Z"
         stroke="#7B6CFF"
         strokeWidth={1.8}
         fill="none"
       />
       <Path
-        d="M11 13 L13.5 10.5"
+        d="M12 9.5 V16.5"
         stroke="#7B6CFF"
         strokeWidth={1.8}
         strokeLinecap="round"

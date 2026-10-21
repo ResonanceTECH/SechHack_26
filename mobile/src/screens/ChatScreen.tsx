@@ -235,11 +235,11 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [outgoing, setOutgoing] = useState<OutgoingMsg[]>([]);
-  /** long-press toggles: send ↔ voice */
+  /** long-press toggles icons: send ↔ mic; tap on mic starts recording */
   const [actionMode, setActionMode] = useState<"send" | "voice">("send");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const longPressed = useRef(false);
+  const lastModeToggleAt = useRef(0);
 
   useEffect(() => {
     if (!recording) {
@@ -291,20 +291,19 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
   };
 
   const toggleActionMode = () => {
-    longPressed.current = true;
+    lastModeToggleAt.current = Date.now();
     setActionMode((m) => (m === "send" ? "voice" : "send"));
   };
 
   const onActionPress = () => {
-    if (longPressed.current) {
-      longPressed.current = false;
+    // ignore the release-press that can follow a long-press
+    if (Date.now() - lastModeToggleAt.current < 450) return;
+    // single tap mic → record; single tap send → text
+    if (actionMode === "voice") {
+      startRecording();
       return;
     }
-    if (actionMode === "send") {
-      sendText();
-      return;
-    }
-    startRecording();
+    sendText();
   };
 
   return (
@@ -472,12 +471,12 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
                 accessibilityRole="button"
                 accessibilityLabel={
                   actionMode === "send"
-                    ? "Отправить сообщение. Удерживайте, чтобы перейти к голосу"
-                    : "Записать голос. Удерживайте, чтобы перейти к отправке текста"
+                    ? "Отправить. Удерживайте, чтобы показать микрофон"
+                    : "Нажмите — записать голос. Удерживайте, чтобы показать отправку"
                 }
                 onPress={onActionPress}
                 onLongPress={toggleActionMode}
-                delayLongPress={280}
+                delayLongPress={350}
                 style={({ pressed }) => [
                   styles.micBtn,
                   pressed && styles.pressed,
@@ -487,7 +486,7 @@ export function ChatScreen({ onBack, onMedPaused, onAttach }: Props) {
               </Pressable>
             </View>
             <Text style={styles.composerHint}>
-              Удерживайте — сменить режим
+              Микрофон — нажать · удерживать — сменить иконку
             </Text>
           </View>
         ) : (
