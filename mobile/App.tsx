@@ -28,6 +28,17 @@ import {
 import { SymptomDetailScreen } from "./src/screens/SymptomDetailScreen";
 import { EmergencyHelpScreen } from "./src/screens/EmergencyHelpScreen";
 import { ChatScreen } from "./src/screens/ChatScreen";
+import { DiaryScreen } from "./src/screens/DiaryScreen";
+import { QuestionnairesScreen } from "./src/screens/QuestionnairesScreen";
+import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { DoctorAccessScreen } from "./src/screens/DoctorAccessScreen";
+import { NotificationSettingsScreen } from "./src/screens/NotificationSettingsScreen";
+import { MyDataScreen } from "./src/screens/MyDataScreen";
+import { SafetyPlanScreen } from "./src/screens/SafetyPlanScreen";
+import {
+  OutgoingCallScreen,
+  type OutgoingCallTarget,
+} from "./src/screens/OutgoingCallScreen";
 import { RegisterReadyScreen } from "./src/screens/RegisterReadyScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
@@ -74,6 +85,14 @@ type Screen =
   | "symptomDetail"
   | "emergencyHelp"
   | "chat"
+  | "diary"
+  | "questionnaires"
+  | "profile"
+  | "doctorAccess"
+  | "notificationSettings"
+  | "myData"
+  | "safetyPlan"
+  | "outgoingCall"
   | "home"
   | "notifications"
   | "checkInMood"
@@ -142,6 +161,13 @@ export default function App() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<SymptomId[]>([]);
   const [emergencyBack, setEmergencyBack] = useState<Screen>("home");
   const [symptomBack, setSymptomBack] = useState<Screen>("home");
+  const [consentBack, setConsentBack] = useState<Screen>("registerConsent");
+  const [callBack, setCallBack] = useState<Screen>("safetyPlan");
+  const [callTarget, setCallTarget] = useState<OutgoingCallTarget>({
+    initials: "ЕС",
+    name: "Смирнова Е. С.",
+    status: "Врач-психиатр · вызов...",
+  });
 
   const symptomDetailTitle = (() => {
     const hasRash = selectedSymptoms.includes("rash");
@@ -198,15 +224,18 @@ export default function App() {
       {screen === "registerConsent" && (
         <RegisterConsentScreen
           onBack={() => setScreen("registerSms")}
-          onReadDocument={() => setScreen("consentDocument")}
+          onReadDocument={() => {
+            setConsentBack("registerConsent");
+            setScreen("consentDocument");
+          }}
           onContinue={() => setScreen("registerDoctor")}
         />
       )}
 
       {screen === "consentDocument" && (
         <ConsentDocumentScreen
-          onBack={() => setScreen("registerConsent")}
-          onDone={() => setScreen("registerConsent")}
+          onBack={() => setScreen(consentBack)}
+          onDone={() => setScreen(consentBack)}
         />
       )}
 
@@ -383,6 +412,7 @@ export default function App() {
 
       {screen === "home" && (
         <HomeScreen
+          onProfile={() => setScreen("profile")}
           onSos={() => {
             setEmergencyBack("home");
             setScreen("emergencyHelp");
@@ -408,8 +438,109 @@ export default function App() {
           }}
           onTab={(tab) => {
             if (tab === "chat") setScreen("chat");
+            if (tab === "diary") setScreen("diary");
+            if (tab === "home") setScreen("home");
           }}
           onMood={() => setScreen("checkInMood")}
+        />
+      )}
+
+      {screen === "profile" && (
+        <ProfileScreen
+          onBack={() => setScreen("home")}
+          onDoctorAccess={() => setScreen("doctorAccess")}
+          onNotificationSettings={() => setScreen("notificationSettings")}
+          onSafetyPlan={() => setScreen("safetyPlan")}
+          onMyData={() => setScreen("myData")}
+          onLogout={() => setScreen("welcome")}
+        />
+      )}
+
+      {screen === "doctorAccess" && (
+        <DoctorAccessScreen
+          onBack={() => setScreen("profile")}
+          onWriteDoctor={() => setScreen("chat")}
+        />
+      )}
+
+      {screen === "notificationSettings" && (
+        <NotificationSettingsScreen onBack={() => setScreen("profile")} />
+      )}
+
+      {screen === "myData" && (
+        <MyDataScreen
+          onBack={() => setScreen("profile")}
+          onConsentText={() => {
+            setConsentBack("myData");
+            setScreen("consentDocument");
+          }}
+          onDownload={() => {}}
+          onDeleteAccount={() => setScreen("welcome")}
+        />
+      )}
+
+      {screen === "safetyPlan" && (
+        <SafetyPlanScreen
+          onBack={() => setScreen("profile")}
+          onCallDoctor={() => {
+            setCallBack("safetyPlan");
+            setCallTarget({
+              initials: "ЕС",
+              name: "Смирнова Е. С.",
+              status: "Врач-психиатр · вызов...",
+            });
+            setScreen("outgoingCall");
+          }}
+          onCallContact={() => {
+            setCallBack("safetyPlan");
+            setCallTarget({
+              initials: "М",
+              name: "Мария",
+              status: "Доверенный контакт · вызов...",
+            });
+            setScreen("outgoingCall");
+          }}
+          onEmergency={() => {
+            setEmergencyBack("safetyPlan");
+            setScreen("emergencyHelp");
+          }}
+        />
+      )}
+
+      {screen === "outgoingCall" && (
+        <OutgoingCallScreen
+          target={callTarget}
+          onHangUp={() => setScreen(callBack)}
+        />
+      )}
+
+      {screen === "diary" && (
+        <DiaryScreen
+          onTab={(tab) => {
+            if (tab === "home") setScreen("home");
+            if (tab === "chat") setScreen("chat");
+            if (tab === "diary") setScreen("diary");
+          }}
+          onAddAction={(action) => {
+            if (action === "wellbeing") setScreen("checkInMood");
+            if (action === "sleep") {
+              setSleepFrom("home");
+              setScreen("checkInSleep");
+            }
+            if (action === "symptom") {
+              setSymptomBack("diary");
+              setScreen("symptomSelect");
+            }
+            if (action === "message") setScreen("chat");
+          }}
+          onQuestionnaires={() => setScreen("questionnaires")}
+        />
+      )}
+
+      {screen === "questionnaires" && (
+        <QuestionnairesScreen
+          onBack={() => setScreen("diary")}
+          onStart={() => setScreen("followUpQuestionnaire")}
         />
       )}
 
