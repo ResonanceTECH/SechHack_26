@@ -20,12 +20,14 @@ type Props = {
   onBack?: () => void;
   onClose?: () => void;
   onComplete?: (answers: Record<string, number | null>) => void;
+  onCrisisHelp?: () => void;
 };
 
 export function RegisterQuestionnaireQuestionScreen({
   onBack,
   onClose,
   onComplete,
+  onCrisisHelp,
 }: Props) {
   const insets = useSafeAreaInsets();
   const total = QUESTIONNAIRE_QUESTIONS.length;
@@ -173,6 +175,37 @@ export function RegisterQuestionnaireQuestionScreen({
               );
             })}
           </View>
+
+          {question.id === "phq9-9" ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onCrisisHelp}
+              style={({ pressed }) => [
+                styles.helpBanner,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Svg width={18} height={18} viewBox="0 0 24 24">
+                <Path
+                  d="M12 20 S4.5 15.2 4.5 9.8 C4.5 7.2 6.5 5.5 8.8 5.5 C10.2 5.5 11.4 6.2 12 7.2 C12.6 6.2 13.8 5.5 15.2 5.5 C17.5 5.5 19.5 7.2 19.5 9.8 C19.5 15.2 12 20 12 20 Z"
+                  fill="#E85A6B"
+                />
+              </Svg>
+              <Text style={styles.helpText}>
+                Тяжело прямо сейчас? Помощь рядом
+              </Text>
+              <Svg width={16} height={16} viewBox="0 0 24 24">
+                <Path
+                  d="M9 5 L16 12 L9 19"
+                  stroke="#B04050"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </Svg>
+            </Pressable>
+          ) : null}
         </ScrollView>
 
         <View style={styles.footer}>
@@ -306,6 +339,23 @@ const styles = StyleSheet.create({
   options: {
     marginTop: 24,
     gap: 10,
+  },
+  helpBanner: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#FFE4E6",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  helpText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+    color: "#B04050",
   },
   option: {
     minHeight: 56,
