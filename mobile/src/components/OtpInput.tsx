@@ -13,9 +13,10 @@ type Props = {
   length?: number;
   value: string;
   onChange: (code: string) => void;
+  error?: boolean;
 };
 
-export function OtpInput({ length = 4, value, onChange }: Props) {
+export function OtpInput({ length = 4, value, onChange, error }: Props) {
   const inputRef = useRef<TextInputType>(null);
   const [focused, setFocused] = useState(false);
   const digits = value.replace(/\D/g, "").slice(0, length).split("");
@@ -29,7 +30,11 @@ export function OtpInput({ length = 4, value, onChange }: Props) {
         return (
           <View
             key={i}
-            style={[styles.cell, isActive && styles.cellActive]}
+            style={[
+              styles.cell,
+              isActive && styles.cellActive,
+              error && styles.cellError,
+            ]}
           >
             {char ? (
               <Text style={styles.digit}>{char}</Text>
@@ -78,6 +83,9 @@ const styles = StyleSheet.create({
   },
   cellActive: {
     borderColor: colors.brand,
+  },
+  cellError: {
+    borderColor: colors.error,
   },
   digit: {
     fontSize: 28,
