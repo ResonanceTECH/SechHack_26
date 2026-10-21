@@ -16,7 +16,10 @@ import {
 } from "./src/screens/RegisterMedsScreen";
 import { RegisterAddMedScreen } from "./src/screens/RegisterAddMedScreen";
 import { RegisterQuestionnaireIntroScreen } from "./src/screens/RegisterQuestionnaireIntroScreen";
-import { RegisterQuestionnaireQuestionScreen } from "./src/screens/RegisterQuestionnaireQuestionScreen";
+import {
+  RegisterQuestionnaireQuestionScreen,
+  type QuestionnaireProgress,
+} from "./src/screens/RegisterQuestionnaireQuestionScreen";
 import { RegisterQuestionnaireResultsScreen } from "./src/screens/RegisterQuestionnaireResultsScreen";
 import { FollowUpQuestionnaireIntroScreen } from "./src/screens/FollowUpQuestionnaireIntroScreen";
 import { QuestionnaireClarificationScreen } from "./src/screens/QuestionnaireClarificationScreen";
@@ -29,6 +32,14 @@ import { SymptomDetailScreen } from "./src/screens/SymptomDetailScreen";
 import { EmergencyHelpScreen } from "./src/screens/EmergencyHelpScreen";
 import { ChatScreen } from "./src/screens/ChatScreen";
 import { DiaryScreen } from "./src/screens/DiaryScreen";
+import { TreatmentScreen } from "./src/screens/TreatmentScreen";
+import {
+  MedicationScreen,
+  type MedicationDoseState,
+} from "./src/screens/MedicationScreen";
+import { SkipDoseScreen } from "./src/screens/SkipDoseScreen";
+import { MedicationInstructionScreen } from "./src/screens/MedicationInstructionScreen";
+import { BreathingScreen } from "./src/screens/BreathingScreen";
 import { QuestionnairesScreen } from "./src/screens/QuestionnairesScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { DoctorAccessScreen } from "./src/screens/DoctorAccessScreen";
@@ -86,6 +97,11 @@ type Screen =
   | "emergencyHelp"
   | "chat"
   | "diary"
+  | "treatment"
+  | "medication"
+  | "skipDose"
+  | "medicationInstruction"
+  | "breathing"
   | "questionnaires"
   | "profile"
   | "doctorAccess"
@@ -163,11 +179,41 @@ export default function App() {
   const [symptomBack, setSymptomBack] = useState<Screen>("home");
   const [consentBack, setConsentBack] = useState<Screen>("registerConsent");
   const [callBack, setCallBack] = useState<Screen>("safetyPlan");
+  const [safetyPlanBack, setSafetyPlanBack] = useState<Screen>("profile");
+  const [questionnaireProgress, setQuestionnaireProgress] =
+    useState<QuestionnaireProgress>({ index: 0, answers: {} });
+  const [medPaused, setMedPaused] = useState(false);
+  const [questionnairesBack, setQuestionnairesBack] =
+    useState<Screen>("diary");
+  const [morningDose, setMorningDose] =
+    useState<MedicationDoseState>("pending");
+  const [eveningDose, setEveningDose] =
+    useState<MedicationDoseState>("pending");
   const [callTarget, setCallTarget] = useState<OutgoingCallTarget>({
     initials: "ЕС",
     name: "Смирнова Е. С.",
     status: "Врач-психиатр · вызов...",
   });
+
+  const goTab = (tab: string) => {
+    if (tab === "home") setScreen("home");
+    if (tab === "diary") setScreen("diary");
+    if (tab === "treatment") setScreen("treatment");
+    if (tab === "chat") setScreen("chat");
+  };
+
+  const addActionFrom = (from: Screen) => (action: string) => {
+    if (action === "wellbeing") setScreen("checkInMood");
+    if (action === "sleep") {
+      setSleepFrom("home");
+      setScreen("checkInSleep");
+    }
+    if (action === "symptom") {
+      setSymptomBack(from);
+      setScreen("symptomSelect");
+    }
+    if (action === "message") setScreen("chat");
+  };
 
   const symptomDetailTitle = (() => {
     const hasRash = selectedSymptoms.includes("rash");
@@ -330,16 +376,27 @@ export default function App() {
       {screen === "registerQuestionnaire" && (
         <RegisterQuestionnaireIntroScreen
           onBack={() => setScreen("registerMeds")}
-          onStart={() => setScreen("registerQuestionnaireRun")}
+          onStart={() => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
+            setScreen("registerQuestionnaireRun");
+          }}
           onSkip={() => setScreen("registerReady")}
         />
       )}
 
       {screen === "registerQuestionnaireRun" && (
         <RegisterQuestionnaireQuestionScreen
+          initialIndex={questionnaireProgress.index}
+          initialAnswers={questionnaireProgress.answers}
           onBack={() => setScreen("registerQuestionnaire")}
           onClose={() => setScreen("registerQuestionnaire")}
+          onCrisisHelp={(progress) => {
+            setQuestionnaireProgress(progress);
+            setSafetyPlanBack("registerQuestionnaireRun");
+            setScreen("safetyPlan");
+          }}
           onComplete={(answers) => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
             setResults(scoreQuestionnaires(answers));
             setScreen("registerQuestionnaireResults");
           }}
@@ -362,22 +419,35 @@ export default function App() {
         <FollowUpQuestionnaireIntroScreen
           onBack={() => setScreen("home")}
           onClose={() => setScreen("home")}
-          onStart={() => setScreen("followUpQuestionnaireRun")}
+          onStart={() => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
+            setScreen("followUpQuestionnaireRun");
+          }}
           onRemindLater={() => setScreen("home")}
         />
       )}
 
       {screen === "followUpQuestionnaireRun" && (
         <RegisterQuestionnaireQuestionScreen
+          initialIndex={questionnaireProgress.index}
+          initialAnswers={questionnaireProgress.answers}
           onBack={() => setScreen("followUpQuestionnaire")}
           onClose={() => setScreen("home")}
-          onCrisisHelp={() => {
-            // TODO: crisis resources
+          onCrisisHelp={(progress) => {
+            setQuestionnaireProgress(progress);
+            setSafetyPlanBack("followUpQuestionnaireRun");
+            setScreen("safetyPlan");
           }}
           onComplete={(answers) => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
             setResults(scoreQuestionnaires(answers));
             const q9 = answers["phq9-9"];
             if (q9 != null && q9 > 0) {
+              // keep answers so clarification back can restore q9
+              setQuestionnaireProgress({
+                index: 8, // phq9-9
+                answers,
+              });
               setFollowUpAlert(true);
               setScreen("followUpClarification");
               return;
@@ -393,6 +463,7 @@ export default function App() {
           onBack={() => setScreen("followUpQuestionnaireRun")}
           onClose={() => setScreen("home")}
           onComplete={(answers) => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
             setFollowUpAlert(
               answers.method === "yes" ||
                 answers.intent === "yes" ||
@@ -424,24 +495,67 @@ export default function App() {
             setRescheduleBack("home");
             setScreen("rescheduleAppointment");
           }}
-          onAddAction={(action) => {
-            if (action === "wellbeing") setScreen("checkInMood");
-            if (action === "sleep") {
-              setSleepFrom("home");
-              setScreen("checkInSleep");
-            }
-            if (action === "symptom") {
-              setSymptomBack("home");
-              setScreen("symptomSelect");
-            }
-            if (action === "message") setScreen("chat");
-          }}
-          onTab={(tab) => {
-            if (tab === "chat") setScreen("chat");
-            if (tab === "diary") setScreen("diary");
-            if (tab === "home") setScreen("home");
-          }}
+          onAddAction={addActionFrom("home")}
+          onTab={goTab}
           onMood={() => setScreen("checkInMood")}
+        />
+      )}
+
+      {screen === "treatment" && (
+        <TreatmentScreen
+          onTab={goTab}
+          onAddAction={addActionFrom("treatment")}
+          onMedication={() => setScreen("medication")}
+          onBreathing={() => setScreen("breathing")}
+          onQuestionnaires={() => {
+            setQuestionnairesBack("treatment");
+            setScreen("questionnaires");
+          }}
+          onAppointment={() => setScreen("appointment")}
+        />
+      )}
+
+      {screen === "medication" && (
+        <MedicationScreen
+          morning={morningDose}
+          evening={medPaused ? "paused" : eveningDose}
+          paused={medPaused}
+          onBack={() => setScreen("treatment")}
+          onInstruction={() => setScreen("medicationInstruction")}
+          onTakeMorning={() => setMorningDose("taken")}
+          onSkipMorning={() => setScreen("skipDose")}
+          onSideEffect={() => {
+            setSymptomBack("medication");
+            setScreen("symptomSelect");
+          }}
+          onWriteDoctor={() => setScreen("chat")}
+        />
+      )}
+
+      {screen === "skipDose" && (
+        <SkipDoseScreen
+          onBack={() => setScreen("medication")}
+          onSave={() => {
+            setMorningDose("skipped");
+            setScreen("medication");
+          }}
+        />
+      )}
+
+      {screen === "medicationInstruction" && (
+        <MedicationInstructionScreen
+          onBack={() => setScreen("medication")}
+          onSideEffect={() => {
+            setSymptomBack("medicationInstruction");
+            setScreen("symptomSelect");
+          }}
+        />
+      )}
+
+      {screen === "breathing" && (
+        <BreathingScreen
+          onBack={() => setScreen("treatment")}
+          onDone={() => setScreen("treatment")}
         />
       )}
 
@@ -450,7 +564,10 @@ export default function App() {
           onBack={() => setScreen("home")}
           onDoctorAccess={() => setScreen("doctorAccess")}
           onNotificationSettings={() => setScreen("notificationSettings")}
-          onSafetyPlan={() => setScreen("safetyPlan")}
+          onSafetyPlan={() => {
+            setSafetyPlanBack("profile");
+            setScreen("safetyPlan");
+          }}
           onMyData={() => setScreen("myData")}
           onLogout={() => setScreen("welcome")}
         />
@@ -481,7 +598,7 @@ export default function App() {
 
       {screen === "safetyPlan" && (
         <SafetyPlanScreen
-          onBack={() => setScreen("profile")}
+          onBack={() => setScreen(safetyPlanBack)}
           onCallDoctor={() => {
             setCallBack("safetyPlan");
             setCallTarget({
@@ -516,37 +633,34 @@ export default function App() {
 
       {screen === "diary" && (
         <DiaryScreen
-          onTab={(tab) => {
-            if (tab === "home") setScreen("home");
-            if (tab === "chat") setScreen("chat");
-            if (tab === "diary") setScreen("diary");
+          onTab={goTab}
+          onAddAction={addActionFrom("diary")}
+          onQuestionnaires={() => {
+            setQuestionnairesBack("diary");
+            setScreen("questionnaires");
           }}
-          onAddAction={(action) => {
-            if (action === "wellbeing") setScreen("checkInMood");
-            if (action === "sleep") {
-              setSleepFrom("home");
-              setScreen("checkInSleep");
-            }
-            if (action === "symptom") {
-              setSymptomBack("diary");
-              setScreen("symptomSelect");
-            }
-            if (action === "message") setScreen("chat");
-          }}
-          onQuestionnaires={() => setScreen("questionnaires")}
         />
       )}
 
       {screen === "questionnaires" && (
         <QuestionnairesScreen
-          onBack={() => setScreen("diary")}
-          onStart={() => setScreen("followUpQuestionnaire")}
+          onBack={() => setScreen(questionnairesBack)}
+          onStart={() => {
+            setQuestionnaireProgress({ index: 0, answers: {} });
+            setScreen("followUpQuestionnaire");
+          }}
         />
       )}
 
       {screen === "chat" && (
         <ChatScreen
           onBack={() => setScreen("home")}
+          onMedPaused={() => {
+            setMedPaused(true);
+            setMorningDose("taken");
+            setEveningDose("paused");
+            setScreen("medication");
+          }}
           onAttach={(action) => {
             if (action === "symptom") {
               setSymptomBack("chat");
