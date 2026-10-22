@@ -24,6 +24,7 @@ COPY backend/app ./app
 
 # Опциональный миграции-мульти-стaged: можно подключить файлы миграций
 COPY backend/alembic alembic
+COPY backend/alembic.ini alembic.ini
 
 # Экспонируем порт
 EXPOSE 3001
