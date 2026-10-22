@@ -32,16 +32,28 @@ class PatientRepository:
         """
         # Patient role: can only see themselves
         if current_user.role == "patient":
-            if current_user.id != user_id:
+            if str(current_user.id) != user_id:
                 from app.core.errors import forbidden
                 raise forbidden("Patients can only see their own data")
             # Query own patient profile
-            stmt = select(PatientProfile).where(PatientProfile.user_id == user_id)
+            stmt = (
+                select(PatientProfile, User)
+                .join(User, PatientProfile.user_id == User.id)
+                .where(PatientProfile.user_id == user_id)
+            )
             result = await db.execute(stmt)
-            profile = result.scalar_one_or_none()
-            if not profile:
+            row = result.first()
+            if not row:
                 return []
-            return [profile]
+            profile, user = row
+            return [{
+                "id": str(profile.id),
+                "email": user.email,
+                "first_name": profile.first_name,
+                "last_name": profile.last_name,
+                "role": user.role,
+                "clinic_id": str(profile.clinic_id) if profile.clinic_id else None,
+            }]
 
         # Doctor/psychologist: see only patients in their clinic
         if current_user.role in ("doctor", "psychologist"):

@@ -31,6 +31,7 @@ from app.schemas.auth import (
     TokenPair,
     UserBrief,
 )
+from app.schemas.common import EnvelopeResponse
 from app.services import auth_service, invite_service, sms_service
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -58,7 +59,7 @@ async def _get_practitioner(db: DbSession, practitioner_id: uuid.UUID) -> Practi
 # ---------------------------------------------------------------- register / login
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=EnvelopeResponse, responses={400: {"description": "Некорректный запрос"}, 409: {"description": "Конфликт (дубликат)"}, 422: {"description": "Ошибка валидации"}})
 async def register(body: RegisterRequest, request: Request, db: DbSession) -> dict:
     """Регистрация email+пароль (веб) с согласиями 152-ФЗ. Роль — patient."""
     _, tokens = await auth_service.register(
@@ -71,7 +72,7 @@ async def register(body: RegisterRequest, request: Request, db: DbSession) -> di
     return envelope(data=_tokens_data(tokens), request_id=_rid(request))
 
 
-@router.post("/login")
+@router.post("/login", response_model=EnvelopeResponse, responses={401: {"description": "Неверные учетные данные"}, 422: {"description": "Ошибка валидации"}, 429: {"description": "Превышен лимит запросов"}})
 async def login(body: LoginRequest, request: Request, db: DbSession) -> dict:
     """Вход по email+пароль. Rate limit: 5 попыток / 15 минут на email."""
     settings = get_settings()
@@ -90,7 +91,7 @@ async def login(body: LoginRequest, request: Request, db: DbSession) -> dict:
 # ---------------------------------------------------------------- SMS (мобилка)
 
 
-@router.post("/sms/request")
+@router.post("/sms/request", response_model=EnvelopeResponse, responses={422: {"description": "Ошибка валидации"}})
 async def sms_request(body: SmsRequestModel, request: Request, db: DbSession) -> dict:
     """Запрос SMS-кода: 4 цифры, TTL 5 минут. Повтор — не чаще 1 раза/60 сек."""
     await sms_service.request_code(db, body.phone)
@@ -98,7 +99,7 @@ async def sms_request(body: SmsRequestModel, request: Request, db: DbSession) ->
     return envelope(data={"status": "sent"}, request_id=_rid(request))
 
 
-@router.post("/sms/verify")
+@router.post("/sms/verify", response_model=EnvelopeResponse, responses={401: {"description": "Некорректный SMS-код"}, 422: {"description": "Ошибка валидации"}})
 async def sms_verify(body: SmsVerifyRequest, request: Request, db: DbSession) -> dict:
     """Проверка SMS-кода → регистрация/вход по телефону, возврат токенов."""
     if not await sms_service.verify_code(db, body.phone, body.code):
@@ -110,7 +111,7 @@ async def sms_verify(body: SmsVerifyRequest, request: Request, db: DbSession) ->
 # ---------------------------------------------------------------- invite-код
 
 
-@router.post("/invite/verify")
+@router.post("/invite/verify", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Invite-код не найден"}, 422: {"description": "Ошибка валидации"}})
 async def invite_verify(
     body: InviteVerifyRequest, request: Request, db: DbSession, user: CurrentUser
 ) -> dict:
@@ -127,7 +128,7 @@ async def invite_verify(
 # ---------------------------------------------------------------- сессии
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=EnvelopeResponse, responses={401: {"description": "Недействительный refresh-токен"}, 422: {"description": "Ошибка валидации"}})
 async def refresh(body: RefreshRequest, request: Request, db: DbSession) -> dict:
     """Обновление пары токенов. Rotation: повторное использование старого
     refresh → отзыв всех сессий (AUTH_PLAN.md §2)."""
@@ -135,14 +136,14 @@ async def refresh(body: RefreshRequest, request: Request, db: DbSession) -> dict
     return envelope(data=_tokens_data(tokens), request_id=_rid(request))
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 422: {"description": "Ошибка валидации"}})
 async def logout(body: LogoutRequest, request: Request, db: DbSession, user: CurrentUser) -> dict:
     """Инвалидация refresh-токена (или всех сессий, если токен не передан)."""
     await auth_service.logout(db, user_id=user.id, refresh_token=body.refresh_token)
     return envelope(data={"logged_out": True}, request_id=_rid(request))
 
 
-@router.get("/me")
+@router.get("/me", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}})
 async def me(db: DbSession, user: CurrentUser, request: Request) -> dict:
     """Профиль текущего пользователя (+ ФИО из профиля, если есть)."""
     profile = (
@@ -159,7 +160,7 @@ async def me(db: DbSession, user: CurrentUser, request: Request) -> dict:
     return envelope(data=MeResponse(user=brief).model_dump(mode="json"), request_id=_rid(request))
 
 
-@router.post("/change-password")
+@router.post("/change-password", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 422: {"description": "Ошибка валидации"}})
 async def change_password(
     body: ChangePasswordRequest, request: Request, db: DbSession, user: CurrentUser
 ) -> dict:

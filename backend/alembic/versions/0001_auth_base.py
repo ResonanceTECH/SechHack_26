@@ -1,4 +1,4 @@
-"""Начальная схема auth-контура concept01 (по DB_SCHEMA.md §1).
+"""Начальная схема auth-контура (по DB_SCHEMA.md §1).
 
 Таблицы: users, clinics, patient_profiles, practitioner_profiles,
 refresh_tokens, sms_codes, invite_codes, patient_assignments, audit_logs.

@@ -12,6 +12,7 @@ from sqlalchemy import text
 
 from app.api.dependencies import DbSession
 from app.core.response import ok
+from app.schemas.common import EnvelopeResponse
 
 router = APIRouter(tags=["health"])
 
@@ -30,7 +31,7 @@ async def db_health(db: DbSession) -> dict:
     return {"ok": True, "now": row["now"].isoformat(), "db": row["db"]}
 
 
-@router.get("/api/v1/health")
+@router.get("/api/v1/health", response_model=EnvelopeResponse)
 async def health_v1() -> dict:
     """Тот же health-check внутри v1-конверта — для единообразия API."""
     return ok({"status": "healthy"})

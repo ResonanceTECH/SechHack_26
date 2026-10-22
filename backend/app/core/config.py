@@ -2,19 +2,19 @@
 
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Настройки из переменных окружения / `.env` (см. `env.example`)."""
+    """Настройки из переменных окружения / `.env` (см. `\.env.example`)."""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # ---- Приложение ----
     app_name: str = "clinical-compass-backend"
     app_version: str = "0.1.0"
-    debug: bool = True
+    debug: bool = False
     environment: str = "development"
 
     # ---- Сервер ----
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     # ---- Безопасность / JWT ----
-    secret_key: str = "dev-insecure-secret-change-me-min-32-chars!!"
+    secret_key: str = Field(..., min_length=32)
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7

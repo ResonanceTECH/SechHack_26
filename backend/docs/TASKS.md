@@ -17,7 +17,7 @@
 **Шаги:**
 1. Инициализация репозитория `backend/`: `pyproject.toml`, `ruff`, `mypy`, `pytest`.
 2. Структура пакетов: `app/{core,api,db,models,schemas,services,repositories,workers}`.
-3. Конфигурация через `pydantic-settings` (`ENV.example` → `.env`).
+3. Конфигурация через `pydantic-settings` (`\.env.example` → `.env`).
 4. Подключение к `sechhack`: asyncpg + SQLAlchemy 2.0, session factory, `Base`.
 5. Подключение Redis (для rate-limit и Celery).
 6. Alembic: инициализация, настройка `include_schemas=True`, первая миграция `base`.
@@ -194,7 +194,7 @@
 1. Нагрузочная проверка базовых сценариев (профиль из пилотной нагрузки).
 2. Проверка миграций на чистой БД и на БД с данными (upgrade path).
 3. Финальный прогон всех тестов, покрытие ≥ 80 %.
-4. Документация: OpenAPI (`/docs`), `README` для запуска, `.env.example` без секретов.
+4. Документация: OpenAPI (`/docs`), `README` для запуска, `.\.env.example` без секретов.
 5. Чек-лист соответствия 152-ФЗ: согласия, аудит, разделение доступа, сокращённый контур лекарств.
 
 **Готово когда:** развёртывается одним docker-compose, тесты зелёные, все документы в `docs/product/backend/` соответствуют коду.
