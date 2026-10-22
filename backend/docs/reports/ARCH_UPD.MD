@@ -29,7 +29,7 @@
 | 3 | `DOMAIN_MODEL.md` | ✅ Есть | ❌ Не актуальна | ⚠️ Среднее | Сущности User, PatientProfile, PractitionerProfile, Clinic, ScreeningResult, DiaryEntry, Alert и т.д. — но без ICD-10, C-SSRS, Safety Plan, кризисных сигналов |
 | 4 | `DB_SCHEMA.md` | ✅ Есть | ⚠️ Частично | ⚠️ Среднее | DDL concept01/public + rx, индексы, CHECK, Alembic. Отчёт PHASE2 указывал на расхождение: 1 миграция vs 22 таблицы (но это архивное, не учитываем!) |
 | 5 | `AUTH_PLAN.md` | ✅ Есть | ✅ Актуальна | ✅ Высокое | Этап 1 завершён. JWT, Argon2id, refresh rotation, RBAC — соответствуют коду |
-| 6 | `MODULES.md` | ✅ Есть | ⚠️ Частично | ⚠️ Среднее | 8 модулей со статусами. Часть помечена Planned, хотя Screening уже реализован (PHASE9) |
+| 6 | `MODULES.md` | ✅ Есть | ⚠️ Частично | ⚠️ Среднее | 8 модулей со статусами. Обновлено: Screening — Implemented (PHASE9); Alert — Implemented (PHASE10); остальные Planned |
 | 7 | `API_CONTRACTS.md` | ✅ Есть | ⚠️ Частично | ⚠️ Среднее | Контракты `/api/v1/*` описаны, но нет маппинга на экраны Figma, нет crisis-эндпоинтов, skip-dose, голосовых сообщений |
 | 8 | `CURRENT_API.md` | ✅ Есть | ✅ Актуальна | ✅ Высокое | Источник истины для реализованных эндпоинтов (health, auth, screenings, questionnaires, practitioners, patients) |
 | 9 | `MEDICATIONS.md` | ✅ Есть | ⚠️ Частично | ⚠️ Низкое | Контракт описан, но статус Planned в коде; нет интеграции с клиническими протоколами психиатра |
@@ -39,8 +39,8 @@
 
 **Папка `reports/`** не относится к архитектурным документам (по правилам пользователя) — там фазовые отчёты PHASE1–PHASE10.
 
-| Реализовано в коде (бэкенд) | Этапы 0–3: Auth/RBAC, Клиники/Пациенты/Практикующие, Screening (PHQ-9/GAD-7) |
-| Планируется, не реализовано | Этапы 4–12: Diary, Program, Alert, Medication, Notification, Report, Audit, Frontend integration, MVP finalization |
+| Реализовано в коде (бэкенд) | Этапы 0–3 + Alert: Auth/RBAC, Клиники/Пациенты/Практикующие, Screening (PHQ-9/GAD-7), Alert (PHASE10) |
+| Планируется, не реализовано | Этапы 4–12: Diary, Program, Medication, Notification, Report, Frontend integration, MVP finalization (Alert — реализован в PHASE10; Audit — сервис есть, эндпоинт отсутствует) |
 | Соответствие экранам Figma | Частичное — API_CONTRACTS.md не связан с конкретными экранами; отсутствует маппинг crisis-сигналов, skip-dose, голосовых сообщений |
 | Учёт требований психиатра | Отсутствует — ICD-10, C-SSRS, Safety Plan, A.W.A.R.E., дополнительные опросники (PDSS, HCL-33) не отражены в DOMAIN_MODEL/DB_SCHEMA |
 
@@ -245,7 +245,7 @@
 9. [ ] Обновить `TASKS.md` со статусами этапов 4–12
 10. [ ] Синхронизировать `MEDICATIONS.md` с клиническими протоколами психиатра (противопоказания, взаимодействия)
 
-### P2 — Неделя 5+ (документация и качество)
+### P2
 
 11. [ ] Обновить `TESTS.md` с тестами для новых эндпоинтов
 12. [ ] Проверить соответствие миграций Alembic `DB_SCHEMA.md`

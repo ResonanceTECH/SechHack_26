@@ -1,4 +1,4 @@
-# Доменная модель — сущности и связи
+﻿# Доменная модель — сущности и связи
 
 **Источник:** `Архитектурный_дизайн_моделей.md` §2, `ТЗ_Клинический_Компас_v1.0.md` §8.3, `WP/White_Paper.MD` §4.2  
 **Первичные ключи:** UUID  
@@ -79,6 +79,8 @@
 | `score` | Integer (CHECK: >= 0, см. верхние границы ниже) | Суммарный балл |
 | `answers` | JSONB (nullable) | Ответы по вопросам `{question_id: value, …}` — нужны для проверки правила «PHQ-9 п.9 ≥ 1»; серверный подсчёт, клиентский score игнорируется |
 | `is_critical` | Boolean | Критический результат (алертинг) |
+| `severity` | String (nullable, max 255) | Нейтральный короткий лейбл тяжести (`минимальная`, `лёгкая`, `умеренная`, `умеренно выраженная`, `тяжёлая`) |
+| `critical_reason` | String (nullable, max 200) | Причина критичности (`high_total_score`, `suicidal_ideation_item` или комбинация) |
 | `created_at` | DateTime | Дата прохождения |
 
 ### 1.6 `DiaryEntry` — запись дневника
@@ -270,6 +272,93 @@ UNIQUE (`user_id`, `device_id`).
 | `uses_count` | Integer | Текущее число использований |
 | `is_active` | Boolean | Активен ли |
 | `created_at` | DateTime | Дата создания |
+
+
+### 1.20 `CrisisSignal` — критический сигнал (SOS / вызов экстренной помощи)
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `type` | Enum | `sos_call`, `critical_symptom`, `red_flag` |
+| `source` | Enum | `mobile_app`, `web_app`, `screening_result`, `practitioner_manual` |
+| `triggered_by_screening_id` | UUID (FK → ScreeningResult.id, nullable) | Скрининг, ставший триггером |
+| `message` | Text (nullable) | Сообщение пациента при сигнале |
+| `location` | JSONB (nullable) | Координаты/местоположение (из мобилки) |
+| `status` | Enum | `new`, `acknowledged`, `resolved`, `false_alarm` |
+| `priority` | Enum | `critical` — всегда максимальный |
+| `created_at` | DateTime | Время сигнала |
+| `acknowledged_at` | DateTime (nullable) | Время подтверждения врачом |
+| `acknowledged_by` | UUID (FK → User.id, nullable) | Кто подтвердил |
+
+### 1.21 `CssrsAssessment` — оценка суицидального риска (C-SSRS)
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID (FK → PractitionerProfile.id, nullable) | Врач (если проведено на приёме) |
+| `assessment_date` | DateTime | Дата проведения оценки |
+| `version` | String | Версия опросника C-SSRS |
+| `suicidal_ideation` | Boolean | Наличие суицидальных мыслей |
+| `suicidal_ideation_with_plan` | Boolean | Мысли с планом |
+| `suicidal_behavior` | Boolean | Суицидальное поведение (попытка, подготовка) |
+| `most_severe_ideation` | Enum | `none`, `wish_to_die`, `suicidal_thoughts`, `suicidal_thoughts_with_plan`, `suicidal_intent` |
+| `most_severe_behavior` | Enum | `none`, `non_suicidal_self_injury`, `suicide_attempt`, `interrupted_attempt`, `aborted_attempt`, `preparatory_behavior` |
+| `risk_level` | Enum | `low`, `moderate`, `high`, `imminent` |
+| `risk_factors` | JSONB (nullable) | Факторы риска (детализация) |
+| `protective_factors` | JSONB (nullable) | Защитные факторы |
+| `recommendations` | Text (nullable) | Рекомендации врача |
+| `safety_plan_id` | UUID (FK → SafetyPlan.id, nullable) | Связанный план безопасности |
+| `created_at` | DateTime | Дата создания |
+
+### 1.22 `SafetyPlan` — план безопасности при кризисе
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID (FK → PractitionerProfile.id) | Врач, составивший план |
+| `title` | String | Название плана |
+| `warning_signs` | Text | Предупреждающие сигналы (распознавание кризиса) |
+| `internal_coping_strategies` | Text | Внутренние стратегии совладания |
+| `social_contacts` | Text | Социальные контакты для отвлечения |
+| `family_support` | Text | Поддержка семьи и близких |
+| `professional_contacts` | Text | Профессиональные контакты (врач, кризисная линия) |
+| `emergency_contacts` | Text | Экстренные контакты (103/112, ближайшая больница) |
+| `safe_environment` | Text | Обеспечение безопасной среды (ограничение доступа к средствам) |
+| `is_active` | Boolean | Активен ли план |
+| `review_date` | Date (nullable) | Дата пересмотра плана |
+| `created_at` | DateTime | Дата создания |
+| `updated_at` | DateTime | Дата последнего обновления |
+
+### 1.23 `Icd10Code` — диагноз по МКБ-10
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID (FK → PractitionerProfile.id) | Врач, поставивший диагноз |
+| `code` | String (10) | Код МКБ-10 (например, F32.1, F41.1) |
+| `description` | String | Описание диагноза |
+| `diagnosis_date` | Date | Дата установки диагноза |
+| `is_primary` | Boolean | Первичный диагноз |
+| `is_confirmed` | Boolean | Подтверждён ли диагноз |
+| `notes` | Text (nullable) | Замечания врача |
+| `created_at` | DateTime | Дата создания записи |
+
+### 1.24 `MedicationSkipReason` — причина пропуска приёма лекарства
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `prescription_id` | UUID (FK → rx.prescriptions.id) | Назначение, которое пропущено |
+| `taken_at` | DateTime | Плановое время приёма |
+| `skip_reason` | Enum | `side_effects`, `forgot`, `ran_out`, `cost`, `pregnancy`, `feeling_better`, `feeling_worse`, `other` |
+| `skip_reason_text` | Text (nullable) | Текст причины (если `other`) |
+| `reported_at` | DateTime | Время сообщения о пропуске |
+| `created_at` | DateTime | Дата записи |
 
 ## 2. Рецептурный контур (concept02) — логически в той же БД
 

@@ -205,13 +205,58 @@ POST /api/v1/auth/invite/verify
     "priority": "mandatory",
     "status": "new",
     "title": "Критический ответ в опроснике — PHQ-9 п.9 ≥ 1",
-    "summary": "Суицидальный риск · умеренный",
+    "summary": "PHQ-9, вопрос 9: мысли о смерти/самоповреждении",
+    "created_at": "2026-10-20T14:30:00Z",
+    "resolved_at": null,
+    "resolved_by": null
+  },
+  "meta": { "request_id": "...", "timestamp": "..." },
+  "error": null
+}
+```
+
+## 7.5. Кризисные сигналы и план безопасности (`crisis-service`)
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| POST | `/api/v1/crisis/signal` | Отправить критический сигнал (SOS / вызов 103/112) | patient |
+| GET | `/api/v1/crisis/signals` | Список сигналов пациента (фильтр по статусу) | patient, doctor, psychologist, coordinator |
+| GET | `/api/v1/crisis/signals/{id}` | Детальная карточка сигнала | patient, doctor, psychologist, coordinator |
+| PATCH | `/api/v1/crisis/signals/{id}/acknowledge` | Подтвердить получение сигнала | doctor, psychologist |
+| PATCH | `/api/v1/crisis/signals/{id}/resolve` | Закрыть сигнал | doctor, psychologist |
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| GET | `/api/v1/safety-plan` | Получить план безопасности пациента | patient, doctor, psychologist |
+| POST | `/api/v1/safety-plan` | Создать/обновить план безопасности | doctor, psychologist |
+
+**Пример запроса `POST /crisis/signal`:**
+```json
+{
+  "type": "sos_call",
+  "source": "mobile_app",
+  "message": "Плохое самочувствие, нужна помощь",
+  "location": { "latitude": 55.7558, "longitude": 37.6173 }
+}
+```
+
+**Пример ответа:**
+```json
+{
+  "data": {
+    "id": "cs-1",
+    "patient_id": "p1",
+    "type": "sos_call",
+    "source": "mobile_app",
+    "status": "new",
+    "priority": "critical",
     "created_at": "2026-10-20T10:42:00Z"
   },
   "meta": { "request_id": "...", "timestamp": "..." },
   "error": null
 }
 ```
+
 
 **Значения полей:**
 - `type`: `critical_symptom` | `adherence` | `missed_diary` | `screening_risk` | `adverse_event`
@@ -229,6 +274,7 @@ POST /api/v1/auth/invite/verify
 | PUT | `/api/v1/prescriptions/{id}` | Изменить/деактивировать назначение | doctor |
 | GET | `/api/v1/adherence` | История приёма препаратов | patient, doctor |
 | POST | `/api/v1/adherence` | Отметить приём | patient, doctor |
+| POST | `/api/v1/medications/{id}/skip` | Сообщить о пропуске приёма с причиной | patient, doctor |
 | GET | `/api/v1/admin/medications` | Управление справочником | clinic_admin, super_admin |
 | POST | `/api/v1/admin/medications` | Добавить препарат в справочник | clinic_admin, super_admin |
 | PUT | `/api/v1/admin/medications/{id}` | Обновить препарат | clinic_admin, super_admin |
@@ -238,6 +284,45 @@ POST /api/v1/auth/invite/verify
 - Пациент: сокращённая карточка — название, дозировка, приверженность, статус, краткая инструкция
 
 Подробно — в `MEDICATIONS.md`.
+
+
+## 8.5. Диагнозы МКБ-10 и C-SSRS (`crisis-service`)
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| GET | `/api/v1/icd10` | Список диагнозов МКБ-10 пациента | patient, doctor, psychologist |
+| POST | `/api/v1/icd10` | Поставить диагноз МКБ-10 | doctor |
+| PUT | `/api/v1/icd10/{id}` | Обновить диагноз | doctor |
+| GET | `/api/v1/cssrs` | Список оценок C-SSRS пациента | patient, doctor, psychologist |
+| POST | `/api/v1/cssrs` | Провести оценку суицидального риска (C-SSRS) | doctor, psychologist |
+
+**Пример запроса `POST /icd10`:**
+```json
+{
+  "patient_id": "p1",
+  "code": "F32.1",
+  "description": "Депрессивный эпизод средней тяжести",
+  "diagnosis_date": "2026-10-20",
+  "is_primary": true,
+  "is_confirmed": true
+}
+```
+
+**Пример запроса `POST /cssrs`:**
+```json
+{
+  "patient_id": "p1",
+  "assessment_date": "2026-10-20T10:00:00Z",
+  "version": "C-SSRS v1.0",
+  "suicidal_ideation": true,
+  "suicidal_ideation_with_plan": false,
+  "suicidal_behavior": false,
+  "most_severe_ideation": "suicidal_thoughts",
+  "most_severe_behavior": "none",
+  "risk_level": "moderate",
+  "recommendations": "Рекомендуется план безопасности и динамическое наблюдение"
+}
+```
 
 ## 9. Записи и сообщения (`appointments` / `messaging`)
 

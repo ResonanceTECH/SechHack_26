@@ -48,7 +48,7 @@ class ScreeningResult(UUIDPkMixin, Base):
     score: Mapped[int] = mapped_column(Integer, nullable=False)
     answers: Mapped[dict | None] = mapped_column(JSONB)
     is_critical: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
-    severity: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    severity: Mapped[str | None] = mapped_column(String(255), nullable=True)
     critical_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()

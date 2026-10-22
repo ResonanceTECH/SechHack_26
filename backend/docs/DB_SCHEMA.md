@@ -1,4 +1,4 @@
-# Схема базы данных — бэкенд «Клинический компас»
+﻿# Схема базы данных — бэкенд «Клинический компас»
 
 **Источник:** `Архитектурный_дизайн_моделей.md` §7, `DOMAIN_MODEL.md`  
 **СУБД:** PostgreSQL 15+  
@@ -77,6 +77,8 @@ CREATE TABLE screening_results (
     score INTEGER NOT NULL CHECK (score >= 0),
     answers JSONB,  -- ответы по вопросам {question_id: value}: нужно для правила «PHQ-9 п.9 ≥ 1»
     is_critical BOOLEAN DEFAULT FALSE,
+    severity VARCHAR(255),
+    critical_reason VARCHAR(200),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT chk_screening_score_range CHECK (
         (questionnaire_type = 'phq9' AND score <= 27) OR
@@ -243,7 +245,117 @@ CREATE TABLE audit_logs (
     old_values JSONB,
     new_values JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
+
+-- ============================================
+-- Критические сигналы / SOS (P0)
+-- ============================================
+CREATE TABLE crisis_signals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('sos_call', 'critical_symptom', 'red_flag')),
+    source VARCHAR(50) NOT NULL CHECK (source IN ('mobile_app', 'web_app', 'screening_result', 'practitioner_manual')),
+    triggered_by_screening_id UUID REFERENCES screening_results(id),
+    message TEXT,
+    location JSONB,
+    status VARCHAR(30) NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'acknowledged', 'resolved', 'false_alarm')),
+    priority VARCHAR(20) NOT NULL DEFAULT 'critical' CHECK (priority = 'critical'),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    acknowledged_at TIMESTAMPTZ,
+    acknowledged_by UUID REFERENCES users(id)
 );
+
+CREATE INDEX idx_crisis_signals_patient_id ON crisis_signals(patient_id);
+CREATE INDEX idx_crisis_signals_status ON crisis_signals(status);
+CREATE INDEX idx_crisis_signals_created_at ON crisis_signals(created_at);
+
+-- ============================================
+-- C-SSRS — оценка суицидального риска (P0)
+-- ============================================
+CREATE TABLE cssrs_assessments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    practitioner_id UUID REFERENCES practitioner_profiles(id),
+    assessment_date TIMESTAMPTZ NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    suicidal_ideation BOOLEAN NOT NULL DEFAULT FALSE,
+    suicidal_ideation_with_plan BOOLEAN NOT NULL DEFAULT FALSE,
+    suicidal_behavior BOOLEAN NOT NULL DEFAULT FALSE,
+    most_severe_ideation VARCHAR(50) NOT NULL CHECK (most_severe_ideation IN ('none', 'wish_to_die', 'suicidal_thoughts', 'suicidal_thoughts_with_plan', 'suicidal_intent')),
+    most_severe_behavior VARCHAR(50) NOT NULL CHECK (most_severe_behavior IN ('none', 'non_suicidal_self_injury', 'suicide_attempt', 'interrupted_attempt', 'aborted_attempt', 'preparatory_behavior')),
+    risk_level VARCHAR(20) NOT NULL CHECK (risk_level IN ('low', 'moderate', 'high', 'imminent')),
+    risk_factors JSONB,
+    protective_factors JSONB,
+    recommendations TEXT,
+    safety_plan_id UUID REFERENCES safety_plans(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_cssrs_assessments_patient_id ON cssrs_assessments(patient_id);
+CREATE INDEX idx_cssrs_assessments_risk_level ON cssrs_assessments(risk_level);
+CREATE INDEX idx_cssrs_assessments_assessment_date ON cssrs_assessments(assessment_date);
+
+-- ============================================
+-- Safety Plan — план безопасности при кризисе (P0)
+-- ============================================
+CREATE TABLE safety_plans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    practitioner_id UUID NOT NULL REFERENCES practitioner_profiles(id),
+    title VARCHAR(255) NOT NULL,
+    warning_signs TEXT,
+    internal_coping_strategies TEXT,
+    social_contacts TEXT,
+    family_support TEXT,
+    professional_contacts TEXT,
+    emergency_contacts TEXT,
+    safe_environment TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    review_date DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_safety_plans_patient_id ON safety_plans(patient_id);
+CREATE INDEX idx_safety_plans_is_active ON safety_plans(is_active);
+
+-- ============================================
+-- Icd10Code — диагнозы по МКБ-10 (P0)
+-- ============================================
+CREATE TABLE icd10_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    practitioner_id UUID NOT NULL REFERENCES practitioner_profiles(id),
+    code VARCHAR(10) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    diagnosis_date DATE NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    is_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_icd10_codes_patient_id ON icd10_codes(patient_id);
+CREATE INDEX idx_icd10_codes_code ON icd10_codes(code);
+CREATE INDEX idx_icd10_codes_is_primary ON icd10_codes(is_primary);
+
+-- ============================================
+-- MedicationSkipReason — причина пропуска приёма лекарства (P0)
+-- ============================================
+CREATE TABLE medication_skip_reasons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    prescription_id UUID NOT NULL REFERENCES rx.prescriptions(id) ON DELETE CASCADE,
+    taken_at TIMESTAMPTZ NOT NULL,
+    skip_reason VARCHAR(50) NOT NULL CHECK (skip_reason IN ('side_effects', 'forgot', 'ran_out', 'cost', 'pregnancy', 'feeling_better', 'feeling_worse', 'other')),
+    skip_reason_text TEXT,
+    reported_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_medication_skip_reasons_patient_id ON medication_skip_reasons(patient_id);
+CREATE INDEX idx_medication_skip_reasons_prescription_id ON medication_skip_reasons(prescription_id);
+CREATE INDEX idx_medication_skip_reasons_reported_at ON medication_skip_reasons(reported_at);
+
 ```
 
 ## 2. DDL concept02 (рецептурный контур, схема `rx`)
@@ -364,6 +476,19 @@ ON rx.medication_adherence (prescription_id, taken_at);
 - `users.token_version` — NOT NULL DEFAULT 1
 
 ## 6. Миграции (Alembic)
+
+
+Новые миграции для P0 сущностей (кризисные сигналы, C-SSRS, Safety Plan, МКБ-10, пропуск приёма):
+
+| Миграция | Описание | Таблицы |
+|---|---|---|
+| `0004_crisis_safety_entities` | Добавление критических клинических сущностей | `crisis_signals`, `cssrs_assessments`, `safety_plans`, `icd10_codes`, `medication_skip_reasons` |
+
+Создание:
+```bash
+alembic revision --autogenerate -m "0004_crisis_safety_entities"
+alembic upgrade head
+```
 
 Все изменения схемы через Alembic. Начальная ревизия — `base` с вышеуказанными таблицами.  
 Схема `rx` создаётся первой миграцией (`alembic revision --autogenerate` с `include_schemas=True`).
