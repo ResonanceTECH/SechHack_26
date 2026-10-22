@@ -69,10 +69,11 @@ class ScreeningService:
             severity=severity,
             critical_reason=critical_reason,
         )
-        return {
+        result = {
             "id": str(row.id),
             "patient_id": str(row.patient_id),
             "questionnaire_type": row.questionnaire_type,
+            "questionnaire_code": code,
             "questionnaire_version": row.questionnaire_version,
             "score": row.score,
             "answers": row.answers,
@@ -82,6 +83,13 @@ class ScreeningService:
             "interpretation": severity,
             "created_at": row.created_at.isoformat() if getattr(row, "created_at", None) else None,
         }
+        # generate alerts (Phase 10)
+        try:
+            from app.services.alert_service import AlertService
+            await AlertService().generate_alerts_for_screening(db, result)
+        except Exception:
+            pass
+        return result
 
     # Backward-compatible helpers (Phase 9.1 API)
     @staticmethod

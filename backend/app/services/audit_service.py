@@ -1,4 +1,4 @@
-"""Запись событий в audit_logs (AUTH_PLAN.md §6).
+﻿"""Запись событий в audit_logs (AUTH_PLAN.md §6).
 
 Whitelist: в old_values/new_values не должны попасть пароли, хеши и токены —
 фильтруем по списку запрещённых ключей независимо от того, что передал
@@ -17,10 +17,8 @@ from app.models.audit import AuditLog
 
 logger = logging.getLogger("app.audit")
 
-# Ключи, которые никогда не пишутся в журнал (case-insensitive, по подстроке)
 _FORBIDDEN_SUBSTRINGS = ("password", "token", "secret", "code_hash", "authorization")
 
-# Известные типы действий (нестандартные не ломают работу, но пишут warning)
 KNOWN_ACTIONS = frozenset(
     {
         "auth.register",
@@ -36,6 +34,9 @@ KNOWN_ACTIONS = frozenset(
         "prescription.create",
         "prescription.update",
         "alert.resolve",
+        "alert.created",
+        "alert.dismiss",
+        "alert.updated",
         "employee.role_change",
     }
 )
@@ -62,8 +63,6 @@ async def record(
     new_values: dict[str, Any] | None = None,
     commit: bool = False,
 ) -> None:
-    """Добавить запись аудита. Не коммитит по умолчанию — событие уходит в
-    ту же транзакцию, что и основное действие (атомарность)."""
     if action not in KNOWN_ACTIONS:
         logger.warning("Неизвестный тип действия аудита: %s", action)
     session.add(

@@ -111,8 +111,11 @@ class Alert(UUIDPkMixin, Base):
     priority: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="new", server_default="new")
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    body: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
