@@ -9,7 +9,8 @@ from app.models.clinical import ScreeningResult
 
 class ScreeningRepository:
     async def create_screening(self, db: AsyncSession, patient_id: str, questionnaire_type: str,
-                               questionnaire_version: str, score: int, answers, is_critical: bool) -> ScreeningResult:
+                               questionnaire_version: str, score: int, answers, is_critical: bool,
+                               severity=None, critical_reason=None) -> ScreeningResult:
         row = ScreeningResult(
             patient_id=uuid.UUID(str(patient_id)),
             questionnaire_type=questionnaire_type,
@@ -17,6 +18,8 @@ class ScreeningRepository:
             score=score,
             answers=answers,
             is_critical=is_critical,
+            severity=severity,
+            critical_reason=critical_reason,
         )
         db.add(row)
         await db.commit()

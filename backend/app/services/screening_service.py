@@ -1,105 +1,75 @@
 ﻿from __future__ import annotations
 
-from app.core.questionnaires import QUESTIONNAIRES
+from app.core.questionnaire_registry import get_definition
 
 
 class ScreeningService:
-    """Сервис скринингов PHQ-9 / GAD-7 (серверный подсчёт балла)."""
+    """Сервис скринингов (backend-driven registry)."""
 
     @staticmethod
-    def _validate_answers(answers: list[int], expected_count: int) -> None:
-        if not isinstance(answers, list) or len(answers) != expected_count:
-            raise ValueError(f"Ожидается {expected_count} ответов")
+    def _validate_answers(defn, answers: list[int]) -> None:
+        if not isinstance(answers, list) or len(answers) != len(defn.questions):
+            raise ValueError(f"Ожидается {len(defn.questions)} ответов")
+        allowed = {opt.value for opt in defn.answer_scale}
         for value in answers:
-            if not isinstance(value, int) or isinstance(value, bool) or value < 0 or value > 3:
-                raise ValueError("Ответ должен быть целым числом от 0 до 3")
+            if not isinstance(value, int) or isinstance(value, bool) or value not in allowed:
+                raise ValueError("Недопустимое значение ответа")
 
     @staticmethod
-    def score_phq9(answers: list[int]) -> int:
-        ScreeningService._validate_answers(answers, QUESTIONNAIRES["phq9"]["questions_count"])
+    def score(defn, answers: list[int]) -> int:
+        ScreeningService._validate_answers(defn, answers)
         return int(sum(answers))
-
-    @staticmethod
-    def score_gad7(answers: list[int]) -> int:
-        ScreeningService._validate_answers(answers, QUESTIONNAIRES["gad7"]["questions_count"])
-        return int(sum(answers))
-
-    @staticmethod
-    def interpret_phq9(score: int) -> str:
-        if score <= 4:
-            return "минимальная"
-        if score <= 9:
-            return "лёгкая"
-        if score <= 14:
-            return "умеренная"
-        if score <= 19:
-            return "умеренно выраженная"
-        return "тяжёлая"
-
-    @staticmethod
-    def interpret_gad7(score: int) -> str:
-        if score <= 4:
-            return "минимальная"
-        if score <= 9:
-            return "лёгкая"
-        if score <= 14:
-            return "умеренная"
-        return "тяжёлая"
-
-    @staticmethod
-    def is_critical_phq9(answers: list[int], score: int) -> bool:
-        ScreeningService._validate_answers(answers, QUESTIONNAIRES["phq9"]["questions_count"])
-        if score >= 20:
-            return True
-        return len(answers) >= 9 and answers[8] >= 1
-
-    @staticmethod
-    def is_critical_gad7(score: int) -> bool:
-        return score >= 15
 
     async def create_screening(self, db, current_user, data: dict):
-        from uuid import UUID
         from app.repositories.screening_repository import ScreeningRepository
-        from app.core.errors import forbidden, not_found
+        from app.core.errors import not_found
         from app.models.profile import PatientProfile
         from sqlalchemy import select
 
-        # resolve patient profile for current user
         profile = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))).scalar_one_or_none()
         if profile is None:
             raise not_found("Профиль пациента не найден")
 
-        qtype = data["questionnaire_type"]
-        if qtype not in QUESTIONNAIRES:
-            raise ValueError("Неизвестный тип опросника")
+        code = data["questionnaire_type"]
+        version = data.get("questionnaire_version", "1.0")
+        defn = get_definition(code, version)
+        if defn is None:
+            raise ValueError("Неизвестный опросник или версия")
 
         answers_payload = data["answers"]
-        # accept list of {question_id, value} or list of ints
         if answers_payload and isinstance(answers_payload[0], dict):
             answers = [int(item["value"]) for item in answers_payload]
         else:
             answers = [int(v) for v in answers_payload]
 
-        if qtype == "phq9":
-            score = self.score_phq9(answers)
-            is_critical = self.is_critical_phq9(answers, score)
-            interpretation = self.interpret_phq9(score)
-        else:
-            score = self.score_gad7(answers)
-            is_critical = self.is_critical_gad7(score)
-            interpretation = self.interpret_gad7(score)
+        score = self.score(defn, answers)
+        severity = defn.severity_for(score)
+        is_critical = False
+        critical_reason = None
+        rules = defn.critical_rules or {}
+        if "total_threshold" in rules and score >= rules["total_threshold"]:
+            is_critical = True
+            critical_reason = "high_total_score"
+        if "item_index" in rules:
+            idx = rules["item_index"]
+            thr = rules.get("item_threshold", 1)
+            if len(answers) > idx and answers[idx] >= thr:
+                is_critical = True
+                critical_reason = "suicidal_ideation_item" if critical_reason is None else f"{critical_reason};suicidal_ideation_item"
 
         repo = ScreeningRepository()
         row = await repo.create_screening(
             db=db,
             patient_id=str(profile.id),
-            questionnaire_type=qtype,
-            questionnaire_version=data.get("questionnaire_version", QUESTIONNAIRES[qtype]["version"]),
+            questionnaire_type=code,
+            questionnaire_version=defn.version,
             score=score,
             answers=data["answers"],
             is_critical=is_critical,
+            severity=severity,
+            critical_reason=critical_reason,
         )
-        result = {
+        return {
             "id": str(row.id),
             "patient_id": str(row.patient_id),
             "questionnaire_type": row.questionnaire_type,
@@ -107,7 +77,48 @@ class ScreeningService:
             "score": row.score,
             "answers": row.answers,
             "is_critical": row.is_critical,
-            "interpretation": interpretation,
+            "severity": row.severity,
+            "critical_reason": row.critical_reason,
+            "interpretation": severity,
             "created_at": row.created_at.isoformat() if getattr(row, "created_at", None) else None,
         }
-        return result
+
+    # Backward-compatible helpers (Phase 9.1 API)
+    @staticmethod
+    def score_phq9(answers):
+        from app.core.questionnaire_registry import get_definition
+        return ScreeningService.score(get_definition("phq9", "1.0"), answers)
+
+    @staticmethod
+    def score_gad7(answers):
+        from app.core.questionnaire_registry import get_definition
+        return ScreeningService.score(get_definition("gad7", "1.0"), answers)
+
+    @staticmethod
+    def interpret_phq9(score):
+        from app.core.questionnaire_registry import get_definition
+        return get_definition("phq9", "1.0").severity_for(score)
+
+    @staticmethod
+    def interpret_gad7(score):
+        from app.core.questionnaire_registry import get_definition
+        return get_definition("gad7", "1.0").severity_for(score)
+
+    @staticmethod
+    def is_critical_phq9(answers, score):
+        defn = __import__("app.core.questionnaire_registry", fromlist=["get_definition"]).get_definition("phq9", "1.0")
+        rules = defn.critical_rules
+        if "total_threshold" in rules and score >= rules["total_threshold"]:
+            return True
+        if "item_index" in rules:
+            idx = rules["item_index"]
+            thr = rules.get("item_threshold", 1)
+            if len(answers) > idx and answers[idx] >= thr:
+                return True
+        return False
+
+    @staticmethod
+    def is_critical_gad7(score):
+        defn = __import__("app.core.questionnaire_registry", fromlist=["get_definition"]).get_definition("gad7", "1.0")
+        rules = defn.critical_rules
+        return "total_threshold" in rules and score >= rules["total_threshold"]

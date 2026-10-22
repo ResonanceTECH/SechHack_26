@@ -24,6 +24,8 @@ class ScreeningResponse(BaseModel):
     score: int
     answers: list | dict | None = None
     is_critical: bool
+    severity: str | None = None
+    critical_reason: str | None = None
     interpretation: str | None = None
     created_at: str | None = None
 

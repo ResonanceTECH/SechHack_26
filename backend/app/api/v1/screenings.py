@@ -59,7 +59,7 @@ async def get_screening(screening_id: str, current_user: CurrentUser, db: DbSess
     result = ScreeningResponse(
         id=str(row.id), patient_id=str(row.patient_id), questionnaire_type=row.questionnaire_type,
         questionnaire_version=row.questionnaire_version, score=row.score, answers=row.answers,
-        is_critical=row.is_critical, interpretation=interpretation, created_at=row.created_at.isoformat() if row.created_at else None,
+        is_critical=row.is_critical, severity=row.severity, critical_reason=row.critical_reason, interpretation=interpretation, created_at=row.created_at.isoformat() if row.created_at else None,
     ).model_dump()
     return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 
