@@ -2,7 +2,7 @@
 
 **Источник:** `Архитектурный_дизайн_моделей.md` §7, `DOMAIN_MODEL.md`  
 **СУБД:** PostgreSQL 15+  
-**Одна БД:** `sechhack` (хост `localhost:5432`, user `postgres`, pass `postgres`)  
+**Одна БД:** PostgreSQL; параметры подключения задаются через environment variables (см. `.env.example`)  
 **Логическое разделение:** concept01 (общий) / concept02 (рецептурный) — без split на уровне БД
 
 ## 1. DDL concept01 (общий контур)

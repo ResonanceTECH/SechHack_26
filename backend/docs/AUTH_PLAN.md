@@ -164,7 +164,7 @@ DDL вынесен в `DB_SCHEMA.md` §1 (таблицы `refresh_tokens`, `sms_
 | Защита от SMS-spam | Rate limit: не более 1 SMS в 60 секунд на номер; не более 5 SMS в час на номер |
 | Защита от перечисления пользователей | Единый ответ 401 «Некорректный email или пароль» |
 | HTTPS | Обязательно на уровне reverse proxy (nginx / Traefik) |
-| CORS | Явный whitelist доменов из `ENV.example`, `credentials=True` |
+| CORS | Явный whitelist доменов из `\.env.example`, `credentials=True` |
 | Заголовки | `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `X-Frame-Options: DENY` |
 | Ограничение размера тела | Middleware: максимум 1 MB (защита от DoS на bulk-sync) |
 | Валидация входа | Pydantic v2: `EmailStr`, минимальная длина пароля, санитизация строк |

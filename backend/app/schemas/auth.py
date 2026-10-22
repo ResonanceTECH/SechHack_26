@@ -40,6 +40,8 @@ class RegisterRequest(BaseModel):
         validate_password_policy(value)
         return value
 
+    model_config = {"json_schema_extra": {"example": {"email": "patient@example.com", "password": "StrongPass123!", "first_name": "Иван", "last_name": "Иванов", "consent_personal_data": True, "consent_medical_data": True}}}
+
     @field_validator("consent_personal_data", "consent_medical_data")
     @classmethod
     def _consent_required(cls, value: bool) -> bool:

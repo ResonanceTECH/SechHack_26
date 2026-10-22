@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Request, status
 
 from app.api.dependencies import CurrentUser, DbSession
+from app.schemas.common import EnvelopeResponse
 from app.schemas.patient import PatientListItem, PatientDetail, PatientUpdate
 
 from app.services.patient_service import PatientService
@@ -18,7 +19,7 @@ def _get_patient_service(db) -> PatientService:
     return PatientService(PatientRepository())
 
 
-@router.get("", status_code=status.HTTP_200_OK)
+@router.get("", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}})
 async def get_patients(
     current_user: CurrentUser,
     db: DbSession,
@@ -33,7 +34,7 @@ async def get_patients(
     }
 
 
-@router.get("/{patient_id}", status_code=status.HTTP_200_OK)
+@router.get("/{patient_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
 async def get_patient(
     patient_id: str,
     current_user: CurrentUser,
@@ -49,7 +50,7 @@ async def get_patient(
     }
 
 
-@router.patch("/{patient_id}", status_code=status.HTTP_200_OK)
+@router.patch("/{patient_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}, 422: {"description": "Ошибка валидации"}})
 async def update_patient(
     patient_id: str,
     body: PatientUpdate,
@@ -66,7 +67,7 @@ async def update_patient(
     }
 
 
-@router.get("/{patient_id}/summary", status_code=status.HTTP_200_OK)
+@router.get("/{patient_id}/summary", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
 async def get_patient_summary(
     patient_id: str,
     current_user: CurrentUser,

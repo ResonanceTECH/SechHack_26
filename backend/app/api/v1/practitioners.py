@@ -17,6 +17,7 @@ from app.core.response import envelope
 from app.models.profile import PractitionerProfile
 from app.models.user import User
 from app.schemas.auth import InviteCodeCreateRequest, InviteCodeResponse
+from app.schemas.common import EnvelopeResponse
 from app.services import invite_service
 
 router = APIRouter(prefix="/api/v1/practitioners", tags=["practitioners"])
@@ -41,7 +42,7 @@ async def _get_practitioner(db: DbSession, practitioner_id: uuid.UUID) -> Practi
     return practitioner
 
 
-@router.get("/{practitioner_id}/invite-codes")
+@router.get("/{practitioner_id}/invite-codes", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 403: {"description": "Доступ запрещён"}, 404: {"description": "Специалист не найден"}})
 async def list_invite_codes(
     practitioner_id: uuid.UUID,
     request: Request,
@@ -57,7 +58,7 @@ async def list_invite_codes(
     )
 
 
-@router.post("/{practitioner_id}/invite-codes", status_code=status.HTTP_201_CREATED)
+@router.post("/{practitioner_id}/invite-codes", status_code=status.HTTP_201_CREATED, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 403: {"description": "Доступ запрещён"}, 404: {"description": "Специалист не найден"}, 422: {"description": "Ошибка валидации"}})
 async def create_invite_code(
     practitioner_id: uuid.UUID,
     body: InviteCodeCreateRequest,
