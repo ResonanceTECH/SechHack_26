@@ -14,6 +14,8 @@
 
 ## Этап 0. Фундамент проекта
 
+**Статус:** ✅ Completed
+
 **Шаги:**
 1. Инициализация репозитория `backend/`: `pyproject.toml`, `ruff`, `mypy`, `pytest`.
 2. Структура пакетов: `app/{core,api,db,models,schemas,services,repositories,workers}`.
@@ -31,6 +33,8 @@
 ---
 
 ## Этап 1. Аутентификация и RBAC
+
+**Статус:** ✅ Completed
 
 **Шаги:**
 1. Модели `User`, `Clinic`, `PatientProfile`, `PractitionerProfile`, `RefreshToken`; миграция.
@@ -51,6 +55,8 @@
 
 ## Этап 2. Клиника, пациенты, специалисты
 
+**Статус:** ✅ Completed (Auth/Patient/Practitioner invite; admin/audit/report остаются запланированными)
+
 **Шаги:**
 1. CRUD пациентов и специалистов, привязка к клинике.
 2. Согласия (152-ФЗ): поля `consent_*` в профиле, обязательны при регистрации, фиксируется `consent_data_processing_at`.
@@ -64,6 +70,8 @@
 ---
 
 ## Этап 3. Скрининги (PHQ-9, GAD-7)
+
+**Статус:** ✅ Completed (Phase 9.1–9.3: PHQ-9/GAD-7, registry, scoring, severity, critical rules, endpoints, migrations 0002/0003)
 
 **Шаги:**
 1. Шаблоны опросников в коде/конфиге: тексты вопросов, веса ответов, шкалы интерпретации.
@@ -80,6 +88,8 @@
 
 ## Этап 4. Дневник и офлайн-синхронизация
 
+**Статус:** ⚪ Planned
+
 **Шаги:**
 1. Модель `DiaryEntry` + миграция с CHECK-ограничениями.
 2. CRUD дневника, доступ — только свой для пациента.
@@ -95,6 +105,8 @@
 
 ## Этап 5. Программы и упражнения
 
+**Статус:** ⚪ Planned
+
 **Шаги:**
 1. Модели `CarePlan`, `ExerciseAssignment`, `ExerciseCompletion` + миграция.
 2. Назначение упражнения врачом; пациент видит только свои.
@@ -108,6 +120,8 @@
 ---
 
 ## Этап 6. Алерты и план безопасности
+
+**Статус:** 🟡 In Progress (alert foundation/constants in screening hardening; Alert Service not fully implemented)
 
 **Шаги:**
 1. Модель `Alert` + миграция.
@@ -124,6 +138,8 @@
 
 ## Этап 7. Лекарства и рецепты
 
+**Статус:** ⚪ Planned
+
 **Шаги:**
 1. Схема `rx` + модели `Medication`, `Prescription`, `MedicationAdherence` + миграция.
 2. CRUD справочника в `admin-service` (с проверкой `instructions_url`).
@@ -137,6 +153,8 @@
 ---
 
 ## Этап 8. Уведомления и сообщения
+
+**Статус:** ⚪ Planned
 
 **Шаги:**
 1. Модели `UserDevice`, `Notification`, `Message` + миграция.
@@ -153,6 +171,8 @@
 
 ## Этап 9. Аналитика и отчёты
 
+**Статус:** ⚪ Planned
+
 **Шаги:**
 1. Запросы агрегации: Screening Completion Rate, Activation Rate, приверженность дневнику/упражнениям/препаратам, средний балл в динамике.
 2. `GET /admin/analytics` — формат под mock-контракты `mockAnalytics.ts`.
@@ -164,6 +184,8 @@
 ---
 
 ## Этап 10. Аудит и защита
+
+**Статус:** ⚪ Planned (audit model/service partially present, API not registered)
 
 **Шаги:**
 1. Аудит чтения карточки пациента, изменения ролей, назначений, закрытия алертов.
@@ -177,6 +199,8 @@
 
 ## Этап 11. Подключение фронтенда
 
+**Статус:** ⚪ Planned
+
 **Шаги:**
 1. Сверка фактических контрактов с mock-данными `frontend_dev` (`mockPatients`, `mockAlerts`, `mockAnalytics`).
 2. Замена мок-слоя на реальный клиент — по BFF-эндпоинтам кабинета врача.
@@ -189,6 +213,8 @@
 ---
 
 ## Этап 12. MVP-готовность
+
+**Статус:** ⚪ Planned
 
 **Шаги:**
 1. Нагрузочная проверка базовых сценариев (профиль из пилотной нагрузки).

@@ -1,6 +1,7 @@
 # INDEPENDENT SYSTEM AUDIT — MASTER REPORT
 
 **Дата аудита:** 21.10.2026
+**Audit Timestamp / Scope:** Часть отчёта (разделы 0–12, строки до Phase 9.1) относится к состоянию ДО Phase 9.1–9.3. Разделы, обновлённые в Phase 9.4 (22.10.2026), отражают состояние ПОСЛЕ реализации Screening Service (Phase 9.1–9.3), миграций 0002/0003 и 74 тестов. Историческая информация сохранена.
 **Источник истины:** ТЕКУЩИЙ КОД (`SechHack_26/backend`), реальный запуск, Docker, реальные HTTP-запросы, реальные тесты.
 Этот файл — ЕДИНСТВЕННЫЙ АКТУАЛЬНЫЙ ИСТОЧНИК ИСТИНЫ. Все остальные отчёты заархивированы в `backend/docs/reports/archive/`.
 
@@ -16,7 +17,7 @@
 | Test suite quality | 51 passed, 0 failed, 0 skipped, 1 warning (все тесты зелёные при запущенном PostgreSQL) |
 | Swagger readiness | /docs 200, /openapi.json 200, 16 путей, 18 операций |
 | Реальный уровень готовности проекта | ~25-30% от заявленного домена |
-| Следующая рекомендуемая фаза | Screening Service (PHQ-9 / GAD-7), затем Alert Service |
+| Следующая рекомендуемая фаза | Alert Service (Screening Service реализован) |
 
 **Общее количество найденных проблем: 9 крупных + Numerous детальных (см. раздел 12).**
 
@@ -306,8 +307,8 @@ API клиент (`src/api/client.ts`) вызывает только 2 эндп�
 ### Факт 2: Patient Service реализован
 Все 4 эндпоинта пациентов существуют в коде (router + service + repository).
 
-### Факт 3: Screening Service НЕ реализован
-В коде отсутствуют: роутер `/api/v1/screenings`, сервис скринингов, API-эндпоинты, миграции для `screening_results`. Есть только ORM-модель `ScreeningResult` в `app/models/clinical.py`.
+### Факт 3: Screening Service реализован (Phase 9.1–9.3)
+В коде присутствуют роутеры `/api/v1/screenings`, `/api/v1/questionnaires`, `/api/v1/patients/{patient_id}/screenings`, сервис скринингов, registry, scoring/severity/critical rules, миграции 0002_screening_base и 0003_screening_hardening. Историческое утверждение о его отсутствии относится к состоянию ДО Phase 9.1.
 
 ### Факт 4: Порядок этапов в TASKS.md
 TASKS.md §6 (Этап 3 — Скрининги) следует сразу после Этапа 2 (Пациенты). MODULES.md §3 определяет Screening Service как Модуль 3.
@@ -350,7 +351,7 @@ TASKS.md §6 (Этап 3 — Скрининги) следует сразу по�
 
 7. **Реальный уровень готовности проекта:** ~25-30% от заявленного домена (не 8/10, как утверждал старый отчёт).
 
-8. **Следующая рекомендуемая фаза:** Screening Service (PHQ-9 / GAD-7), затем Alert Service — подтверждено TASKS.md, MODULES.md и отсутствием кода для скринингов.
+8. **Следующая рекомендуемая фаза:** Alert Service (PHQ-9/GAD-7 screening completed; alert foundation present, full Alert Service next) — подтверждено TASKS.md, MODULES.md и кодом.
 
 9. **Заархивированные отчёты:** PROJECT_STATUS_MASTER_REPORT.md, DOCUMENTATION_CONSOLIDATION_REPORT.md, все PHASE* отчёты, INDEPENDENT_SYSTEM_preAUDIT.md — все перемещены в `backend/docs/reports/archive/`.
 

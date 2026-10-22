@@ -30,6 +30,28 @@
 | GET | `/me` | Bearer | — | профиль; 401 |
 | POST | `/change-password` | Bearer | `ChangePasswordRequest` | `{"changed":true}`; 401/422 |
 
+## Screening (`/api/v1/screenings`)
+
+| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
+|---|---|---|---|---|
+| GET | `` | Bearer | `questionnaire_code`, `version` (query, optional) | список опросников; 401/404 |
+| POST | `` | Bearer | `ScreeningCreateRequest` | результат скрининга; 401/404/422 |
+| GET | `/{screening_id}` | Bearer | — | результат скрининга; 401/404 |
+
+## Patient screenings (`/api/v1/patients/{patient_id}/screenings`)
+
+| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
+|---|---|---|---|---|
+| GET | `` | Bearer | — | история скринингов пациента; 401/404 |
+
+## Questionnaires (`/api/v1/questionnaires`)
+
+| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
+|---|---|---|---|---|
+| GET | `` | Bearer | — | список активных опросников; 401 |
+| GET | `/{code}` | Bearer | `version` (query, optional) | опросник по коду; 401/404 |
+| GET | `/{code}/versions/{version}` | Bearer | — | версия опросника; 401/404 |
+
 ## Practitioners (`/api/v1/practitioners`)
 
 | Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
