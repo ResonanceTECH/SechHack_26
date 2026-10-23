@@ -286,27 +286,32 @@ POST /api/v1/auth/invite/verify
 Подробно — в `MEDICATIONS.md`.
 
 
-## 8.5. Диагнозы МКБ-10 и C-SSRS (`crisis-service`)
+## 8.5. Диагнозы (МКБ-10/МКБ-11) и C-SSRS (`crisis-service`)
 
 | Метод | Путь | Описание | Доступ |
 |---|---|---|---|
-| GET | `/api/v1/icd10` | Список диагнозов МКБ-10 пациента | patient, doctor, psychologist |
-| POST | `/api/v1/icd10` | Поставить диагноз МКБ-10 | doctor |
-| PUT | `/api/v1/icd10/{id}` | Обновить диагноз | doctor |
+| GET | `/api/v1/diagnoses` | Список диагнозов (ICD-10/ICD-11) пациента | patient, doctor, psychologist |
+| POST | `/api/v1/diagnoses` | Поставить диагноз (ICD-10 или ICD-11) | doctor |
+| GET | `/api/v1/diagnoses/{id}` | Получить диагноз | patient, doctor, psychologist |
+| PUT | `/api/v1/diagnoses/{id}` | Обновить диагноз (статус, primary, notes) | doctor |
+| GET | `/api/v1/patients/{id}/diagnoses` | Диагнозы пациента | patient, doctor, psychologist |
 | GET | `/api/v1/cssrs` | Список оценок C-SSRS пациента | patient, doctor, psychologist |
 | POST | `/api/v1/cssrs` | Провести оценку суицидального риска (C-SSRS) | doctor, psychologist |
 
-**Пример запроса `POST /icd10`:**
+**Пример запроса `POST /diagnoses`:**
 ```json
 {
   "patient_id": "p1",
-  "code": "F32.1",
-  "description": "Депрессивный эпизод средней тяжести",
+  "coding_system": "ICD10",
+  "code": "F41.1",
+  "title": "Генерализованное тревожное расстройство",
   "diagnosis_date": "2026-10-20",
   "is_primary": true,
   "is_confirmed": true
 }
 ```
+
+Поддержка МКБ-10 и МКБ-11 одновременно: поле `coding_system` (`ICD10`/`ICD11`). Deprecated alias: `/api/v1/icd10` может оставаться как deprecated alias `/api/v1/diagnoses?coding_system=ICD10`.
 
 **Пример запроса `POST /cssrs`:**
 ```json
@@ -403,9 +408,14 @@ POST /api/v1/auth/invite/verify
 
 ## Clinical Architecture Update — Phase 11.0 (2026-10-23)
 
-### Diagnosis Layer
+### Diagnosis Layer — Реализовано (Phase 13)
 
-Current `Icd10Code` is a flat record without lifecycle/status/history. It cannot fully support diagnosis history, closure, remission, multiple diagnoses with status, primary diagnosis constraint, or ICD-11. Proposed: `PatientDiagnosis` (coding_system, code, title, is_primary, status, diagnosed_at, ended_at, diagnosed_by, is_confirmed, notes, created_at, updated_at) + `DiagnosisReference` (coding_system, code, title, title_en, chapter, parent_code, is_active, version). Partial unique index: one primary diagnosis per patient.
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Планируется: `DiagnosisReference` (справочник МКБ-10/МКБ-11), deprecated alias `/api/v1/icd10`, clinic isolation, audit logging.
 
 ### ICD-10 / ICD-11 Strategy
 

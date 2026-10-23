@@ -67,4 +67,11 @@ class PatientService:
         result = await self.repository.get_patient_summary(db, patient_id, current_user)
         if not result:
             raise not_found("Пациент не найден")
+        from app.repositories.diagnosis_repository import DiagnosisRepository
+        diagnoses = await DiagnosisRepository().list_by_patient(db, patient_id)
+        result["diagnoses"] = {
+            "active": [d.code for d in diagnoses if d.status == "active"],
+            "primary": next((d.code for d in diagnoses if d.is_primary and d.status == "active"), None),
+            "total": len(diagnoses),
+        }
         return result

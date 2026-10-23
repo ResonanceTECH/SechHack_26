@@ -7,6 +7,8 @@ from app.models.auth import InviteCode, RefreshToken, SmsCode
 from app.models.care import Alert, CarePlan, ExerciseAssignment, ExerciseCompletion
 from app.models.clinic import Clinic
 from app.models.clinical import DiaryEntry, ScreeningResult
+from app.models.diagnosis import DiagnosisReference, PatientDiagnosis
+
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.user import User
 
@@ -18,6 +20,9 @@ __all__ = [
     "DiaryEntry",
     "ExerciseAssignment",
     "ExerciseCompletion",
+    "DiagnosisReference",
+    "PatientDiagnosis",
+
     "InviteCode",
     "PatientAssignment",
     "PatientProfile",

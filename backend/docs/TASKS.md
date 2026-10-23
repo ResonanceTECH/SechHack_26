@@ -242,9 +242,14 @@
 
 ## Clinical Architecture Update — Phase 11.0 (2026-10-23)
 
-### Diagnosis Layer
+### Diagnosis Layer — Реализовано (Phase 13)
 
-Current `Icd10Code` is a flat record without lifecycle/status/history. It cannot fully support diagnosis history, closure, remission, multiple diagnoses with status, primary diagnosis constraint, or ICD-11. Proposed: `PatientDiagnosis` (coding_system, code, title, is_primary, status, diagnosed_at, ended_at, diagnosed_by, is_confirmed, notes, created_at, updated_at) + `DiagnosisReference` (coding_system, code, title, title_en, chapter, parent_code, is_active, version). Partial unique index: one primary diagnosis per patient.
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Планируется: `DiagnosisReference` (справочник МКБ-10/МКБ-11), deprecated alias `/api/v1/icd10`, clinic isolation, audit logging.
 
 ### ICD-10 / ICD-11 Strategy
 

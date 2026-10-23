@@ -84,13 +84,24 @@
 | GET | `` | Bearer, роли patient/doctor/psychologist | — | план безопасности пациента; 401/404 |
 | POST | `` | Bearer, роли doctor/psychologist | `SafetyPlanCreate` | созданный план; 201/401/422 |
 
-## Диагнозы МКБ-10 (`/api/v1/icd10`) — ПЛАНИРУЕТСЯ
+## Диагнозы (`/api/v1/diagnoses`) — РЕАЛИЗОВАНО
 
 | Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
 |---|---|---|---|---|
-| GET | `` | Bearer, роли patient/doctor/psychologist | — | список диагнозов пациента; 401 |
-| POST | `` | Bearer, роль doctor | `Icd10Create` | созданный диагноз; 201/401/422 |
-| PUT | `/{id}` | Bearer, роль doctor | `Icd10Update` | обновлённый диагноз; 401/403/404/422 |
+| GET | `` | Bearer, роли patient/doctor/psychologist | `patient_id` (query, optional) | список диагнозов; 401/403 |
+| POST | `` | Bearer, роли doctor/super_admin | `DiagnosisCreate` | созданный диагноз; 201/401/403/422 |
+| GET | `/{id}` | Bearer, роли patient/doctor/psychologist | — | диагноз; 401/403/404 |
+| PUT | `/{id}` | Bearer, роли doctor/super_admin | `DiagnosisUpdate` | обновлённый диагноз; 401/403/404/422 |
+
+## Диагнозы пациента (`/api/v1/patients/{patient_id}/diagnoses`) — РЕАЛИЗОВАНО
+
+| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
+|---|---|---|---|---|
+| GET | `` | Bearer, роли patient/doctor/psychologist | — | список диагнозов пациента; 401/403/404 |
+
+Поддержка МКБ-10 и МКБ-11 одновременно: поле `coding_system` (`ICD10`/`ICD11`). Patient Card summary включает диагнозы.
+
+Deprecated alias: `/api/v1/icd10` может оставаться как deprecated alias `/api/v1/diagnoses?coding_system=ICD10` (планируется).
 
 ## C-SSRS оценка суицидального риска (`/api/v1/cssrs`) — ПЛАНИРУЕТСЯ
 

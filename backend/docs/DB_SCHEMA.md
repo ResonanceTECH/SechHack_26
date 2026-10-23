@@ -319,24 +319,49 @@ CREATE INDEX idx_safety_plans_patient_id ON safety_plans(patient_id);
 CREATE INDEX idx_safety_plans_is_active ON safety_plans(is_active);
 
 -- ============================================
--- Icd10Code — диагнозы по МКБ-10 (P0)
+-- PatientDiagnosis — диагнозы пациента (МКБ-10/МКБ-11) (P0)
 -- ============================================
-CREATE TABLE icd10_codes (
+CREATE TABLE patient_diagnoses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
-    practitioner_id UUID NOT NULL REFERENCES practitioner_profiles(id),
-    code VARCHAR(10) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    diagnosis_date DATE NOT NULL,
+    coding_system VARCHAR(10) NOT NULL CHECK (coding_system IN ('ICD10','ICD11')),
+    code VARCHAR(30) NOT NULL,
+    title VARCHAR(255),
     is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-    is_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','remission','resolved','closed')),
+    diagnosed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    diagnosed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_confirmed BOOLEAN NOT NULL DEFAULT TRUE,
     notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_icd10_codes_patient_id ON icd10_codes(patient_id);
-CREATE INDEX idx_icd10_codes_code ON icd10_codes(code);
-CREATE INDEX idx_icd10_codes_is_primary ON icd10_codes(is_primary);
+CREATE INDEX idx_patient_diagnoses_patient_id ON patient_diagnoses(patient_id);
+CREATE INDEX idx_patient_diagnoses_status ON patient_diagnoses(status);
+CREATE INDEX idx_patient_diagnoses_code ON patient_diagnoses(code);
+CREATE UNIQUE INDEX uq_patient_diagnoses_primary_active ON patient_diagnoses(patient_id) WHERE is_primary = true AND status = 'active';
+
+-- ============================================
+-- DiagnosisReference — справочник диагнозов (МКБ-10/МКБ-11) — ПЛАНИРУЕТСЯ
+-- ============================================
+CREATE TABLE diagnosis_references (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    coding_system VARCHAR(10) NOT NULL CHECK (coding_system IN ('ICD10','ICD11')),
+    code VARCHAR(30) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    title_en VARCHAR(255),
+    chapter VARCHAR(255),
+    parent_code VARCHAR(30),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    version VARCHAR(50),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (coding_system, code)
+);
+
+CREATE INDEX idx_diagnosis_references_coding_system ON diagnosis_references(coding_system);
+CREATE INDEX idx_diagnosis_references_code ON diagnosis_references(code);
 
 -- ============================================
 -- MedicationSkipReason — причина пропуска приёма лекарства (P0)
@@ -507,9 +532,14 @@ alembic upgrade head
 
 ## Clinical Architecture Update — Phase 11.0 (2026-10-23)
 
-### Diagnosis Layer
+### Diagnosis Layer — Реализовано (Phase 13)
 
-Current `Icd10Code` is a flat record without lifecycle/status/history. It cannot fully support diagnosis history, closure, remission, multiple diagnoses with status, primary diagnosis constraint, or ICD-11. Proposed: `PatientDiagnosis` (coding_system, code, title, is_primary, status, diagnosed_at, ended_at, diagnosed_by, is_confirmed, notes, created_at, updated_at) + `DiagnosisReference` (coding_system, code, title, title_en, chapter, parent_code, is_active, version). Partial unique index: one primary diagnosis per patient.
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Планируется: `DiagnosisReference` (справочник МКБ-10/МКБ-11), deprecated alias `/api/v1/icd10`, clinic isolation, audit logging.
 
 ### ICD-10 / ICD-11 Strategy
 

@@ -332,20 +332,43 @@ UNIQUE (`user_id`, `device_id`).
 | `created_at` | DateTime | Дата создания |
 | `updated_at` | DateTime | Дата последнего обновления |
 
-### 1.23 `Icd10Code` — диагноз по МКБ-10
+### 1.23 `PatientDiagnosis` — диагноз пациента (МКБ-10/МКБ-11)
 
 | Поле | Тип | Описание |
 |---|---|---|
 | `id` | UUID | PK |
 | `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
-| `practitioner_id` | UUID (FK → PractitionerProfile.id) | Врач, поставивший диагноз |
-| `code` | String (10) | Код МКБ-10 (например, F32.1, F41.1) |
-| `description` | String | Описание диагноза |
-| `diagnosis_date` | Date | Дата установки диагноза |
+| `coding_system` | Enum (`ICD10`, `ICD11`) | Система кодирования |
+| `code` | String (30) | Код диагноза (F41.1, 6B00) |
+| `title` | String (255, nullable) | Название диагноза |
 | `is_primary` | Boolean | Первичный диагноз |
+| `status` | Enum (`active`, `remission`, `resolved`, `closed`) | Статус диагноза |
+| `diagnosed_at` | DateTime | Дата установки диагноза |
+| `ended_at` | DateTime (nullable) | Дата закрытия/ремиссии |
+| `diagnosed_by` | UUID (FK → User.id, nullable) | Врач, поставивший диагноз |
 | `is_confirmed` | Boolean | Подтверждён ли диагноз |
 | `notes` | Text (nullable) | Замечания врача |
 | `created_at` | DateTime | Дата создания записи |
+| `updated_at` | DateTime | Дата последнего обновления |
+
+Частичный UNIQUE-индекс: один активный первичный диагноз на пациента.
+
+### 1.24 `DiagnosisReference` — справочник диагнозов (МКБ-10/МКБ-11) — ПЛАНИРУЕТСЯ
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `coding_system` | Enum (`ICD10`, `ICD11`) | Система кодирования |
+| `code` | String (30) | Код диагноза |
+| `title` | String (255) | Название (ru) |
+| `title_en` | String (255, nullable) | Название (en) |
+| `chapter` | String (255, nullable) | Глава/раздел |
+| `parent_code` | String (30, nullable) | Родительский код |
+| `is_active` | Boolean | Активен в справочнике |
+| `version` | String (50, nullable) | Версия справочника |
+| `created_at` | DateTime | Дата создания |
+
+UNIQUE(coding_system, code).
 
 ### 1.24 `MedicationSkipReason` — причина пропуска приёма лекарства
 
@@ -506,9 +529,14 @@ RefreshToken N─1 User (replaced_by → RefreshToken self)
 
 ## Clinical Architecture Update — Phase 11.0 (2026-10-23)
 
-### Diagnosis Layer
+### Diagnosis Layer — Реализовано (Phase 13)
 
-Current `Icd10Code` is a flat record without lifecycle/status/history. It cannot fully support diagnosis history, closure, remission, multiple diagnoses with status, primary diagnosis constraint, or ICD-11. Proposed: `PatientDiagnosis` (coding_system, code, title, is_primary, status, diagnosed_at, ended_at, diagnosed_by, is_confirmed, notes, created_at, updated_at) + `DiagnosisReference` (coding_system, code, title, title_en, chapter, parent_code, is_active, version). Partial unique index: one primary diagnosis per patient.
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Планируется: `DiagnosisReference` (справочник МКБ-10/МКБ-11), deprecated alias `/api/v1/icd10`, clinic isolation, audit logging.
 
 ### ICD-10 / ICD-11 Strategy
 
