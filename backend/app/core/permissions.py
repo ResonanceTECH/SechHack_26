@@ -64,8 +64,12 @@ PERMISSIONS: dict[str, frozenset[str]] = {
     "clinic:manage": frozenset({ROLE_SUPER_ADMIN}),
     "diagnosis:read": frozenset(ALL_ROLES),
     "diagnosis:write": frozenset({ROLE_DOCTOR, ROLE_SUPER_ADMIN}),
+    "safety:read": frozenset(ALL_ROLES),
+    "safety:write": frozenset({ROLE_DOCTOR, ROLE_PSYCHOLOGIST, ROLE_SUPER_ADMIN}),
+    "crisis:read": frozenset(ALL_ROLES),
     "assessment:read": frozenset(ALL_ROLES),
     "assessment:write": frozenset({ROLE_DOCTOR, ROLE_SUPER_ADMIN}),
+    "crisis:write": frozenset({ROLE_PATIENT, ROLE_DOCTOR, ROLE_PSYCHOLOGIST, ROLE_COORDINATOR, ROLE_SUPER_ADMIN}),
 
 }
 

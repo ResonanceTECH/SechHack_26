@@ -435,8 +435,8 @@ SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, de
 
 ### Screening Expansion
 
-Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change. C-SSRS-related crisis events can be stored as CrisisSignal with source=screening_result.
 
 ### Patient Card Requirements
 
-Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.
+Missing blocks: adherence, screening trends. (Diagnoses, assessment schedule, safety plans, crisis history implemented; see Phase 13/15/17.)

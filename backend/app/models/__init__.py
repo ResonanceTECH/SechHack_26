@@ -10,6 +10,7 @@ from app.models.clinical import DiaryEntry, ScreeningResult
 from app.models.diagnosis import DiagnosisReference, PatientDiagnosis
 
 from app.models.profile import PatientProfile, PractitionerProfile
+from app.models.safety import CrisisSignal, SafetyPlan
 from app.models.user import User
 
 __all__ = [

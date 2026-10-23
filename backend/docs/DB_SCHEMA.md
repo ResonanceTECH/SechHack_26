@@ -549,7 +549,7 @@ Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes codi
 
 ### MBC Layer
 
-Chain: Diagnosis → Assessment Plan → Screening → Trend. `AssessmentPlan` реализован (миграция 0008): patient_id, questionnaire_code, interval_days, enabled, created_by, created_at/updated_at. Optional `SymptomTrend` остаётся планируемым. Screening поддерживает PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS через registry/versioning; MBC добавляет расписание.
+Chain: Diagnosis → Assessment Plan → Screening → Trend. `AssessmentPlan` реализован (миграция 0008). `SymptomTrend` реализован как вычисляемый endpoint `GET /api/v1/patients/{id}/screening-trend` (Phase 16) без отдельной таблицы. Screening поддерживает PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS через registry/versioning; MBC добавляет расписание.
 
 ### Diary Rework
 
@@ -561,8 +561,7 @@ SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, de
 
 ### Screening Expansion
 
-Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
 
 ### Patient Card Requirements
 
-Missing blocks: adherence, safety plans, crisis history, screening trends. (Diagnoses and assessment schedule implemented; see Phase 13/15.)
+Missing blocks: adherence. (Diagnoses, assessment schedule, safety plans, crisis history, screening trend implemented; see Phase 13/15/16/17.)
