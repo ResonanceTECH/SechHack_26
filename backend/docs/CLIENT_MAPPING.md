@@ -72,7 +72,7 @@
 
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
-| Medication tracking | BLOCKED | medication endpoints not implemented |
+| Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
 | Appointment scheduling | BLOCKED | appointment endpoints not implemented |
 
 ## 4. Screen → Endpoint Matrix (Frontend — wt_frontend)
@@ -107,7 +107,7 @@
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | C-SSRS | BLOCKED | endpoint planned, not implemented |
-| Medication skip | BLOCKED | endpoint planned, not implemented |
+| Medication skip | READY | `/api/v1/adherence` (GET/POST), `/api/v1/prescriptions/{id}/adherence-rate` (GET) |
 | Screening trend frontend charts | PARTIAL | endpoint exists, UI wiring pending |
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |
 | Chat / messaging | BLOCKED | chat endpoints not implemented |
@@ -140,7 +140,7 @@
 
 ## 8. OpenAPI
 
-- `backend/docs/openapi.json`
+- `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
 - 41 путей (актуальное состояние runtime, совпадает с committed spec)
 

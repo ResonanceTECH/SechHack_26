@@ -343,15 +343,13 @@
 | `diagnosis-service` | `diagnoses.py`, `diagnosis.py` | ✅ Реализован | diagnoses, icd10 (deprecated alias), patient diagnoses |
 | `assessment-plan` | `assessment_plans.py`, `care.py` (CarePlan) | ✅ Реализован | assessment-plans (CRUD) |
 | `safety-service` | `safety.py` | ✅ Реализован | safety/plans, safety/crisis-signals |
+| `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create) |
 | `integrations` | `integrations.py`, `base.py`, `emergency_adapter.py`, `mis_adapter.py`, `fhir_mapper.py` | ✅ Частично | integration events router |
 
 ### 5.3 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Статус в коде |
 |--------|-------------------|---------------|
-| `medication-service` | API_CONTRACTS.md §3.1, MEDICATIONS.md | Нет роутера `/api/v1/medications` |
-| `prescription-service` | API_CONTRACTS.md §3.3, MEDICATIONS.md §3.3 | Нет роутера `/api/v1/prescriptions` |
-| `adherence-service` | MEDICATIONS.md §3.4 | Нет роутера `/api/v1/adherence` |
 | `program-service` (exercises) | MODULES.md §8 | Нет роутера `/api/v1/exercises` |
 | `message-service` | API_CONTRACTS.md | Нет роутера `/api/v1/messages` |
 | `appointment-service` | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` |

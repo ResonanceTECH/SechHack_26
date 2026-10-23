@@ -1,0 +1,6 @@
+abstract.md
+intro-termsheet.md
+introduction.md
+part-01-general_requirements.md
+part-conclusion.md
+sources.md
