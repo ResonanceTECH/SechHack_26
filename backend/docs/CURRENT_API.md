@@ -101,7 +101,7 @@
 
 Поддержка МКБ-10 и МКБ-11 одновременно: поле `coding_system` (`ICD10`/`ICD11`). Patient Card summary включает диагнозы.
 
-Deprecated alias: `/api/v1/icd10` может оставаться как deprecated alias `/api/v1/diagnoses?coding_system=ICD10` (планируется).
+Deprecated alias: `/api/v1/icd10` реализован как deprecated alias `/api/v1/diagnoses?coding_system=ICD10` (Phase 14).
 
 ## C-SSRS оценка суицидального риска (`/api/v1/cssrs`) — ПЛАНИРУЕТСЯ
 

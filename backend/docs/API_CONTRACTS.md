@@ -415,7 +415,7 @@ POST /api/v1/auth/invite/verify
 - API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
 - Patient Card summary включает диагнозы.
 - RBAC: diagnosis:read / diagnosis:write.
-- Планируется: `DiagnosisReference` (справочник МКБ-10/МКБ-11), deprecated alias `/api/v1/icd10`, clinic isolation, audit logging.
+- Реализовано (Phase 14): `DiagnosisReference` (справочник МКБ-10/МКБ-11, миграция 0007, seed subset), deprecated alias `/api/v1/icd10`, clinic isolation для diagnosis endpoints, audit logging на create/update.
 
 ### ICD-10 / ICD-11 Strategy
 
