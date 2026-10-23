@@ -8,6 +8,7 @@ from app.models.care import Alert, CarePlan, ExerciseAssignment, ExerciseComplet
 from app.models.clinic import Clinic
 from app.models.clinical import DiaryEntry, ScreeningResult
 from app.models.diagnosis import DiagnosisReference, PatientDiagnosis
+from app.models.integration import IntegrationEvent
 
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.safety import CrisisSignal, SafetyPlan
@@ -24,6 +25,7 @@ __all__ = [
     "DiagnosisReference",
     "PatientDiagnosis",
 
+    "IntegrationEvent",
     "InviteCode",
     "PatientAssignment",
     "PatientProfile",

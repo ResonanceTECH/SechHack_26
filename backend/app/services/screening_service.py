@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from app.core.questionnaire_registry import get_definition
 
@@ -88,7 +88,8 @@ class ScreeningService:
             from app.services.alert_service import AlertService
             await AlertService().generate_alerts_for_screening(db, result)
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('alert generation failed')
         return result
 
     # Backward-compatible helpers (Phase 9.1 API)

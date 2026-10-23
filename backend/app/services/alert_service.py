@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import uuid
 from typing import Any
@@ -43,7 +43,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(alert)
 
     async def generate_alerts_for_screening(self, db, screening):
@@ -140,7 +141,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(updated)
 
     async def dismiss_alert(self, db, alert_id, current_user, comment=None):
@@ -169,7 +171,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(updated)
 
     async def update_alert(self, db, alert_id, current_user, data):

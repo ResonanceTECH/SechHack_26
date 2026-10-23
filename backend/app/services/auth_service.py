@@ -172,6 +172,8 @@ async def refresh(session: AsyncSession, *, refresh_token: str) -> TokenPair:
     try:
         payload = jwt_service.decode_token(refresh_token, expected_type="refresh")
     except Exception:
+        import logging
+        logging.getLogger(__name__).warning('invalid refresh token decode')
         raise unauthorized("Недействительный refresh-токен") from None
 
     user = (
