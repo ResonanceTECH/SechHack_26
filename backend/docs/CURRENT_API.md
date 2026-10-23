@@ -99,9 +99,22 @@
 |---|---|---|---|---|
 | GET | `` | Bearer, роли patient/doctor/psychologist | — | список диагнозов пациента; 401/403/404 |
 
+
 Поддержка МКБ-10 и МКБ-11 одновременно: поле `coding_system` (`ICD10`/`ICD11`). Patient Card summary включает диагнозы.
 
 Deprecated alias: `/api/v1/icd10` реализован как deprecated alias `/api/v1/diagnoses?coding_system=ICD10` (Phase 14).
+
+## Планы оценок (MBC) (`/api/v1/assessment-plans`) — РЕАЛИЗОВАНО
+
+| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
+|---|---|---|---|---|
+| GET | `` | Bearer, роли patient/doctor/psychologist | `patient_id` (query, optional) | список планов; 401/403 |
+| POST | `` | Bearer, роли doctor/super_admin | `AssessmentPlanCreate` | созданный план; 201/401/403/422 |
+| GET | `/{id}` | Bearer, роли patient/doctor/psychologist | — | план; 401/403/404 |
+| PUT | `/{id}` | Bearer, роли doctor/super_admin | `AssessmentPlanUpdate` | обновлённый план; 401/403/404/422 |
+| DELETE | `/{id}` | Bearer, роли doctor/super_admin | — | 204/401/403/404 |
+
+Планы связывают диагноз → опросник (PHQ-9, GAD-7 и др. из реестра) → расписание → результаты скринингов → тренды. Patient Card summary включает активные планы, ближайший срок и просроченные.
 
 ## C-SSRS оценка суицидального риска (`/api/v1/cssrs`) — ПЛАНИРУЕТСЯ
 

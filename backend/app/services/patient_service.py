@@ -74,4 +74,9 @@ class PatientService:
             "primary": next((d.code for d in diagnoses if d.is_primary and d.status == "active"), None),
             "total": len(diagnoses),
         }
+        from app.services.assessment_plan_service import AssessmentPlanService
+        from app.repositories.assessment_plan_repository import AssessmentPlanRepository
+
+        assessment = await AssessmentPlanService(AssessmentPlanRepository()).patient_summary_assessment(db, patient_id)
+        result["assessment"] = assessment
         return result
