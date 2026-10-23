@@ -30,7 +30,7 @@
 
 ### JWT Flow
 
-- Access token短оживущий (15 мин).
+- Access token короткоживущий (15 мин).
 - Refresh token используется для получения нового access токена (7 дней).
 - Роль встроена в claims JWT.
 
@@ -40,6 +40,10 @@
 
 | Роль | User ID | Profile ID |
 |------|---------|------------|
+| Patient | `70f7a34f-f8df-49fc-a724-28f6d656c938` | `705fa5d0-acfa-40e8-88d7-e4c516aa1048` |
+| Doctor | `ba827169-c584-4186-a357-2e6a8bd8d04e` | — |
+| Psychologist | `c3860428-8b82-494d-a617-cb2a546b649a` | — |
+| Coordinator | `9efa3cfa-503f-46d2-8f41-61c22f4f2d10` | — |
 
 ## 3. Screen → Endpoint Matrix (Mobile — wt_mobile)
 
@@ -106,7 +110,6 @@
 | Medication skip | BLOCKED | endpoint planned, not implemented |
 | Screening trend frontend charts | PARTIAL | endpoint exists, UI wiring pending |
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |
-
 | Chat / messaging | BLOCKED | chat endpoints not implemented |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
 
@@ -135,15 +138,10 @@
 - Ошибки валидации возвращают 422 с деталями в `error`.
 - Коды `error.code`: `unauthorized`, `forbidden`, `invalid_credentials`, `not_found`, `validation_error`, `rate_limited`, `conflict`, `internal_error`.
 
-## 8. OpenAPI Bundle
+## 8. OpenAPI
 
-- `backend/docs/openapi_bundle.json`
+- `backend/docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
 - 41 путей (актуальное состояние runtime, совпадает с committed spec)
-
-| Patient | `70f7a34f-f8df-49fc-a724-28f6d656c938` | `705fa5d0-acfa-40e8-88d7-e4c516aa1048` |
-| Doctor | `ba827169-c584-4186-a357-2e6a8bd8d04e` | — |
-| Psychologist | `c3860428-8b82-494d-a617-cb2a546b649a` | — |
-| Coordinator | `9efa3cfa-503f-46d2-8f41-61c22f4f2d10` | — |
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
