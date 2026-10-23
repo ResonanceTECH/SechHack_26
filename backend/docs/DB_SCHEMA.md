@@ -508,6 +508,8 @@ ON rx.medication_adherence (prescription_id, taken_at);
 | Миграция | Описание | Таблицы |
 |---|---|---|
 | `0004_crisis_safety_entities` | Добавление критических клинических сущностей | `crisis_signals`, `cssrs_assessments`, `safety_plans`, `icd10_codes`, `medication_skip_reasons` |
+| `0007_diagnosis_reference` | Справочник МКБ-10/МКБ-11 | `diagnosis_references` |
+| `0008_assessment_plans` | Планы оценок (MBC) | `assessment_plans` |
 
 Создание:
 ```bash
@@ -547,7 +549,7 @@ Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes codi
 
 ### MBC Layer
 
-Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+Chain: Diagnosis → Assessment Plan → Screening → Trend. `AssessmentPlan` реализован (миграция 0008): patient_id, questionnaire_code, interval_days, enabled, created_by, created_at/updated_at. Optional `SymptomTrend` остаётся планируемым. Screening поддерживает PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS через registry/versioning; MBC добавляет расписание.
 
 ### Diary Rework
 
@@ -563,4 +565,4 @@ Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL
 
 ### Patient Card Requirements
 
-Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.
+Missing blocks: adherence, safety plans, crisis history, screening trends. (Diagnoses and assessment schedule implemented; see Phase 13/15.)

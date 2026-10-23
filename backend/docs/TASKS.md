@@ -274,3 +274,13 @@ Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL
 ### Patient Card Requirements
 
 Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.
+## Phase 15 — AssessmentPlan (implemented + audit fixes 2026-10-23)
+
+- `AssessmentPlan` реализован: модель, миграция 0008, CRUD `/api/v1/assessment-plans`, patient summary.
+- RBAC: `assessment:read` для всех ролей, `assessment:write` для doctor/super_admin.
+- Clinic isolation: проверка принадлежности пациента клинике врача в create/get/update/delete/list.
+- Patient existence validation: 404 вместо 500 при отсутствующем пациенте.
+- Validation: неизвестный опросник возвращает 422.
+- Audit logging: `assessment_plan.create/update/delete` в audit_logs.
+- Миграция 0008: downgrade/upgrade проверены.
+- Тесты: `tests/api/test_assessment_plans_api.py` (84 passed в полном прогоне).

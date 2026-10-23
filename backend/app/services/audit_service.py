@@ -38,6 +38,9 @@ KNOWN_ACTIONS = frozenset(
         "alert.dismiss",
         "alert.updated",
         "employee.role_change",
+        "assessment_plan.create",
+        "assessment_plan.update",
+        "assessment_plan.delete",
     }
 )
 

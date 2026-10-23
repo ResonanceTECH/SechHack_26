@@ -9,11 +9,12 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import forbidden, not_found
+from app.core.errors import forbidden, not_found, validation_error
 from app.core.questionnaire_registry import get_definition
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.diagnosis import PatientDiagnosis
 from app.repositories.assessment_plan_repository import AssessmentPlanRepository
+from app.services import audit_service
 import datetime as _dt
 
 
@@ -68,17 +69,20 @@ class AssessmentPlanService:
         profile = (await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == user.id))).scalars().first()
         return str(profile.clinic_id) if profile and profile.clinic_id else None
 
-    async def _patient_clinic_id(self, db, patient_id) -> Optional[str]:
+    async def _get_patient_profile(self, db: AsyncSession, patient_id) -> Optional[PatientProfile]:
         try:
             pid = uuid.UUID(str(patient_id))
         except (ValueError, AttributeError):
             return None
-        profile = (await db.execute(select(PatientProfile).where(PatientProfile.id == pid))).scalars().first()
+        return (await db.execute(select(PatientProfile).where(PatientProfile.id == pid))).scalars().first()
+
+    async def _patient_clinic_id(self, db, patient_id) -> Optional[str]:
+        profile = await self._get_patient_profile(db, patient_id)
         return str(profile.clinic_id) if profile and profile.clinic_id else None
 
     def _validate_questionnaire(self, code: str) -> None:
         if get_definition(code) is None:
-            raise ValueError("Неизвестный опросник")
+            raise validation_error("Неизвестный опросник")
 
     async def _validate_diagnosis(self, db: AsyncSession, patient_id: str, diagnosis_id: Optional[str]) -> None:
         if not diagnosis_id:
@@ -98,15 +102,22 @@ class AssessmentPlanService:
             raise forbidden()
         payload = dict(data)
         patient_id = payload["patient_id"]
+        patient_profile = await self._get_patient_profile(db, patient_id)
+        if patient_profile is None:
+            raise not_found("Пациент не найден")
         if role != "super_admin":
             p_clinic = await self._practitioner_clinic_id(db, current_user)
-            pat_clinic = await self._patient_clinic_id(db, patient_id)
+            pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
             if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
                 raise forbidden()
         self._validate_questionnaire(payload["questionnaire_code"])
         await self._validate_diagnosis(db, patient_id, payload.get("diagnosis_id"))
         payload["created_by"] = str(current_user.id)
         row = await self.repository.create(db, payload)
+        await audit_service.record(
+            db, user_id=current_user.id, action="assessment_plan.create",
+            entity_type="AssessmentPlan", entity_id=row.id, new_values=payload, commit=True,
+        )
         return self._to_response(row)
 
     async def get_plan(self, db: AsyncSession, plan_id: str, current_user) -> dict:
@@ -119,8 +130,11 @@ class AssessmentPlanService:
             if own != str(row.patient_id):
                 raise forbidden()
         elif role != "super_admin":
+            patient_profile = await self._get_patient_profile(db, row.patient_id)
+            if patient_profile is None:
+                raise not_found("Пациент не найден")
             p_clinic = await self._practitioner_clinic_id(db, current_user)
-            pat_clinic = await self._patient_clinic_id(db, row.patient_id)
+            pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
             if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
                 raise forbidden()
         return self._to_response(row)
@@ -133,8 +147,11 @@ class AssessmentPlanService:
         if row is None:
             raise not_found("План оценки не найден")
         if role != "super_admin":
+            patient_profile = await self._get_patient_profile(db, row.patient_id)
+            if patient_profile is None:
+                raise not_found("Пациент не найден")
             p_clinic = await self._practitioner_clinic_id(db, current_user)
-            pat_clinic = await self._patient_clinic_id(db, row.patient_id)
+            pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
             if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
                 raise forbidden()
         payload = dict(data)
@@ -142,7 +159,12 @@ class AssessmentPlanService:
             self._validate_questionnaire(payload["questionnaire_code"])
         if "diagnosis_id" in payload:
             await self._validate_diagnosis(db, str(row.patient_id), payload.get("diagnosis_id"))
+        old = {"questionnaire_code": row.questionnaire_code, "interval_days": row.interval_days, "enabled": row.enabled}
         updated = await self.repository.update(db, plan_id, payload)
+        await audit_service.record(
+            db, user_id=current_user.id, action="assessment_plan.update",
+            entity_type="AssessmentPlan", entity_id=updated.id, old_values=old, new_values=payload, commit=True,
+        )
         return self._to_response(updated)
 
     async def disable_plan(self, db: AsyncSession, plan_id: str, current_user) -> dict:
@@ -156,11 +178,19 @@ class AssessmentPlanService:
         if row is None:
             raise not_found("План оценки не найден")
         if role != "super_admin":
+            patient_profile = await self._get_patient_profile(db, row.patient_id)
+            if patient_profile is None:
+                raise not_found("Пациент не найден")
             p_clinic = await self._practitioner_clinic_id(db, current_user)
-            pat_clinic = await self._patient_clinic_id(db, row.patient_id)
+            pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
             if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
                 raise forbidden()
+        old = {"id": str(row.id), "patient_id": str(row.patient_id), "questionnaire_code": row.questionnaire_code}
         await self.repository.delete(db, plan_id)
+        await audit_service.record(
+            db, user_id=current_user.id, action="assessment_plan.delete",
+            entity_type="AssessmentPlan", entity_id=row.id, old_values=old, commit=True,
+        )
 
     async def list_plans(self, db: AsyncSession, current_user, patient_id: Optional[str] = None) -> dict:
         role = getattr(current_user, "role", None)
@@ -172,8 +202,19 @@ class AssessmentPlanService:
                 raise forbidden()
             patient_id = own
         clinic_id = None
-        if role not in ("patient", "super_admin") and not patient_id:
-            clinic_id = await self._practitioner_clinic_id(db, current_user)
+        if role not in ("patient", "super_admin"):
+            if patient_id:
+                patient_profile = await self._get_patient_profile(db, patient_id)
+                if patient_profile is None:
+                    raise not_found("Пациент не найден")
+                p_clinic = await self._practitioner_clinic_id(db, current_user)
+                pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
+                if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+                    raise forbidden()
+            else:
+                clinic_id = await self._practitioner_clinic_id(db, current_user)
+                if clinic_id is None:
+                    return {"items": [], "total": 0}
         if patient_id:
             rows = await self.repository.list_by_patient(db, patient_id)
         else:

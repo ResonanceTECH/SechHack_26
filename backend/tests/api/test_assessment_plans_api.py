@@ -51,6 +51,28 @@ def test_psychologist_cannot_write():
     assert resp.status_code == 403
 
 
+@pytest.mark.db
+def test_create_invalid_questionnaire_422():
+    from app.main import app
+    client = TestClient(app)
+    resp = client.post("/api/v1/assessment-plans", json={
+        "patient_id": PATIENT_PROFILE_ID,
+        "questionnaire_code": "unknown_q",
+        "interval_days": 14,
+    }, headers={"Authorization": f"Bearer {DOCTOR_TOKEN}"})
+    assert resp.status_code == 422
+
+
+@pytest.mark.db
+def test_get_unknown_plan_404():
+    from app.main import app
+    from uuid import uuid4
+    client = TestClient(app)
+    resp = client.get(f"/api/v1/assessment-plans/{uuid4()}",
+                      headers={"Authorization": f"Bearer {DOCTOR_TOKEN}"})
+    assert resp.status_code == 404
+
+
 def test_patient_cannot_create():
     from app.main import app
     client = TestClient(app)
