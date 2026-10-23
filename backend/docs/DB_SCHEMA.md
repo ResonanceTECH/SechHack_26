@@ -564,4 +564,4 @@ SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, de
 
 ### Patient Card Requirements
 
-Missing blocks: adherence. (Diagnoses, assessment schedule, safety plans, crisis history, screening trend implemented; see Phase 13/15/16/17.)
+Missing blocks: screening trends. (Diagnoses, assessment schedule, safety plans, crisis history, adherence implemented; see Phase 13/15/16/17/18.)

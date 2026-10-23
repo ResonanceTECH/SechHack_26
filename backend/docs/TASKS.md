@@ -272,7 +272,7 @@ SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, de
 
 ### Patient Card Requirements
 
-Missing blocks: adherence, screening trends. (Diagnoses, assessment schedule, safety plans, crisis history implemented; see Phase 13/15/17.)
+Missing blocks: screening trends. (Diagnoses, assessment schedule, safety plans, crisis history, adherence implemented; see Phase 13/15/17/18.)
 ## Phase 15 — AssessmentPlan (implemented + audit fixes 2026-10-23)
 
 - `AssessmentPlan` реализован: модель, миграция 0008, CRUD `/api/v1/assessment-plans`, patient summary.

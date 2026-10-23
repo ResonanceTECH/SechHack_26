@@ -66,23 +66,26 @@
 | GET | `` | Bearer | — | список пациентов; 401 |
 | GET | `/{patient_id}` | Bearer | — | карточка; 401/404 |
 | PATCH | `/{patient_id}` | Bearer | `PatientUpdate` | обновлённая карточка; 401/404/422 |
+| GET | `/{patient_id}/summary` | Bearer | — | сокращённая карточка; 401/404 |
+| GET | `/{patient_id}/screening-trend` | Bearer | — | standalone screening trend; 401/404 |
+| GET | `/{patient_id}/diagnoses` | Bearer | — | список диагнозов пациента; 401/403/404 |
 
 ## Safety (`/api/v1/safety`) — РЕАЛИЗОВАНО
 
 | Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
 |---|---|---|---|---|
-| POST | `/signal` | Bearer, роль patient | `CrisisSignalCreate` | созданный сигнал; 401/422 |
-| GET | `/signals` | Bearer, роли patient/doctor/psychologist/coordinator | — | список сигналов; 401 |
-| GET | `/signals/{id}` | Bearer, роли patient/doctor/psychologist/coordinator | — | детальная карточка; 401/404 |
-| PATCH | `/signals/{id}/acknowledge` | Bearer, роли doctor/psychologist | `{"status": "acknowledged"}` | обновлённый сигнал; 401/403/404 |
-| PATCH | `/signals/{id}/resolve` | Bearer, роли doctor/psychologist | `{"status": "resolved"}` | обновлённый сигнал; 401/403/404 |
+| GET | `/plans` | Bearer | — | список safety plans; 401 |
+| POST | `/plans` | Bearer, `safety:write` | `SafetyPlanCreate` | созданный план; 201/401/422 |
+| GET | `/plans/{plan_id}` | Bearer | — | план; 401/404 |
+| PUT | `/plans/{plan_id}` | Bearer, `safety:write` | `SafetyPlanUpdate` | обновлённый план; 401/404/422 |
+| DELETE | `/plans/{plan_id}` | Bearer, `safety:write` | — | 204/401/404 |
+| GET | `/crisis-signals` | Bearer | — | список crisis signals; 401 |
+| POST | `/crisis-signals` | Bearer | `CrisisSignalCreate` | созданный сигнал; 201/401/422 |
+| POST | `/crisis-signals/{signal_id}/acknowledge` | Bearer | — | обновлённый сигнал; 401/404 |
 
-## План безопасности (`/api/v1/safety-plan`) — ПЛАНИРУЕТСЯ
+## План безопасности (`/api/v1/safety-plan`) — ОТСУТСТВУЕТ
 
-| Метод | Путь | Авторизация | Запрос | Ответ / ошибки |
-|---|---|---|---|---|
-| GET | `` | Bearer, роли patient/doctor/psychologist | — | план безопасности пациента; 401/404 |
-| POST | `` | Bearer, роли doctor/psychologist | `SafetyPlanCreate` | созданный план; 201/401/422 |
+Отдельного `/api/v1/safety-plan` endpoint нет. Safety plans реализованы через `/api/v1/safety/plans`.
 
 ## Диагнозы (`/api/v1/diagnoses`) — РЕАЛИЗОВАНО
 

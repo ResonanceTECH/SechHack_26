@@ -70,3 +70,4 @@ def test_get_patient_summary_endpoint():
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "data" in data
+    assert "adherence" in data["data"]

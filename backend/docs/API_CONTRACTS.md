@@ -439,4 +439,4 @@ Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL
 
 ### Patient Card Requirements
 
-Missing blocks: adherence, screening trends. (Diagnoses, assessment schedule, safety plans, crisis history implemented; see Phase 13/15/17.)
+Missing blocks: screening trends. (Diagnoses, assessment schedule, safety plans, crisis history, adherence implemented; see Phase 13/15/16/17/18.)
