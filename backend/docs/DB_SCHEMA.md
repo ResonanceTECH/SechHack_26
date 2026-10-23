@@ -77,6 +77,8 @@ CREATE TABLE screening_results (
     score INTEGER NOT NULL CHECK (score >= 0),
     answers JSONB,  -- ответы по вопросам {question_id: value}: нужно для правила «PHQ-9 п.9 ≥ 1»
     is_critical BOOLEAN DEFAULT FALSE,
+    severity VARCHAR(255),
+    critical_reason VARCHAR(200),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT chk_screening_score_range CHECK (
         (questionnaire_type = 'phq9' AND score <= 27) OR
@@ -243,7 +245,142 @@ CREATE TABLE audit_logs (
     old_values JSONB,
     new_values JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
+
+-- ============================================
+-- Критические сигналы / SOS (P0)
+-- ============================================
+CREATE TABLE crisis_signals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('sos_call', 'critical_symptom', 'red_flag')),
+    source VARCHAR(50) NOT NULL CHECK (source IN ('mobile_app', 'web_app', 'screening_result', 'practitioner_manual')),
+    triggered_by_screening_id UUID REFERENCES screening_results(id),
+    message TEXT,
+    location JSONB,
+    status VARCHAR(30) NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'acknowledged', 'resolved', 'false_alarm')),
+    priority VARCHAR(20) NOT NULL DEFAULT 'critical' CHECK (priority = 'critical'),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    acknowledged_at TIMESTAMPTZ,
+    acknowledged_by UUID REFERENCES users(id)
 );
+
+CREATE INDEX idx_crisis_signals_patient_id ON crisis_signals(patient_id);
+CREATE INDEX idx_crisis_signals_status ON crisis_signals(status);
+CREATE INDEX idx_crisis_signals_created_at ON crisis_signals(created_at);
+
+-- ============================================
+-- C-SSRS — оценка суицидального риска (P0)
+-- ============================================
+CREATE TABLE cssrs_assessments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    practitioner_id UUID REFERENCES practitioner_profiles(id),
+    assessment_date TIMESTAMPTZ NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    suicidal_ideation BOOLEAN NOT NULL DEFAULT FALSE,
+    suicidal_ideation_with_plan BOOLEAN NOT NULL DEFAULT FALSE,
+    suicidal_behavior BOOLEAN NOT NULL DEFAULT FALSE,
+    most_severe_ideation VARCHAR(50) NOT NULL CHECK (most_severe_ideation IN ('none', 'wish_to_die', 'suicidal_thoughts', 'suicidal_thoughts_with_plan', 'suicidal_intent')),
+    most_severe_behavior VARCHAR(50) NOT NULL CHECK (most_severe_behavior IN ('none', 'non_suicidal_self_injury', 'suicide_attempt', 'interrupted_attempt', 'aborted_attempt', 'preparatory_behavior')),
+    risk_level VARCHAR(20) NOT NULL CHECK (risk_level IN ('low', 'moderate', 'high', 'imminent')),
+    risk_factors JSONB,
+    protective_factors JSONB,
+    recommendations TEXT,
+    safety_plan_id UUID REFERENCES safety_plans(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_cssrs_assessments_patient_id ON cssrs_assessments(patient_id);
+CREATE INDEX idx_cssrs_assessments_risk_level ON cssrs_assessments(risk_level);
+CREATE INDEX idx_cssrs_assessments_assessment_date ON cssrs_assessments(assessment_date);
+
+-- ============================================
+-- Safety Plan — план безопасности при кризисе (P0)
+-- ============================================
+CREATE TABLE safety_plans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    practitioner_id UUID NOT NULL REFERENCES practitioner_profiles(id),
+    title VARCHAR(255) NOT NULL,
+    warning_signs TEXT,
+    internal_coping_strategies TEXT,
+    social_contacts TEXT,
+    family_support TEXT,
+    professional_contacts TEXT,
+    emergency_contacts TEXT,
+    safe_environment TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    review_date DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_safety_plans_patient_id ON safety_plans(patient_id);
+CREATE INDEX idx_safety_plans_is_active ON safety_plans(is_active);
+
+-- ============================================
+-- PatientDiagnosis — диагнозы пациента (МКБ-10/МКБ-11) (P0)
+-- ============================================
+CREATE TABLE patient_diagnoses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    coding_system VARCHAR(10) NOT NULL CHECK (coding_system IN ('ICD10','ICD11')),
+    code VARCHAR(30) NOT NULL,
+    title VARCHAR(255),
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','remission','resolved','closed')),
+    diagnosed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    diagnosed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_confirmed BOOLEAN NOT NULL DEFAULT TRUE,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_patient_diagnoses_patient_id ON patient_diagnoses(patient_id);
+CREATE INDEX idx_patient_diagnoses_status ON patient_diagnoses(status);
+CREATE INDEX idx_patient_diagnoses_code ON patient_diagnoses(code);
+CREATE UNIQUE INDEX uq_patient_diagnoses_primary_active ON patient_diagnoses(patient_id) WHERE is_primary = true AND status = 'active';
+
+-- ============================================
+-- DiagnosisReference — справочник диагнозов (МКБ-10/МКБ-11) — ПЛАНИРУЕТСЯ
+-- ============================================
+CREATE TABLE diagnosis_references (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    coding_system VARCHAR(10) NOT NULL CHECK (coding_system IN ('ICD10','ICD11')),
+    code VARCHAR(30) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    title_en VARCHAR(255),
+    chapter VARCHAR(255),
+    parent_code VARCHAR(30),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    version VARCHAR(50),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (coding_system, code)
+);
+
+CREATE INDEX idx_diagnosis_references_coding_system ON diagnosis_references(coding_system);
+CREATE INDEX idx_diagnosis_references_code ON diagnosis_references(code);
+
+-- ============================================
+-- MedicationSkipReason — причина пропуска приёма лекарства (P0)
+-- ============================================
+CREATE TABLE medication_skip_reasons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES patient_profiles(id) ON DELETE CASCADE,
+    prescription_id UUID NOT NULL REFERENCES rx.prescriptions(id) ON DELETE CASCADE,
+    taken_at TIMESTAMPTZ NOT NULL,
+    skip_reason VARCHAR(50) NOT NULL CHECK (skip_reason IN ('side_effects', 'forgot', 'ran_out', 'cost', 'pregnancy', 'feeling_better', 'feeling_worse', 'other')),
+    skip_reason_text TEXT,
+    reported_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_medication_skip_reasons_patient_id ON medication_skip_reasons(patient_id);
+CREATE INDEX idx_medication_skip_reasons_prescription_id ON medication_skip_reasons(prescription_id);
+CREATE INDEX idx_medication_skip_reasons_reported_at ON medication_skip_reasons(reported_at);
+
 ```
 
 ## 2. DDL concept02 (рецептурный контур, схема `rx`)
@@ -365,6 +502,19 @@ ON rx.medication_adherence (prescription_id, taken_at);
 
 ## 6. Миграции (Alembic)
 
+
+Новые миграции для P0 сущностей (кризисные сигналы, C-SSRS, Safety Plan, МКБ-10, пропуск приёма):
+
+| Миграция | Описание | Таблицы |
+|---|---|---|
+| `0004_crisis_safety_entities` | Добавление критических клинических сущностей | `crisis_signals`, `cssrs_assessments`, `safety_plans`, `icd10_codes`, `medication_skip_reasons` |
+
+Создание:
+```bash
+alembic revision --autogenerate -m "0004_crisis_safety_entities"
+alembic upgrade head
+```
+
 Все изменения схемы через Alembic. Начальная ревизия — `base` с вышеуказанными таблицами.  
 Схема `rx` создаётся первой миграцией (`alembic revision --autogenerate` с `include_schemas=True`).
 
@@ -377,3 +527,40 @@ ON rx.medication_adherence (prescription_id, taken_at);
 | Row-Level Security | Управляется на уровне приложения (RBAC), RLS добавим позже | При подключении внешних BI-инструментов |
 | Полнотекстовый поиск по дневнику | Не требуется в MVP-экранах | Если добавим поиск по notes |
 | Партиционирование `audit_logs`/`diary_entries` | Объёмы MVP не требуют | При >10 млн записей |
+
+---
+
+## Clinical Architecture Update — Phase 11.0 (2026-10-23)
+
+### Diagnosis Layer — Реализовано (Phase 13)
+
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Реализовано (Phase 14): `DiagnosisReference` (справочник МКБ-10/МКБ-11, миграция 0007, seed subset), deprecated alias `/api/v1/icd10`, clinic isolation для diagnosis endpoints, audit logging на create/update.
+
+### ICD-10 / ICD-11 Strategy
+
+Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes coding_system. Backward compat: `/api/v1/icd10` may remain as deprecated alias of `/api/v1/diagnoses?coding_system=ICD10`.
+
+### MBC Layer
+
+Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+
+### Diary Rework
+
+New scales: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4. Add `functioning_score`. Micro-diary (partial entries, nullable fields). Migration: ALTER CHECK constraints + ADD COLUMN; data mapping decision required.
+
+### Safety Plan Architecture
+
+SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, depression handouts, crisis algorithm, relative/doctor instructions) moves to `SafetyPlanTemplate` / `ClinicalContentLibrary`, referenced via nullable `template_id` + override. Structured contacts (JSONB) and crisis steps.
+
+### Screening Expansion
+
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+
+### Patient Card Requirements
+
+Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.

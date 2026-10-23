@@ -79,6 +79,8 @@
 | `score` | Integer (CHECK: >= 0, см. верхние границы ниже) | Суммарный балл |
 | `answers` | JSONB (nullable) | Ответы по вопросам `{question_id: value, …}` — нужны для проверки правила «PHQ-9 п.9 ≥ 1»; серверный подсчёт, клиентский score игнорируется |
 | `is_critical` | Boolean | Критический результат (алертинг) |
+| `severity` | String (nullable, max 255) | Нейтральный короткий лейбл тяжести (`минимальная`, `лёгкая`, `умеренная`, `умеренно выраженная`, `тяжёлая`) |
+| `critical_reason` | String (nullable, max 200) | Причина критичности (`high_total_score`, `suicidal_ideation_item` или комбинация) |
 | `created_at` | DateTime | Дата прохождения |
 
 ### 1.6 `DiaryEntry` — запись дневника
@@ -271,6 +273,116 @@ UNIQUE (`user_id`, `device_id`).
 | `is_active` | Boolean | Активен ли |
 | `created_at` | DateTime | Дата создания |
 
+
+### 1.20 `CrisisSignal` — критический сигнал (SOS / вызов экстренной помощи)
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `type` | Enum | `sos_call`, `critical_symptom`, `red_flag` |
+| `source` | Enum | `mobile_app`, `web_app`, `screening_result`, `practitioner_manual` |
+| `triggered_by_screening_id` | UUID (FK → ScreeningResult.id, nullable) | Скрининг, ставший триггером |
+| `message` | Text (nullable) | Сообщение пациента при сигнале |
+| `location` | JSONB (nullable) | Координаты/местоположение (из мобилки) |
+| `status` | Enum | `new`, `acknowledged`, `resolved`, `false_alarm` |
+| `priority` | Enum | `critical` — всегда максимальный |
+| `created_at` | DateTime | Время сигнала |
+| `acknowledged_at` | DateTime (nullable) | Время подтверждения врачом |
+| `acknowledged_by` | UUID (FK → User.id, nullable) | Кто подтвердил |
+
+### 1.21 `CssrsAssessment` — оценка суицидального риска (C-SSRS)
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID (FK → PractitionerProfile.id, nullable) | Врач (если проведено на приёме) |
+| `assessment_date` | DateTime | Дата проведения оценки |
+| `version` | String | Версия опросника C-SSRS |
+| `suicidal_ideation` | Boolean | Наличие суицидальных мыслей |
+| `suicidal_ideation_with_plan` | Boolean | Мысли с планом |
+| `suicidal_behavior` | Boolean | Суицидальное поведение (попытка, подготовка) |
+| `most_severe_ideation` | Enum | `none`, `wish_to_die`, `suicidal_thoughts`, `suicidal_thoughts_with_plan`, `suicidal_intent` |
+| `most_severe_behavior` | Enum | `none`, `non_suicidal_self_injury`, `suicide_attempt`, `interrupted_attempt`, `aborted_attempt`, `preparatory_behavior` |
+| `risk_level` | Enum | `low`, `moderate`, `high`, `imminent` |
+| `risk_factors` | JSONB (nullable) | Факторы риска (детализация) |
+| `protective_factors` | JSONB (nullable) | Защитные факторы |
+| `recommendations` | Text (nullable) | Рекомендации врача |
+| `safety_plan_id` | UUID (FK → SafetyPlan.id, nullable) | Связанный план безопасности |
+| `created_at` | DateTime | Дата создания |
+
+### 1.22 `SafetyPlan` — план безопасности при кризисе
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID (FK → PractitionerProfile.id) | Врач, составивший план |
+| `title` | String | Название плана |
+| `warning_signs` | Text | Предупреждающие сигналы (распознавание кризиса) |
+| `internal_coping_strategies` | Text | Внутренние стратегии совладания |
+| `social_contacts` | Text | Социальные контакты для отвлечения |
+| `family_support` | Text | Поддержка семьи и близких |
+| `professional_contacts` | Text | Профессиональные контакты (врач, кризисная линия) |
+| `emergency_contacts` | Text | Экстренные контакты (103/112, ближайшая больница) |
+| `safe_environment` | Text | Обеспечение безопасной среды (ограничение доступа к средствам) |
+| `is_active` | Boolean | Активен ли план |
+| `review_date` | Date (nullable) | Дата пересмотра плана |
+| `created_at` | DateTime | Дата создания |
+| `updated_at` | DateTime | Дата последнего обновления |
+
+### 1.23 `PatientDiagnosis` — диагноз пациента (МКБ-10/МКБ-11)
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `coding_system` | Enum (`ICD10`, `ICD11`) | Система кодирования |
+| `code` | String (30) | Код диагноза (F41.1, 6B00) |
+| `title` | String (255, nullable) | Название диагноза |
+| `is_primary` | Boolean | Первичный диагноз |
+| `status` | Enum (`active`, `remission`, `resolved`, `closed`) | Статус диагноза |
+| `diagnosed_at` | DateTime | Дата установки диагноза |
+| `ended_at` | DateTime (nullable) | Дата закрытия/ремиссии |
+| `diagnosed_by` | UUID (FK → User.id, nullable) | Врач, поставивший диагноз |
+| `is_confirmed` | Boolean | Подтверждён ли диагноз |
+| `notes` | Text (nullable) | Замечания врача |
+| `created_at` | DateTime | Дата создания записи |
+| `updated_at` | DateTime | Дата последнего обновления |
+
+Частичный UNIQUE-индекс: один активный первичный диагноз на пациента.
+
+### 1.24 `DiagnosisReference` — справочник диагнозов (МКБ-10/МКБ-11) — ПЛАНИРУЕТСЯ
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `coding_system` | Enum (`ICD10`, `ICD11`) | Система кодирования |
+| `code` | String (30) | Код диагноза |
+| `title` | String (255) | Название (ru) |
+| `title_en` | String (255, nullable) | Название (en) |
+| `chapter` | String (255, nullable) | Глава/раздел |
+| `parent_code` | String (30, nullable) | Родительский код |
+| `is_active` | Boolean | Активен в справочнике |
+| `version` | String (50, nullable) | Версия справочника |
+| `created_at` | DateTime | Дата создания |
+
+UNIQUE(coding_system, code).
+
+### 1.24 `MedicationSkipReason` — причина пропуска приёма лекарства
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | UUID | PK |
+| `patient_id` | UUID (FK → PatientProfile.id) | Пациент |
+| `prescription_id` | UUID (FK → rx.prescriptions.id) | Назначение, которое пропущено |
+| `taken_at` | DateTime | Плановое время приёма |
+| `skip_reason` | Enum | `side_effects`, `forgot`, `ran_out`, `cost`, `pregnancy`, `feeling_better`, `feeling_worse`, `other` |
+| `skip_reason_text` | Text (nullable) | Текст причины (если `other`) |
+| `reported_at` | DateTime | Время сообщения о пропуске |
+| `created_at` | DateTime | Дата записи |
+
 ## 2. Рецептурный контур (concept02) — логически в той же БД
 
 ### 2.1 `Medication` — лекарственный препарат
@@ -412,3 +524,40 @@ RefreshToken N─1 User (replaced_by → RefreshToken self)
 - `patient_profiles.consent_personal_data` — NOT NULL
 - `patient_profiles.consent_medical_data` — NOT NULL
 - Частичный UNIQUE-индекс по (`device_id`, `recorded_at`, `patient_id`) в `diary_entries` (дедупликация офлайн-синхронизации)
+
+---
+
+## Clinical Architecture Update — Phase 11.0 (2026-10-23)
+
+### Diagnosis Layer — Реализовано (Phase 13)
+
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Реализовано (Phase 14): `DiagnosisReference` (справочник МКБ-10/МКБ-11, миграция 0007, seed subset), deprecated alias `/api/v1/icd10`, clinic isolation для diagnosis endpoints, audit logging на create/update.
+
+### ICD-10 / ICD-11 Strategy
+
+Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes coding_system. Backward compat: `/api/v1/icd10` may remain as deprecated alias of `/api/v1/diagnoses?coding_system=ICD10`.
+
+### MBC Layer
+
+Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+
+### Diary Rework
+
+New scales: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4. Add `functioning_score`. Micro-diary (partial entries, nullable fields). Migration: ALTER CHECK constraints + ADD COLUMN; data mapping decision required.
+
+### Safety Plan Architecture
+
+SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, depression handouts, crisis algorithm, relative/doctor instructions) moves to `SafetyPlanTemplate` / `ClinicalContentLibrary`, referenced via nullable `template_id` + override. Structured contacts (JSONB) and crisis steps.
+
+### Screening Expansion
+
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+
+### Patient Card Requirements
+
+Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.

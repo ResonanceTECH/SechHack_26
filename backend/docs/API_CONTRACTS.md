@@ -1,4 +1,4 @@
-﻿# API-контракты — бэкенд «Клинический компас»
+# API-контракты — бэкенд «Клинический компас»
 
 **Источник:** `Архитектурный_дизайн_моделей.md` §6, `ТЗ_Клинический_Компас_v1.0.md` §8, роуты `frontend_dev` (ветка `SechHack_26`), экраны Figma  
 **Базовый путь:** `/api/v1`  
@@ -205,13 +205,58 @@ POST /api/v1/auth/invite/verify
     "priority": "mandatory",
     "status": "new",
     "title": "Критический ответ в опроснике — PHQ-9 п.9 ≥ 1",
-    "summary": "Суицидальный риск · умеренный",
+    "summary": "PHQ-9, вопрос 9: мысли о смерти/самоповреждении",
+    "created_at": "2026-10-20T14:30:00Z",
+    "resolved_at": null,
+    "resolved_by": null
+  },
+  "meta": { "request_id": "...", "timestamp": "..." },
+  "error": null
+}
+```
+
+## 7.5. Кризисные сигналы и план безопасности (`crisis-service`)
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| POST | `/api/v1/crisis/signal` | Отправить критический сигнал (SOS / вызов 103/112) | patient |
+| GET | `/api/v1/crisis/signals` | Список сигналов пациента (фильтр по статусу) | patient, doctor, psychologist, coordinator |
+| GET | `/api/v1/crisis/signals/{id}` | Детальная карточка сигнала | patient, doctor, psychologist, coordinator |
+| PATCH | `/api/v1/crisis/signals/{id}/acknowledge` | Подтвердить получение сигнала | doctor, psychologist |
+| PATCH | `/api/v1/crisis/signals/{id}/resolve` | Закрыть сигнал | doctor, psychologist |
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| GET | `/api/v1/safety-plan` | Получить план безопасности пациента | patient, doctor, psychologist |
+| POST | `/api/v1/safety-plan` | Создать/обновить план безопасности | doctor, psychologist |
+
+**Пример запроса `POST /crisis/signal`:**
+```json
+{
+  "type": "sos_call",
+  "source": "mobile_app",
+  "message": "Плохое самочувствие, нужна помощь",
+  "location": { "latitude": 55.7558, "longitude": 37.6173 }
+}
+```
+
+**Пример ответа:**
+```json
+{
+  "data": {
+    "id": "cs-1",
+    "patient_id": "p1",
+    "type": "sos_call",
+    "source": "mobile_app",
+    "status": "new",
+    "priority": "critical",
     "created_at": "2026-10-20T10:42:00Z"
   },
   "meta": { "request_id": "...", "timestamp": "..." },
   "error": null
 }
 ```
+
 
 **Значения полей:**
 - `type`: `critical_symptom` | `adherence` | `missed_diary` | `screening_risk` | `adverse_event`
@@ -229,6 +274,7 @@ POST /api/v1/auth/invite/verify
 | PUT | `/api/v1/prescriptions/{id}` | Изменить/деактивировать назначение | doctor |
 | GET | `/api/v1/adherence` | История приёма препаратов | patient, doctor |
 | POST | `/api/v1/adherence` | Отметить приём | patient, doctor |
+| POST | `/api/v1/medications/{id}/skip` | Сообщить о пропуске приёма с причиной | patient, doctor |
 | GET | `/api/v1/admin/medications` | Управление справочником | clinic_admin, super_admin |
 | POST | `/api/v1/admin/medications` | Добавить препарат в справочник | clinic_admin, super_admin |
 | PUT | `/api/v1/admin/medications/{id}` | Обновить препарат | clinic_admin, super_admin |
@@ -238,6 +284,50 @@ POST /api/v1/auth/invite/verify
 - Пациент: сокращённая карточка — название, дозировка, приверженность, статус, краткая инструкция
 
 Подробно — в `MEDICATIONS.md`.
+
+
+## 8.5. Диагнозы (МКБ-10/МКБ-11) и C-SSRS (`crisis-service`)
+
+| Метод | Путь | Описание | Доступ |
+|---|---|---|---|
+| GET | `/api/v1/diagnoses` | Список диагнозов (ICD-10/ICD-11) пациента | patient, doctor, psychologist |
+| POST | `/api/v1/diagnoses` | Поставить диагноз (ICD-10 или ICD-11) | doctor |
+| GET | `/api/v1/diagnoses/{id}` | Получить диагноз | patient, doctor, psychologist |
+| PUT | `/api/v1/diagnoses/{id}` | Обновить диагноз (статус, primary, notes) | doctor |
+| GET | `/api/v1/patients/{id}/diagnoses` | Диагнозы пациента | patient, doctor, psychologist |
+| GET | `/api/v1/cssrs` | Список оценок C-SSRS пациента | patient, doctor, psychologist |
+| POST | `/api/v1/cssrs` | Провести оценку суицидального риска (C-SSRS) | doctor, psychologist |
+
+**Пример запроса `POST /diagnoses`:**
+```json
+{
+  "patient_id": "p1",
+  "coding_system": "ICD10",
+  "code": "F41.1",
+  "title": "Генерализованное тревожное расстройство",
+  "diagnosis_date": "2026-10-20",
+  "is_primary": true,
+  "is_confirmed": true
+}
+```
+
+Поддержка МКБ-10 и МКБ-11 одновременно: поле `coding_system` (`ICD10`/`ICD11`). Deprecated alias: `/api/v1/icd10` может оставаться как deprecated alias `/api/v1/diagnoses?coding_system=ICD10`.
+
+**Пример запроса `POST /cssrs`:**
+```json
+{
+  "patient_id": "p1",
+  "assessment_date": "2026-10-20T10:00:00Z",
+  "version": "C-SSRS v1.0",
+  "suicidal_ideation": true,
+  "suicidal_ideation_with_plan": false,
+  "suicidal_behavior": false,
+  "most_severe_ideation": "suicidal_thoughts",
+  "most_severe_behavior": "none",
+  "risk_level": "moderate",
+  "recommendations": "Рекомендуется план безопасности и динамическое наблюдение"
+}
+```
 
 ## 9. Записи и сообщения (`appointments` / `messaging`)
 
@@ -313,3 +403,40 @@ POST /api/v1/auth/invite/verify
 | Управление сотрудниками | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 
 Полная матрица прав — в `AUTH_PLAN.md` §5.2.
+
+---
+
+## Clinical Architecture Update — Phase 11.0 (2026-10-23)
+
+### Diagnosis Layer — Реализовано (Phase 13)
+
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Реализовано (Phase 14): `DiagnosisReference` (справочник МКБ-10/МКБ-11, миграция 0007, seed subset), deprecated alias `/api/v1/icd10`, clinic isolation для diagnosis endpoints, audit logging на create/update.
+
+### ICD-10 / ICD-11 Strategy
+
+Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes coding_system. Backward compat: `/api/v1/icd10` may remain as deprecated alias of `/api/v1/diagnoses?coding_system=ICD10`.
+
+### MBC Layer
+
+Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+
+### Diary Rework
+
+New scales: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4. Add `functioning_score`. Micro-diary (partial entries, nullable fields). Migration: ALTER CHECK constraints + ADD COLUMN; data mapping decision required.
+
+### Safety Plan Architecture
+
+SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, depression handouts, crisis algorithm, relative/doctor instructions) moves to `SafetyPlanTemplate` / `ClinicalContentLibrary`, referenced via nullable `template_id` + override. Structured contacts (JSONB) and crisis steps.
+
+### Screening Expansion
+
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+
+### Patient Card Requirements
+
+Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.

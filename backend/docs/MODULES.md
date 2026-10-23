@@ -1,4 +1,4 @@
-﻿# Модули MVP — детализация ТЗ §8.2
+# Модули MVP — детализация ТЗ §8.2
 
 **Источник:** `ТЗ_Клинический_Компас_v1.0.md` §8.2, `docs/product/backend/ARCHITECTURE.md` §3, экраны Figma  
 **Все 8 модулей входят в MVP.** Ниже — границы, функционал, API и правила для каждого.
@@ -6,6 +6,8 @@
 ---
 
 ## Модуль 1. Аутентификация и профили (`auth-service`)
+
+**Status:** Implemented
 
 **Назначение:** регистрация, вход, JWT-сессии, профили пациентов/специалистов, согласия (152-ФЗ).
 
@@ -26,6 +28,8 @@
 
 ## Модуль 2. Ведение пациентов (`patient-service`)
 
+**Status:** Implemented (core CRUD/summary; admin/audit/report remain planned)
+
 **Назначение:** карточка пациента, список пациентов клиники, назначение врача.
 
 **Функционал MVP:**
@@ -44,12 +48,14 @@
 
 ## Модуль 3. Скрининговые опросники (`screening-service`)
 
+**Status:** Implemented (PHQ-9/GAD-7, registry, scoring, severity, critical rules, endpoints, migrations 0002/0003/0004/0005)
+
 **Назначение:** PHQ-9, GAD-7, подсчёт баллов, интерпретация, выявление риска.
 
 **Функционал MVP:**
 - Хранение версионированных шаблонов опросников (в конфигурации/коде — `phq9`, `gad7`)
 - Приём ответов, серверный подсчёт балла (клиент не влияет на результат)
-- Интерпретация: PHQ-9 0–4 минимальная, 5–9 лёгкая, 10–14 умеренная, 15–19 умеренно-выраженная, 20–27 тяжёлая депрессия; GAD-7 0–4 минимальная, 5–9 лёгкая, 10–14 умеренная, 15–21 тяжёлая тревога
+- Интерпретация: PHQ-9 0–4 — отсутствие или минимальный уровень депрессии; 5–9 — лёгкая депрессия, рекомендована консультация психолога; 10–14 — умеренная депрессия, рекомендована консультация психолога, психотерапевта; 15–19 — тяжёлая депрессия, необходима консультация психотерапевта, психиатра; 20–27 — крайне тяжёлая депрессия, необходима срочная консультация психиатра. GAD-7 0–4 — минимальная выраженность тревоги (или её отсутствие); 5–9 — лёгкая тревожность, рекомендуется наблюдать за состоянием и применять техники саморегуляции; 10–14 — умеренная тревожность, порог от 10 баллов считается «положительным» скринингом; 15–21 — высокая (тяжёлая) тревожность
 - Флаг критического результата: PHQ-9 п.9 ≥ 1 (суицидальный риск) или суммарный балл ≥ 20
 - История прохождений и график динамики
 
@@ -62,6 +68,8 @@
 ---
 
 ## Модуль 4. Дневник самооценки (`diary-service`)
+
+**Status:** Planned
 
 **Назначение:** микро-отметки настроения/тревоги/сна/энергии, графики, офлайн-синхронизация.
 
@@ -81,6 +89,8 @@
 
 ## Модуль 5. Программы и упражнения (`program-service`)
 
+**Status:** Planned
+
 **Назначение:** индивидуальный план сопровождения, назначение упражнений, отслеживание приверженности.
 
 **Функционал MVP:**
@@ -98,6 +108,8 @@
 ---
 
 ## Модуль 6. Система алертов и план безопасности (`alert-service`)
+
+**Status:** Partial (alert foundation/constants present; full Alert Service not implemented)
 
 **Назначение:** обнаружение рисков, приоритизация, очередь для врача, план безопасности при суицидальном риске.
 
@@ -123,6 +135,8 @@
 
 ## Модуль 7. Лекарства и рецепты (`medication-service`)
 
+**Status:** Planned (contract only)
+
 **Назначение:** справочник препаратов, назначения, отслеживание приёма. Подробно — в `MEDICATIONS.md`.
 
 **Функционал MVP:**
@@ -139,6 +153,8 @@
 ---
 
 ## Модуль 8. Уведомления и сообщения (`notification-service`)
+
+**Status:** Planned
 
 **Назначение:** доставка уведомлений (push/SMS/email) и защищённый обмен сообщениями между врачом и пациентом.
 
@@ -178,3 +194,40 @@
 | admin-service | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | audit-service | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | report-service | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+---
+
+## Clinical Architecture Update — Phase 13/14 (2026-10-23)
+
+### Diagnosis Layer — Реализовано (Phase 13)
+
+- `PatientDiagnosis` реализован: `coding_system` (ICD10/ICD11), `code`, `title`, `is_primary`, `status` (active/remission/resolved/closed), `diagnosed_at`, `ended_at`, `diagnosed_by`, `is_confirmed`, `notes`, `created_at`, `updated_at`.
+- Partial unique index: один активный первичный диагноз на пациента.
+- API: `/api/v1/diagnoses` (GET/POST/GET/{id}/PUT/{id}), `/api/v1/patients/{id}/diagnoses`.
+- Patient Card summary включает диагнозы.
+- RBAC: diagnosis:read / diagnosis:write.
+- Реализовано (Phase 14): `DiagnosisReference` (справочник МКБ-10/МКБ-11, миграция 0007, seed subset), deprecated alias `/api/v1/icd10`, clinic isolation для diagnosis endpoints, audit logging на create/update.
+
+### ICD-10 / ICD-11 Strategy
+
+Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes coding_system. Backward compat: `/api/v1/icd10` may remain as deprecated alias of `/api/v1/diagnoses?coding_system=ICD10`.
+
+### MBC Layer
+
+Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+
+### Diary Rework
+
+New scales: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4. Add `functioning_score`. Micro-diary (partial entries, nullable fields). Migration: ALTER CHECK constraints + ADD COLUMN; data mapping decision required.
+
+### Safety Plan Architecture
+
+SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, depression handouts, crisis algorithm, relative/doctor instructions) moves to `SafetyPlanTemplate` / `ClinicalContentLibrary`, referenced via nullable `template_id` + override. Structured contacts (JSONB) and crisis steps.
+
+### Screening Expansion
+
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+
+### Patient Card Requirements
+
+Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.

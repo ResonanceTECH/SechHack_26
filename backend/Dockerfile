@@ -7,11 +7,8 @@ FROM python:3.11-slim
 # Внутренняя работа
 WORKDIR /app
 
-# Системные зависимости для asyncpg + psycopg
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Системные зависимости для asyncpg + psycopg удалены:
+# asyncpg/psycopg2-binary ставятся из wheels, поэтому apt-пакеты не нужны.
 
 # Копируем конфигурацию проекта
 COPY backend/pyproject.toml backend/README.md ./
@@ -22,7 +19,7 @@ RUN pip install --no-cache-dir -e .
 # Копируем исходный код приложения
 COPY backend/app ./app
 
-# Опциональный миграции-мульти-стaged: можно подключить файлы миграций
+# Миграции
 COPY backend/alembic alembic
 COPY backend/alembic.ini alembic.ini
 

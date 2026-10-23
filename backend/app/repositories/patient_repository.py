@@ -207,10 +207,14 @@ class PatientRepository:
         data = await self.get_patient_by_id(db, patient_id, current_user)
         if not data:
             return None
+        # active alerts count
+        from app.repositories.alert_repository import AlertRepository
+        alerts, _ = await AlertRepository().list_alerts(db, {"patient_id": patient_id, "status": "new"})
+        active_count = len(alerts)
         return {
             "id": data["id"],
             "first_name": data["first_name"],
             "last_name": data["last_name"],
             "clinic_id": data["clinic_id"],
+            "alerts": {"active": active_count},
         }
-        return []
