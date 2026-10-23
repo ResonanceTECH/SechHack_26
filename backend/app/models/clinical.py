@@ -60,9 +60,11 @@ class DiaryEntry(UUIDPkMixin, Base):
 
     __tablename__ = "diary_entries"
     __table_args__ = (
-        CheckConstraint("mood_score BETWEEN 1 AND 5", name="ck_diary_entries_mood_score"),
-        CheckConstraint("anxiety_score BETWEEN 1 AND 5", name="ck_diary_entries_anxiety_score"),
-        CheckConstraint("energy_score BETWEEN 1 AND 5", name="ck_diary_entries_energy_score"),
+        CheckConstraint("mood_score IS NULL OR mood_score BETWEEN -3 AND 3", name="ck_diary_entries_mood_score"),
+        CheckConstraint("anxiety_score IS NULL OR anxiety_score BETWEEN 0 AND 4", name="ck_diary_entries_anxiety_score"),
+        CheckConstraint("energy_score IS NULL OR energy_score BETWEEN 0 AND 4", name="ck_diary_entries_energy_score"),
+        CheckConstraint("functioning_score IS NULL OR functioning_score BETWEEN 0 AND 4", name="ck_diary_entries_functioning_score"),
+        Index("uq_diary_entries_device_recorded_patient", "device_id", "recorded_at", "patient_id", unique=True, postgresql_where="device_id IS NOT NULL"),
         Index("idx_diary_entries_patient_id_recorded_at", "patient_id", "recorded_at"),
         Index("idx_diary_entries_synced_at", "synced_at"),
     )
@@ -74,6 +76,7 @@ class DiaryEntry(UUIDPkMixin, Base):
     mood_score: Mapped[int | None] = mapped_column(Integer)
     anxiety_score: Mapped[int | None] = mapped_column(Integer)
     energy_score: Mapped[int | None] = mapped_column(Integer)
+    functioning_score: Mapped[int | None] = mapped_column(Integer)
     sleep_hours: Mapped[float | None] = mapped_column()
     sleep_quality: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(Text)

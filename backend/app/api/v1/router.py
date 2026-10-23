@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, health, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety
+from app.api.v1 import auth, health, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -20,3 +20,4 @@ api_router.include_router(diagnoses.patient_diagnoses_router)
 api_router.include_router(diagnoses.icd10_router)
 api_router.include_router(assessment_plans.router)
 api_router.include_router(safety.router)
+api_router.include_router(diary.router)
