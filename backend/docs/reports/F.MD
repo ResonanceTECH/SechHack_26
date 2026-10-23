@@ -514,7 +514,7 @@ wt_mobile/mobile/src/api/client.ts — only getHealth, getDbHealth; wt_mobile/mo
 clinicalcompass/docs/figma/ — prototype images; clinicalcompass/docs/figma/CLINICAL_ARCHITECTURE_REVIEW.md
 
 ### Documentation
-docs/ARCHITECTURE.md, DOMAIN_MODEL.md, DB_SCHEMA.md, CURRENT_API.md, API_CONTRACTS.md, AUTH_PLAN.md, MODULES.md, MEDICATIONS.md, TASKS.md, TESTS.md, README.md
+docs/BACKEND_SPEC.md, docs/CLIENT_MAPPING.md, docs/integration_contract.md, docs/questionnaire_sources.md, docs/openapi.json
 
 ### Reports Archive
 docs/reports/archive/ — 30+ reports from previous phases
@@ -524,8 +524,8 @@ docs/reports/archive/ — 30+ reports from previous phases
 
 Evidence:
 - app/api/v1/router.py — не импортирует и не регистрирует routers для medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit
-- docs/API_CONTRACTS.md — dokumentiert все эти эндпоинты
-- docs/MEDICATIONS.md — dokumentiert medications, prescriptions, adherence
+- docs/BACKEND_SPEC.md — документирует все эти эндпоинты как planned/not implemented
+- docs/BACKEND_SPEC.md — документирует medications, prescriptions, adherence
 
 | DiagnosisReference | diagnosis_references | app/models/diagnosis.py |
 | CarePlan | care_plans | app/models/care.py |
