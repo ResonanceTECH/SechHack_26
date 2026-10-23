@@ -14,7 +14,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.errors import conflict, invalid_credentials, unauthorized
+from app.core.errors import ApiError, conflict, invalid_credentials, unauthorized
 from app.core.security import jwt as jwt_service
 from app.core.security.passwords import hash_password, verify_password
 from app.db.base import utcnow
@@ -171,7 +171,7 @@ async def refresh(session: AsyncSession, *, refresh_token: str) -> TokenPair:
     признак компрометации: отзываем ВСЕ сессии пользователя (AUTH_PLAN.md §2)."""
     try:
         payload = jwt_service.decode_token(refresh_token, expected_type="refresh")
-    except Exception:
+    except (ValueError, ApiError):
         import logging
         logging.getLogger(__name__).warning('invalid refresh token decode')
         raise unauthorized("Недействительный refresh-токен") from None

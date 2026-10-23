@@ -212,7 +212,8 @@ class AlertService:
                     commit=True,
                 )
             except Exception:
-                pass
+                import logging
+                logging.getLogger(__name__).exception('audit record failed')
             return self._to_dict(updated)
         return self._to_dict(alert)
 

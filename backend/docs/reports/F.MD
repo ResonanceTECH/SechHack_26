@@ -88,9 +88,9 @@ Evidence:
 |-------|-----|----------|--------|
 | app/services/alert_service.py:45-47 | `except Exception: logging.getLogger(__name__).exception('audit record failed')` | Аудит не удался — swallowed, но логируется (приемлемо) | PARTIALLY VERIFIED |
 | app/services/alert_service.py:173-175 | `except Exception: logging.getLogger(__name__).exception('audit record failed')` | То же самое | PARTIALLY VERIFIED |
-| app/services/alert_service.py:214-215 | `except Exception: pass` | **Пустой except — ошибка аудита полностью поглощается** | P1 |
+| app/services/alert_service.py:214-215 | `except Exception: pass` | **ИСПРАВЛЕНО** — заменено на `logging.getLogger(__name__).exception('audit record failed')` | FIXED |
 | app/services/screening_service.py:87-92 | `except Exception: logging.getLogger(__name__).exception('alert generation failed')` | Генерация алерта упала — swallowed, но логируется | PARTIALLY VERIFIED |
-| app/services/auth_service.py:174 | `except Exception` (broad) | В refresh — broad except (указано в предыдущем аудите) | P1 |
+| app/services/auth_service.py:174 | `except (ValueError, ApiError)` (narrowed) | В refresh — broad except заменён на узкий набор ожидаемых исключений | FIXED |
 
 
 ## 4. Database
