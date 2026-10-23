@@ -1,4 +1,4 @@
-﻿# Модули MVP — детализация ТЗ §8.2
+# Модули MVP — детализация ТЗ §8.2
 
 **Источник:** `ТЗ_Клинический_Компас_v1.0.md` §8.2, `docs/product/backend/ARCHITECTURE.md` §3, экраны Figma  
 **Все 8 модулей входят в MVP.** Ниже — границы, функционал, API и правила для каждого.
@@ -194,3 +194,35 @@
 | admin-service | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | audit-service | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | report-service | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+---
+
+## Clinical Architecture Update — Phase 11.0 (2026-10-23)
+
+### Diagnosis Layer
+
+Current `Icd10Code` is a flat record without lifecycle/status/history. It cannot fully support diagnosis history, closure, remission, multiple diagnoses with status, primary diagnosis constraint, or ICD-11. Proposed: `PatientDiagnosis` (coding_system, code, title, is_primary, status, diagnosed_at, ended_at, diagnosed_by, is_confirmed, notes, created_at, updated_at) + `DiagnosisReference` (coding_system, code, title, title_en, chapter, parent_code, is_active, version). Partial unique index: one primary diagnosis per patient.
+
+### ICD-10 / ICD-11 Strategy
+
+Future-proof: `coding_system` (ICD10/ICD11) + `code` + `title`. API exposes coding_system. Backward compat: `/api/v1/icd10` may remain as deprecated alias of `/api/v1/diagnoses?coding_system=ICD10`.
+
+### MBC Layer
+
+Chain: Diagnosis → Assessment Plan → Screening → Trend. Missing: `AssessmentPlan` (patient_id, questionnaire_code, interval_days, enabled, start_date, end_date) and optional `SymptomTrend`. Screening itself already supports PHQ-9/GAD-7/PDSS/HCL-33/C-SSRS via registry/versioning; MBC adds scheduling.
+
+### Diary Rework
+
+New scales: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4. Add `functioning_score`. Micro-diary (partial entries, nullable fields). Migration: ALTER CHECK constraints + ADD COLUMN; data mapping decision required.
+
+### Safety Plan Architecture
+
+SafetyPlan remains patient-specific entity. Reusable clinical content (AWARE, depression handouts, crisis algorithm, relative/doctor instructions) moves to `SafetyPlanTemplate` / `ClinicalContentLibrary`, referenced via nullable `template_id` + override. Structured contacts (JSONB) and crisis steps.
+
+### Screening Expansion
+
+Already supported via Questionnaire Registry/versioning: PHQ-9, GAD-7. PDSS, HCL-33, C-SSRS require registry entries + scoring rules + critical rules; no core architecture change, but C-SSRS is clinical safety instrument (consider dedicated entity).
+
+### Patient Card Requirements
+
+Missing blocks: diagnoses (active + history + primary), assessment schedule, adherence, safety plans, crisis history, screening trends.
