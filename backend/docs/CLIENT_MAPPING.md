@@ -74,6 +74,7 @@
 |----------------|--------|--------|
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
 | Appointment scheduling | READY | `/api/v1/appointments` (GET/POST) |
+| Reports (pre-visit, clinic analytics) | READY | `/api/v1/reports/pre-visit/{patient_id}` (GET), `/api/v1/reports/clinic-analytics` (GET) |
 
 ## 4. Screen → Endpoint Matrix (Frontend — frontend_dev)
 

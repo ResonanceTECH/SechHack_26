@@ -422,7 +422,7 @@
 
 | Модуль | Документировано в | Статус в коде |
 |--------|-------------------|---------------|
-| `report-service` | MODULES.md §10 | Нет роутера `/api/v1/reports` |
+| `report-service` | MODULES.md §10 | Роутер `/api/v1/reports` реализован (pre-visit, clinic-analytics) |
 | `admin-service` | MODULES.md §10 | Нет роутера `/api/v1/admin` |
 | `audit-service` (API) | AUTH_PLAN.md §6 | Нет роутера `/api/v1/audit` (только сервис записи) |
 
