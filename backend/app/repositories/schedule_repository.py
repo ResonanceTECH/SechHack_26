@@ -63,6 +63,13 @@ class ScheduleRepository:
             await db.delete(row)
             await db.flush()
 
+    async def list_exceptions(self, db: AsyncSession, practitioner_id: uuid.UUID) -> list[PractitionerScheduleException]:
+        res = await db.execute(select(PractitionerScheduleException).where(PractitionerScheduleException.practitioner_id == practitioner_id))
+        return list(res.scalars().all())
+
     async def get_exception(self, db: AsyncSession, exception_id: uuid.UUID) -> PractitionerScheduleException | None:
+        res = await db.execute(select(PractitionerScheduleException).where(PractitionerScheduleException.id == exception_id))
+        return res.scalar_one_or_none()
+
         res = await db.execute(select(PractitionerScheduleException).where(PractitionerScheduleException.id == exception_id))
         return res.scalar_one_or_none()

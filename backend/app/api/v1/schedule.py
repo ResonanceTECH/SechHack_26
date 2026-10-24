@@ -80,6 +80,13 @@ async def add_exception(practitioner_id: str, body: PractitionerScheduleExceptio
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
 
 
+@schedule_router.get("/practitioners/{practitioner_id}/availability", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+                   dependencies=[Depends(require_permission("schedule:read"))])
+async def availability(practitioner_id: str, request: Request, current_user: CurrentUser, db: DbSession, at: Optional[str] = None):
+    svc = _svc()
+    data = await svc.availability(db, practitioner_id, at)
+    return {"data": data, "request_id": getattr(request.state, "request_id", "")}
+
 @schedule_router.delete("/practitioners/{practitioner_id}/schedule/exceptions/{exception_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
                    dependencies=[Depends(require_permission("schedule:write"))])
 async def delete_exception(practitioner_id: str, exception_id: str, request: Request, current_user: CurrentUser, db: DbSession):

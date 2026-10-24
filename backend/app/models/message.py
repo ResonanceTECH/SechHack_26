@@ -34,4 +34,12 @@ class Message(UUIDPkMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
+    )
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    edited_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    is_edited: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

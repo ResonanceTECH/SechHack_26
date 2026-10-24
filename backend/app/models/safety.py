@@ -41,5 +41,6 @@ class CrisisSignal(UUIDPkMixin, Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="new")
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default="critical")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     acknowledged_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)

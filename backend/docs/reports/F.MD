@@ -28,6 +28,7 @@
 | exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
 | message-service | ✅ Реализован (базовый CRUD + read-state) | app/api/v1/messages.py, app/services/message_service.py, app/repositories/message_repository.py, app/models/message.py, app/schemas/message.py |
 | appointment-service | ✅ Реализован | app/api/v1/appointments.py, app/services/appointment_service.py |
+| schedule-service | ✅ Реализован (Phase 11 Partial) | app/api/v1/schedule.py, app/services/schedule_service.py, app/repositories/schedule_repository.py, app/models/schedule.py, migrations 0018 |
 | report-service | ✅ Реализован (JSON aggregates) | app/api/v1/reports.py, app/services/report_service.py |
 | admin-service | ✅ Реализован (staff list, role change) | app/api/v1/admin.py |
 | audit-service (API) | ✅ Реализован (read logs) | app/api/v1/audit.py, app/services/audit_service.py |

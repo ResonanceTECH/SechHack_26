@@ -734,11 +734,12 @@ Push-уведомления (planned); чат между пациентом и �
 - `GET/PUT /api/v1/clinics/{clinic_id}/settings`
 - `GET/PUT /api/v1/practitioners/{id}/schedule`
 - `POST/DELETE /api/v1/practitioners/{id}/schedule/exceptions/{exception_id}`
-RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_available_now/next_available_at` и интеграция с чатом — planned.
+- `GET /api/v1/practitioners/{id}/availability`
+RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_available_now/next_available_at` реализован. Интеграция с чатом/SLA и полный audit logging — planned.
 
-### Этап 12. Базовая строгость данных (Planned)
+### Этап 12. Базовая строгость данных (Partial)
 
-`updated_at`, priority/status для crisis signals, metadata редактирования сообщений, audit log с old/new values.
+Реализовано (миграция 0019): `updated_at` для `messages` и `crisis_signals`; metadata редактирования сообщений (`edited_at`, `edited_by`, `is_edited`). Приоритет/статус crisis signals и audit old/new уже присутствуют. Полное покрытие updated_at для всех таблиц — planned.
 
 ### Этап 13. Корректировки клинических данных (Planned)
 
