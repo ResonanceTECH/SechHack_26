@@ -305,7 +305,7 @@
 
 ## 4. Ограничения целостности
 
-- `screening_results.score` — CHECK: `score >= 0` + диапазоны по типу опросника (PHQ-9 ≤ 27, GAD-7 ≤ 21, YMRS ≤ 60, HCL-8 ≤ 8, PDSS ≤ 28, C-SSRS ≤ 6, ISI ≤ 28, HCL-33 ≤ 33)
+- `screening_results.score` — CHECK: `score >= 0` + диапазоны по типу опросника (PHQ-9 ≤ 27, GAD-7 ≤ 21, YMRS ≤ 60, HCL-8 ≤ 8, PDSS ≤ 28, C-SSRS ≤ 6, ISI ≤ 28, HCL-33 ≤ 33). Ограничение `chk_screening_score_range` расширено миграцией `0015_screening_registry`. При downgrade `0015` ограничение создаётся с `NOT VALID`, чтобы rollback работал даже при наличии строк с новыми типами вопросников; такие строки сохраняются, но новые вставки/обновления проверяются.
 - `diary_entries.mood_score` — CHECK: `mood_score BETWEEN -3 AND 3` (актуальное значение из кода)
 - `diary_entries.anxiety_score` — CHECK: `anxiety_score BETWEEN 0 AND 4`
 - `diary_entries.energy_score` — CHECK: `energy_score BETWEEN 0 AND 4`
@@ -622,9 +622,13 @@ CRUD пациентов и специалистов, привязка к кли�
 
 CRUD записей дневника; bulk-sync с дедупликацией по `(device_id, recorded_at, patient_id)`; CHECK-ограничения шкал; summary. Новые шкалы: mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4.
 
-### Этап 5. Программы и упражнения (Planned)
+### Этап 5. Программы и упражнения ✅ Completed
 
-Назначение упражнения врачом; отметка выполнения пациентом; расчёт adherence.
+Реализованы care plans и exercise assignments/completions/compliance:
+- `GET/POST /api/v1/care-plans`
+- `GET/POST/PUT /api/v1/exercises`, `POST /api/v1/exercises/{id}/complete`, `GET /api/v1/exercises/{id}/compliance`
+- Автосоздание default care plan при назначении упражнения без `care_plan_id`
+- RBAC: `exercise:assign`, `exercise:complete`; compliance = basic count of completions.
 
 ### Этап 6. Алерты и план безопасности ✅ Completed
 

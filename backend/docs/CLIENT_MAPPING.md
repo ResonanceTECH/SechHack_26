@@ -101,6 +101,13 @@
 | Diary delete | `/api/v1/diary/{id}` | DELETE | — | 204 | patient | READY |
 | Diary bulk sync | `/api/v1/diary/bulk-sync` | POST | `DiaryBulkSyncRequest` | `DiaryBulkSyncResponse` | patient | READY |
 | Diary summary | `/api/v1/diary/summary` | GET | `patient_id?`, `date_from?`, `date_to?` | `DiarySummaryResponse` | patient/doctor | READY |
+| Care plans list | `/api/v1/care-plans` | GET | `patient_id?` | `CarePlan[]` | patient/doctor/psychologist | READY |
+| Care plan create | `/api/v1/care-plans` | POST | `CarePlanCreate` | `CarePlan` | doctor/psychologist | READY |
+| Exercise list | `/api/v1/exercises` | GET | `patient_id?` | `ExerciseAssignment[]` | patient/doctor/psychologist | READY |
+| Exercise create | `/api/v1/exercises` | POST | `ExerciseAssignmentCreate` | `ExerciseAssignment` | doctor/psychologist | READY |
+| Exercise update | `/api/v1/exercises/{id}` | PUT | `ExerciseAssignmentUpdate` | `ExerciseAssignment` | doctor/psychologist | READY |
+| Exercise complete | `/api/v1/exercises/{id}/complete` | POST | `ExerciseCompletionCreate` | `ExerciseCompletion` | patient | READY |
+| Exercise compliance | `/api/v1/exercises/{id}/compliance` | GET | — | `ComplianceResponse` | doctor/psychologist | READY |
 
 ### Partial / Blocked (Frontend)
 
@@ -142,7 +149,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 41 путей (актуальное состояние runtime, совпадает с committed spec)
+- 59 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 

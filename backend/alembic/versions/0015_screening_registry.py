@@ -31,10 +31,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint("chk_screening_score_range", "screening_results", type_="check")
-    op.create_check_constraint(
-        "chk_screening_score_range",
-        "screening_results",
-        "(questionnaire_type = 'phq9' AND score <= 27) OR "
+    # NOT VALID keeps rollback working when rows for newer questionnaire types already exist;
+    # those rows remain in the database but future inserts/updates are checked.
+    op.execute(
+        "ALTER TABLE screening_results ADD CONSTRAINT chk_screening_score_range "
+        "CHECK ((questionnaire_type = 'phq9' AND score <= 27) OR "
         "(questionnaire_type = 'gad7' AND score <= 21) OR "
-        "(questionnaire_type = 'ymrs' AND score <= 60)",
+        "(questionnaire_type = 'ymrs' AND score <= 60)) NOT VALID"
     )

@@ -24,17 +24,18 @@
 | diagnosis-service | ✅ Реализован (Phase 13/14) | app/api/v1/diagnoses.py, app/models/diagnosis.py, migrations 0006, 0007 |
 | assessment-plan | ✅ Реализован (Phase 15) | app/api/v1/assessment_plans.py, app/models/care.py (CarePlan), migration 0008 |
 | safety-service | ✅ Реализован | app/api/v1/safety.py, migrations 0004, 0009 |
+| exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
 
-**Source:** app/api/v1/router.py (12 роутеров зарегистрированы), docs/openapi.json (41 путей)
+**Source:** app/api/v1/router.py (14 роутеров зарегистрированы), docs/openapi.json (59 путей)
 
 ### 2.2 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Реализовано в коде | Status |
 |--------|-------------------|-------------------|--------|
-| medication-service | API_CONTRACTS.md §3, MEDICATIONS.md | Нет роутера `/api/v1/medications` | UNVERIFIED (документ только) |
-| prescription-service | API_CONTRACTS.md, MEDICATIONS.md §3.3 | Нет роутера `/api/v1/prescriptions` | UNVERIFIED |
-| adherence-service | MEDICATIONS.md §3.4 | Нет роутера `/api/v1/adherence` | UNVERIFIED |
-| program-service (exercises) | MODULES.md §8 | Нет роутера `/api/v1/exercises` | UNVERIFIED |
+| medication-service | API_CONTRACTS.md §3, MEDICATIONS.md | `/api/v1/medications` | VERIFIED |
+| prescription-service | API_CONTRACTS.md, MEDICATIONS.md §3.3 | `/api/v1/prescriptions` | VERIFIED |
+| adherence-service | MEDICATIONS.md §3.4 | `/api/v1/adherence` | VERIFIED |
+| program-service (exercises) | MODULES.md §8 | `/api/v1/exercises`, `/api/v1/care-plans` | VERIFIED |
 | message-service | API_CONTRACTS.md | Нет роутера `/api/v1/messages` | UNVERIFIED |
 | appointment-service | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` | UNVERIFIED |
 | report-service | MODULES.md §10 | Нет роутера `/api/v1/reports` | UNVERIFIED |
@@ -112,11 +113,16 @@ Evidence:
 | 0011_diary_entries | diary_entries (new scales) | ✅ | ✅ |
 | 0012_integration_events | integration_events | ✅ | ✅ |
 
-**Head:** 0012_integration_events  
-**Все миграции имеют downgrade()** — подтверждено при чтении исходников.
+| 0013_medications | rx.medications, prescriptions, adherence | ✅ | ✅ |
+| 0014_screening_ymrs | добавить YMRS в chk_screening_score_range | ✅ | ✅ |
+| 0015_screening_registry | расширить chk_screening_score_range на все коды реестра | ✅ | ✅ (downgrade создаёт CHECK ... NOT VALID) |
+
+**Head:** 0015_screening_registry  
+**Все миграции имеют downgrade()** — подтверждено при чтении исходников.  
+Примечание: downgrade `0015_screening_registry` создаёт `chk_screening_score_range` с `NOT VALID`, чтобы rollback работал при наличии строк с новыми типами вопросников (`hcl8`, `pdss`, `cssrs`, `isi`, `hcl33`); такие строки сохраняются, но новые вставки/обновления проверяются.
 
 Evidence:
-- alembic/versions/ — 12 файлов миграций, все с upgrade() и downgrade()
+- alembic/versions/ — 15 файлов миграций, все с upgrade() и downgrade()
 - alembic.ini, env.py
 
 ### 4.2 Модели ORM (VERIFIED)
@@ -598,8 +604,8 @@ Evidence:
 - P1 проблемы: есть (отсутствующие эндпоинты, swallowed exceptions, отсутствие интеграции frontend/mobile с backend)  
 - CONTRADICTED утверждения: есть (DB_SCHEMA.md §7 vs код — диапазоны mood_score/anxiety_score)  
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
-- OpenAPI: committed spec содержит 41 пути, совпадает с runtime  
-- Миграции: 12 миграций, head = 0012_integration_events, downgrade есть у всех  
+- OpenAPI: committed spec содержит 59 путей, совпадает с runtime  
+- Миграции: 15 миграций, head = 0015_screening_registry, downgrade есть у всех  
 
 
 ## Questionnaire anchors update
