@@ -141,8 +141,8 @@
 
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
-| Clinic settings timezone | MOCK ONLY | frontend `ClinicSettingsModal` uses mock data; backend `ClinicSettings` planned |
-| Doctor schedule / availability | PLANNED | backend endpoints not implemented |
+| Clinic settings timezone | PARTIAL | backend `GET/PUT /api/v1/clinics/{id}/settings` implemented; frontend mock |
+| Doctor schedule / availability | PARTIAL | backend `GET/PUT /api/v1/practitioners/{id}/schedule`, exceptions implemented; availability calc planned |
 
 ## 5. Patient Flow (общий)
 
@@ -172,7 +172,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 62 путей (актуальное состояние runtime, совпадает с committed spec)
+- 71 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 

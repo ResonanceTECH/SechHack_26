@@ -15,6 +15,7 @@ from app.models.message import Message
 
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.safety import CrisisSignal, SafetyPlan
+from app.models.schedule import ClinicSettings, PractitionerSchedule, PractitionerScheduleException
 from app.models.user import User
 
 __all__ = [
@@ -40,6 +41,9 @@ __all__ = [
     "PractitionerProfile",
     "RefreshToken",
     "ScreeningResult",
+    "ClinicSettings",
+    "PractitionerSchedule",
+    "PractitionerScheduleException",
     "SmsCode",
     "User",
 ]

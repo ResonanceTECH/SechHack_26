@@ -728,9 +728,13 @@ Push-уведомления (planned); чат между пациентом и �
 
 Аудит-логи (API); управление сотрудниками; настройки клиники.
 
-### Этап 11. Расписание врачей и доступность чата (Planned)
+### Этап 11. Расписание врачей и доступность чата (Partial)
 
-`ClinicSettings` с timezone клиники; `PractitionerSchedule` и `PractitionerScheduleException`; endpoints управления расписанием и расчёта `is_available_now` / `next_available_at`. Чат остаётся доступным 24/7; расписание влияет на UX-индикаторы и SLA, но не блокирует сообщения. RBAC: `schedule:read`, `schedule:write`, `clinic_settings:read`, `clinic_settings:write`; clinic isolation и audit logging обязательны.
+Реализовано (миграция 0018): `ClinicSettings`, `PractitionerSchedule`, `PractitionerScheduleException`; endpoints:
+- `GET/PUT /api/v1/clinics/{clinic_id}/settings`
+- `GET/PUT /api/v1/practitioners/{id}/schedule`
+- `POST/DELETE /api/v1/practitioners/{id}/schedule/exceptions/{exception_id}`
+RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_available_now/next_available_at` и интеграция с чатом — planned.
 
 ### Этап 12. Базовая строгость данных (Planned)
 

@@ -74,7 +74,10 @@ PERMISSIONS: dict[str, frozenset[str]] = {
     "assessment:read": frozenset(ALL_ROLES),
     "assessment:write": frozenset({ROLE_DOCTOR, ROLE_SUPER_ADMIN}),
     "crisis:write": frozenset({ROLE_PATIENT, ROLE_DOCTOR, ROLE_PSYCHOLOGIST, ROLE_COORDINATOR, ROLE_SUPER_ADMIN}),
-
+    "schedule:read": frozenset({ROLE_DOCTOR, ROLE_PSYCHOLOGIST, ROLE_COORDINATOR, ROLE_CLINIC_ADMIN, ROLE_SUPER_ADMIN}),
+    "schedule:write": frozenset({ROLE_DOCTOR, ROLE_PSYCHOLOGIST, ROLE_COORDINATOR, ROLE_CLINIC_ADMIN, ROLE_SUPER_ADMIN}),
+    "clinic_settings:read": frozenset({ROLE_CLINIC_ADMIN, ROLE_SUPER_ADMIN}),
+    "clinic_settings:write": frozenset({ROLE_CLINIC_ADMIN, ROLE_SUPER_ADMIN}),
 }
 
 
