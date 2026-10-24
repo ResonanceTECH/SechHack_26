@@ -58,4 +58,4 @@
   - Bastien CH, Vallières A, Morin CM. Validation of the Insomnia Severity Index as an outcome measure for insomnia research // Sleep Medicine, 2001.
   - Young RC, et al. A rating scale for mania: reliability, validity and sensitivity // British Journal of Psychiatry, 1978.
 
-Если для PDSS/ISI/YMRS потребуются полностью текстовые якоря, их следует добавлять как item-specific metadata (`max_value`/anchors) отдельным расширением реестра, а не подменять общий `answer_scale`.
+PDSS и ISI уже имеют item-specific `anchors` в поле `Question.anchors`; YMRS при необходимости следует расширять отдельно как item-specific metadata (`max_value`/anchors), а не подменять общий `answer_scale`.

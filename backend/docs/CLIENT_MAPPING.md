@@ -149,4 +149,4 @@
 
 ## Questionnaire anchors
 
-- Question payload may include anchors: [{value,label}] | null for PDSS/ISI item-specific labels; YMRS uses numeric labels only.
+См. [questionnaire_sources](./questionnaire_sources.md) (раздел «Формулировки ответов»): `anchors` присутствуют для PDSS/ISI; YMRS использует только числовые метки.

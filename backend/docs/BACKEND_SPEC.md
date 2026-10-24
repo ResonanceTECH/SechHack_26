@@ -686,8 +686,6 @@ Push-уведомления; чат между пациентом и врачо�
 
 **Invite-код:** алфавит `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, формат UI `RAV-27400` (дефис — маска, на бэкенд без дефиса), TTL задаёт врач.
 
-## Questionnaire anchors update
+## Questionnaire anchors
 
-- Question now supports anchors: list[AnswerOption] | None.
-- PDSS and ISI expose item-specific anchors in QuestionnaireDefinition.to_dict().
-- YMRS remains clinician-rated with numeric labels.
+См. [questionnaire_sources](./questionnaire_sources.md) (раздел «Формулировки ответов»): PDSS/ISI имеют item-specific `anchors`; YMRS остаётся clinician-rated с числовыми метками.

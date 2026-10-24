@@ -604,6 +604,4 @@ Evidence:
 
 ## Questionnaire anchors update
 
-- Question now supports anchors: list[AnswerOption] | None.
-- PDSS and ISI expose item-specific anchors in questionnaire payload.
-- YMRS remains clinician-rated with numeric labels.
+См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.
