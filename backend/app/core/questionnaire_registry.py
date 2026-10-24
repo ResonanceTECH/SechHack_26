@@ -9,6 +9,7 @@ class Question:
     id: str
     text: str
     order: int
+    max_value: int | None = None
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,7 @@ class QuestionnaireDefinition:
             "version": self.version,
             "title": self.title,
             "description": self.description,
-            "questions": [{"id": q.id, "text": q.text, "order": q.order} for q in self.questions],
+            "questions": [{"id": q.id, "text": q.text, "order": q.order, "max_value": q.max_value} for q in self.questions],
             "answer_scale": [{"value": a.value, "label": a.label} for a in self.answer_scale],
             "scoring": self.scoring,
             "max_score": self.max_score,
@@ -182,7 +183,41 @@ _register(QuestionnaireDefinition(
     critical_rules={"total_threshold": 15},
 ))
 
-_HCL33_QUESTIONS = [f"?????? HCL-33 #{i+1}" for i in range(33)]
+_HCL33_QUESTIONS = [
+    "Мне требуется меньше сна.",
+    "Я чувствую себя более энергичным и активным.",
+    "Я более уверен в себе.",
+    "Работа доставляет мне больше удовольствия.",
+    "Я более социально активен (чаще звоню по телефону, чаще развлекаюсь).",
+    "Мне хочется больше путешествовать и/или я больше путешествую.",
+    "Я вожу автомобиль с большей скоростью или чаще рискую во время вождения.",
+    "Я трачу больше денег, чем обычно (слишком много денег).",
+    "Я чаще рискую в повседневной жизни (на работе или в других ситуациях).",
+    "Я более активен физически (спорт и т. д.).",
+    "Я планирую больше действий и проектов.",
+    "У меня больше идей, я становлюсь более креативным.",
+    "Я становлюсь менее застенчивым и закомплексованным.",
+    "Я одеваюсь более ярко и экстравагантно.",
+    "Мне хочется встречаться с большим количеством людей или я действительно чаще общаюсь с людьми.",
+    "Я больше интересуюсь сексом и/или становлюсь более сексуально активным.",
+    "Я больше говорю.",
+    "Я думаю быстрее.",
+    "Во время разговора я чаще шучу и каламбурю.",
+    "Я легко отвлекаюсь.",
+    "Я вовлекаюсь во множество новых вещей.",
+    "Мои мысли перепрыгивают с одной темы на другую.",
+    "Я всё делаю гораздо быстрее и/или легче, чем обычно.",
+    "Я более нетерпелив и/или легче раздражаюсь.",
+    "Я могу быть утомительным или раздражать окружающих.",
+    "Я чаще вступаю в ссоры.",
+    "Мое настроение более приподнятое и оптимистическое.",
+    "Я пью больше кофе.",
+    "Я выкуриваю большее число сигарет.",
+    "Я пью больше алкоголя.",
+    "Я принимаю больше лекарств (седативных, анксиолитиков, стимуляторов...).",
+    "Я чаще играю на компьютере или увлекаюсь азартными играми.",
+    "Я больше ем или чаще переедаю.",
+]
 
 _register(QuestionnaireDefinition(
     code="hcl33",
@@ -190,10 +225,10 @@ _register(QuestionnaireDefinition(
     title="HCL-33",
     description="Hypomania Checklist (33 items)",
     questions=[Question(id=f"q{i+1}", text=text, order=i+1) for i, text in enumerate(_HCL33_QUESTIONS)],
-    answer_scale=[AnswerOption(0, "???"), AnswerOption(1, "??")],
+    answer_scale=[AnswerOption(0, "Нет"), AnswerOption(1, "Да")],
     scoring="sum",
     max_score=33,
-    severity_bands=[SeverityBand(0, 7, "??????"), SeverityBand(8, 14, "?????????"), SeverityBand(15, 33, "???????")],
+    severity_bands=[SeverityBand(0, 7, "низкий"), SeverityBand(8, 13, "умеренный"), SeverityBand(14, 33, "высокий")],
     critical_rules={"total_threshold": 14},
 ))
 for code, title, questions, bands, critical in [
@@ -217,6 +252,41 @@ for code, title, questions, bands, critical in [
         critical_rules=critical,
     ))
 
+
+_YMRS_QUESTIONS = [
+    "Приподнятое настроение",
+    "Увеличение моторной активности, энергичность",
+    "Сексуальная заинтересованность",
+    "Сон",
+    "Раздражительность",
+    "Речь (скорость и количество)",
+    "Нарушение мышления",
+    "Содержание идей",
+    "Агрессивное поведение",
+    "Внешний вид",
+    "Сознание болезни",
+]
+
+_YMRS_MAX_VALUES = [4, 4, 4, 4, 8, 8, 4, 8, 8, 4, 4]
+
+_register(QuestionnaireDefinition(
+    code="ymrs",
+    version="1.0",
+    title="YMRS",
+    description="Young Mania Rating Scale",
+    questions=[Question(id=f"q{i+1}", text=text, order=i+1, max_value=_YMRS_MAX_VALUES[i]) for i, text in enumerate(_YMRS_QUESTIONS)],
+    answer_scale=[AnswerOption(i, str(i)) for i in range(9)],
+    scoring="sum",
+    max_score=60,
+    severity_bands=[
+        SeverityBand(0, 12, "ремиссия"),
+        SeverityBand(13, 19, "лёгкая"),
+        SeverityBand(20, 25, "умеренная"),
+        SeverityBand(26, 37, "тяжёлая"),
+        SeverityBand(38, 60, "очень тяжёлая"),
+    ],
+    critical_rules={"total_threshold": 20},
+))
 
 def list_codes() -> list[str]:
     return sorted({code for code, _ in REGISTRY})

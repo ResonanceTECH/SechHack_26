@@ -33,7 +33,13 @@ class ScreeningResult(UUIDPkMixin, Base):
         CheckConstraint("score >= 0", name="ck_screening_results_score_nonneg"),
         CheckConstraint(
             "(questionnaire_type = 'phq9' AND score <= 27) OR "
-            "(questionnaire_type = 'gad7' AND score <= 21)",
+            "(questionnaire_type = 'gad7' AND score <= 21) OR "
+            "(questionnaire_type = 'ymrs' AND score <= 60) OR "
+            "(questionnaire_type = 'hcl8' AND score <= 8) OR "
+            "(questionnaire_type = 'pdss' AND score <= 28) OR "
+            "(questionnaire_type = 'cssrs' AND score <= 6) OR "
+            "(questionnaire_type = 'isi' AND score <= 28) OR "
+            "(questionnaire_type = 'hcl33' AND score <= 33)",
             name="chk_screening_score_range",
         ),
         Index("idx_screening_results_patient_id_created_at", "patient_id", "created_at"),

@@ -9,8 +9,7 @@ from app.schemas.screening import (
     ScreeningHistoryResponse,
     QuestionnaireInfo,
 )
-from app.core.questionnaires import QUESTIONNAIRES
-from app.core.questionnaire_registry import get_definition
+from app.core.questionnaire_registry import get_definition, list_codes
 from app.core.errors import forbidden, not_found, validation_error
 from app.services.screening_service import ScreeningService
 from app.repositories.screening_repository import ScreeningRepository
@@ -27,9 +26,14 @@ def _get_service() -> ScreeningService:
 @router.get("", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
             dependencies=[Depends(require_permission("screening:read"))])
 async def list_questionnaires(request: Request) -> dict:
-    """?????? ????????? ?????????? (PHQ-9, GAD-7)."""
-    items = [QuestionnaireInfo(code=v["code"], title=v["title"], questions_count=v["questions_count"],
-                               max_score=v["max_score"], version=v["version"]).model_dump() for v in QUESTIONNAIRES.values()]
+    """Список вопросников из реестра (все поддерживаемые)."""
+    items = []
+    for code in list_codes():
+        defn = get_definition(code)
+        if defn is None:
+            continue
+        items.append(QuestionnaireInfo(code=defn.code, title=defn.title, questions_count=len(defn.questions),
+                                     max_score=defn.max_score, version=defn.version).model_dump())
     return {"data": {"questionnaires": items}, "request_id": getattr(request.state, "request_id", "")}
 
 
@@ -57,7 +61,8 @@ async def get_screening(screening_id: str, current_user: CurrentUser, db: DbSess
             from app.core.errors import forbidden
             raise forbidden()
     service = _get_service()
-    interpretation = service.interpret_phq9(row.score) if row.questionnaire_type == "phq9" else service.interpret_gad7(row.score)
+    defn = get_definition(row.questionnaire_type, row.questionnaire_version)
+    interpretation = defn.severity_for(row.score) if defn is not None else row.severity
     result = ScreeningResponse(
         id=str(row.id), patient_id=str(row.patient_id), questionnaire_type=row.questionnaire_type,
         questionnaire_version=row.questionnaire_version, score=row.score, answers=row.answers,

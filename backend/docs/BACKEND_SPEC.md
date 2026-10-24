@@ -110,7 +110,7 @@
 |------|-----|----------|
 | `id` | UUID | PK |
 | `patient_id` | UUID NOT NULL (FK → PatientProfile.id) | Пациент |
-| `questionnaire_type` | String NOT NULL | `phq9`, `gad7` |
+| `questionnaire_type` | String NOT NULL | `phq9`, `gad7`, `ymrs` |
 | `questionnaire_version` | String NOT NULL | Версия опросника |
 | `score` | Integer NOT NULL CHECK (`score >= 0`) | Суммарный балл |
 | `answers` | JSONB (nullable) | Ответы `{question_id: value}` — для правила «PHQ-9 п.9 ≥ 1» |
@@ -305,7 +305,7 @@
 
 ## 4. Ограничения целостности
 
-- `screening_results.score` — CHECK: `score >= 0` + диапазоны по типу опросника (PHQ-9 ≤ 27, GAD-7 ≤ 21)
+- `screening_results.score` — CHECK: `score >= 0` + диапазоны по типу опросника (PHQ-9 ≤ 27, GAD-7 ≤ 21, YMRS ≤ 60, HCL-8 ≤ 8, PDSS ≤ 28, C-SSRS ≤ 6, ISI ≤ 28, HCL-33 ≤ 33)
 - `diary_entries.mood_score` — CHECK: `mood_score BETWEEN -3 AND 3` (актуальное значение из кода)
 - `diary_entries.anxiety_score` — CHECK: `anxiety_score BETWEEN 0 AND 4`
 - `diary_entries.energy_score` — CHECK: `energy_score BETWEEN 0 AND 4`
@@ -667,7 +667,7 @@ Push-уведомления; чат между пациентом и врачо�
 - **MBC Layer** (Phase 15): `AssessmentPlan` реализован (миграция 0008, CRUD, RBAC, clinic isolation, patient existence validation, audit logging). `SymptomTrend` как вычисляемый endpoint без отдельной таблицы.
 - **Diary Rework** (Phase 11): новые шкалы mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4; `functioning_score` добавлен; micro-diary (частичные записи, nullable поля).
 - **Safety Plan Architecture**: переиспользуемый клинический контент → `SafetyPlanTemplate` / `ClinicalContentLibrary` (планируется).
-- **Screening Expansion**: PHQ-9, GAD-7 поддерживаются через реестр; PDSS, HCL-33, C-SSRS требуют записей реестра + правил скоринга.
+- **Screening Expansion**: реестр вопросников содержит 8 кодов (PHQ-9, GAD-7, YMRS, HCL-8, HCL-33, PDSS, C-SSRS, ISI); HCL-33 использует 33 пункта и band-пороги 0-7 низкий, 8-13 умеренный, >=14 высокий.
 - **Patient Card Requirements**: отсутствуют блоки screening trends.
 
 | `scheduled_for` | Date (nullable) | Плановая дата |

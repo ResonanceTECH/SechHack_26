@@ -1,52 +1,41 @@
-# Validated sources for questionnaire item wording
+﻿# Источники вопросников и ограничения БД
 
-This file documents the sources used for the Russian item wording currently stored in
-`backend/app/core/questionnaire_registry.py`.
+Источник истины для кодов вопросников и их определений: backend/app/core/questionnaire_registry.py.
 
-## PHQ-9
-- Original instrument: Kroenke K., Spitzer R.L., Williams J.B. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med. 2001;16(9):606-613.
-- Russian clinical use: validated Russian translations are used in Russian clinical guidelines and psychiatric practice; current item wording follows the standard Russian PHQ-9 item set.
-- Russian validation sources:
-  - Zolotareva A.A. Diagnosis of Depression: Psychometric Examination of the Russian Version of the Patient Health Questionnaire (PHQ-9). Clinical Psychology and Special Education. 2023;12(4). https://psyjournals.ru/en/journals/cpse/archive/2023_n4/Zolotareva
-  - Pogosova G.V. et al. Russian version of PHQ-2 and PHQ-9 questionnaires: sensitivity and specificity in detection of depression in outpatient general medical practice. Cardiovascular Therapy and Prevention. 2014;13(3):18-24. https://cardiovascular.elpub.ru/jour/article/view/51
-  - Russian clinical guideline "Depressive episode, recurrent depressive disorder" (Ministry of Health of Russia) — uses PHQ-9 as screening tool.
-- Source used for verification: Russian clinical guideline / psychiatric practice materials and the standard 9 PHQ-9 items.
+## Поддерживаемые коды
 
-## GAD-7
-- Original instrument: Spitzer R.L., Kroenke K., Williams J.B., Lowe B. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med. 2006;166(10):1092-1097.
-- Russian clinical use: standard Russian GAD-7 translation used in clinical practice.
-- Russian validation sources:
-  - Zolotareva A.A. Adaptation of the GAD-7 and GAD-2 questionnaires into Russian. Clinical Psychology and Special Education. 2023;12(1). https://psyjournals.ru/en/journals/cpse/archive/2023_n1/Zolotareva
-  - Russian clinical guideline "Anxiety disorders in adults" (Ministry of Health of Russia) — uses GAD-7 as screening tool.
-- Source used for verification: standard Russian GAD-7 item set.
+Реестр содержит 8 вопросников:
 
-## HCL-8
-- Derived from: Angst J., Adolfsson R., Benazzi F. et al. The HCL-32: Towards a self-assessment tool for hypomanic symptoms in outpatients. J Affect Disord. 2005;88(2):217-233.
-- Russian validation: Mosolov S.N. et al. Validation of the Russian version of HCL-32. Social and Clinical Psychiatry. 2015;25(1):22-30.
-- Russian official text: Russian clinical guidelines "Bipolar affective disorder" (Ministry of Health of Russia), Appendix G3, HCL-32. https://sudact.ru/law/klinicheskie-rekomendatsii-bipoliarnoe-affektivnoe-rasstroistvo-utv-minzdravom/prilozhenie-g3-gn/prilozhenie-g3/
-- Note: HCL-8 is a short 8-item hypomania domain checklist based on HCL-32 symptom domains. It is not a separately validated full instrument; item wording is an abbreviated clinical summary.
+- hcl8
+- pdss
+- cssrs
+- isi
+- hcl33
+- phq9
+- gad7
+- ymrs
 
-## HCL-33
-- Derived from: Angst J. et al. The HCL-32 / HCL-33 hypomania checklist family.
-- Russian official text: Russian clinical guidelines "Bipolar affective disorder" (Ministry of Health of Russia), Appendix G3, HCL-32 (image-based in the published document). https://sudact.ru/law/klinicheskie-rekomendatsii-bipoliarnoe-affektivnoe-rasstroistvo-utv-minzdravom/prilozhenie-g3-gn/prilozhenie-g3/
-- Status: item-level Russian wording is still a placeholder because the official HCL-32 item text is embedded as an image in the published guideline and was not extractable in this session.
+## Ограничение CHECK screening_results (chk_screening_score_range)
 
-## C-SSRS
-- Original instrument: Posner K. et al. The Columbia-Suicide Severity Rating Scale (C-SSRS): initial validity and internal consistency findings. Am J Psychiatry. 2011;168(12):1266-1277.
-- Russian official text: Russian clinical guidelines "Bipolar affective disorder" (Ministry of Health of Russia), Appendix G1, Columbia Suicide Severity Rating Scale.
-- Source URL: https://sudact.ru/law/klinicheskie-rekomendatsii-bipoliarnoe-affektivnoe-rasstroistvo-utv-minzdravom/prilozhenie-g1-gn/prilozhenie-g1/kolumbiiskaia-shkala-otsenki-tiazhesti-suitsida/
+Максимальные значения score по типу вопросника:
 
-## PDSS
-- Original instrument: Shear M.K., Brown T.A., Barlow D.H. et al. Multicenter collaborative panic disorder severity scale. Am J Psychiatry. 1997;154(11):1571-1575.
-- Russian adaptation: Fedotov I.A. Panic Disorder Severity Scale. In: Clinical Psychometrics (ed. Soldatkin V.A.). Moscow: Knorus; 2022.
-- Russian official text: Russian clinical guidelines "Panic disorder" (Ministry of Health of Russia, 2024), Appendix 2, PDSS.
-- Source URL: https://base.garant.ru/410407475/37f2c5776c509d4d338445ec97a7d852/
+- phq9 (score <= 27)
+- gad7 (score <= 21)
+- ymrs (score <= 60)
+- hcl8 (score <= 8)
+- pdss (score <= 28)
+- cssrs (score <= 6)
+- isi (score <= 28)
+- hcl33 (score <= 33)
 
-## ISI
-- Original instrument: Bastien C.H., Vallieres A., Morin C.M. Validation of the Insomnia Severity Index as an outcome measure for insomnia research. Sleep Med. 2001;2(4):297-307.
-- Russian clinical use: standard Russian ISI translation used in sleep medicine and psychiatry.
-- Russian validation sources:
-  - Russian clinical guideline "Insomnia in adults" (Ministry of Health of Russia) — uses ISI as outcome measure.
-  - Standard Russian ISI item set used in sleep medicine and psychiatry practice.
-- Source used for verification: standard Russian ISI item set.
-"""
+Расширение CHECK-ограничения выполнено миграцией 0015_screening_registry.
+
+## Источники и примечания
+
+- PHQ-9: валидизированный инструмент оценки депрессии; критическое правило: пункт 9 >= 1 или сумма >= 20. Источники: Kroenke et al., 2001; российские публикации по адаптации PHQ-9.
+- GAD-7: инструмент оценки генерализованного тревожного расстройства; критический порог суммы >= 15. Источник: Spitzer et al., 2006.
+- HCL-8 / HCL-33: сокращённые/полные версии Hypomania Checklist; критические пороги суммы: HCL-8 >= 6, HCL-33 >= 14. Источники: Feng Y, Angst J, et al. The 33-item Hypomania Checklist (HCL-33): A new self-completed screening instrument for bipolar disorder // Journal of Affective Disorders, 2016, 190; российская адаптация: Сорокина М. Ю., Пантелеева Г. П., Абрамова Л. И., Костюк Г. П. Разработка и апробация в России нового опросника HCL-33 // Социальная и клиническая психиатрия, 2021, №6; HCL-8: Сорокина М. Ю. и др. (2015).
+- C-SSRS: Columbia-Suicide Severity Rating Scale; критическое правило: любой положительный ответ. Источник: Posner K, et al. The Columbia-Suicide Severity Rating Scale: initial validity and internal consistency findings from three multisite studies with adolescents and adults // American Journal of Psychiatry, 2011.
+- PDSS: Panic Disorder Severity Scale; критический порог суммы >= 15. Источник: Shear MK, et al. Multicenter collaborative panic disorder severity scale // American Journal of Psychiatry, 1997.
+- YMRS: Young Mania Rating Scale; 11 пунктов, максимум 60; критический порог суммы >= 20. Источник: Young RC, et al. A rating scale for mania: reliability, validity and sensitivity // British Journal of Psychiatry, 1978.
+- ISI: Insomnia Severity Index; критический порог суммы >= 15. Источник: Bastien CH, Vallieres A, Morin CM. Validation of the Insomnia Severity Index as an outcome measure for insomnia research // Sleep Medicine, 2001.

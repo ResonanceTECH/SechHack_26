@@ -11,9 +11,16 @@ class ScreeningService:
         if not isinstance(answers, list) or len(answers) != len(defn.questions):
             raise ValueError(f"Ожидается {len(defn.questions)} ответов")
         allowed = {opt.value for opt in defn.answer_scale}
-        for value in answers:
-            if not isinstance(value, int) or isinstance(value, bool) or value not in allowed:
+        for i, value in enumerate(answers):
+            if not isinstance(value, int) or isinstance(value, bool):
                 raise ValueError("Недопустимое значение ответа")
+            q = defn.questions[i]
+            if q.max_value is not None:
+                if value < 0 or value > q.max_value:
+                    raise ValueError("Недопустимое значение ответа")
+            else:
+                if value not in allowed:
+                    raise ValueError("Недопустимое значение ответа")
 
     @staticmethod
     def score(defn, answers: list[int]) -> int:
