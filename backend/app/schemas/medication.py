@@ -4,7 +4,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+import uuid
+
 
 
 class MedicationCreate(BaseModel):
@@ -48,6 +50,12 @@ class MedicationFullResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def _id_to_str(cls, v):
+        return str(v) if v is not None else v
+
+
     model_config = {"from_attributes": True}
 
 
@@ -60,6 +68,12 @@ class MedicationBriefResponse(BaseModel):
     instructions_url: Optional[str] = None
     is_prescribed: bool = False
     adherence: Optional[float] = None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def _id_to_str(cls, v):
+        return str(v) if v is not None else v
+
 
     model_config = {"from_attributes": True}
 
@@ -100,6 +114,12 @@ class PrescriptionResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    @field_validator("id", "patient_id", "practitioner_id", "medication_id", mode="before")
+    @classmethod
+    def _ids_to_str(cls, v):
+        return str(v) if v is not None else v
+
+
     model_config = {"from_attributes": True}
 
 
@@ -122,6 +142,12 @@ class AdherenceResponse(BaseModel):
     is_taken: bool
     note: Optional[str] = None
     created_at: Optional[datetime] = None
+
+    @field_validator("id", "prescription_id", mode="before")
+    @classmethod
+    def _ids_to_str(cls, v):
+        return str(v) if v is not None else v
+
 
     model_config = {"from_attributes": True}
 
