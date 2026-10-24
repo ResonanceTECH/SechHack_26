@@ -145,3 +145,8 @@
 - 41 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
+
+
+## Questionnaire anchors
+
+- Question payload may include anchors: [{value,label}] | null for PDSS/ISI item-specific labels; YMRS uses numeric labels only.

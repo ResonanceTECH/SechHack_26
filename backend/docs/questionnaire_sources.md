@@ -52,7 +52,7 @@
   - Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure // Journal of General Internal Medicine, 2001.
   - Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7 // Archives of Internal Medicine, 2006.
 - HCL-8, HCL-33 и C-SSRS используют бинарные якоря «Нет» / «Да» (ответ на наличие симптома/признака).
-- PDSS, ISI и YMRS сохраняют числовые метки (`"0"`…`"4"` / `"0"`…`"8"`), потому что их якоря зависят от конкретного пункта и смешивают частоту, выраженность, удовлетворённость и нарушение функционирования. Для таких шкал числовая шкала с серверной валидацией `value` принята как безопасный и воспроизводимый контракт; текстовые пояснения лучше показывать в UI по конкретному вопросу, а не в общем `answer_scale`.
+- PDSS и ISI теперь имеют item-specific anchors в поле `Question.anchors`; YMRS остаётся clinician-rated и использует числовые метки (`"0"`…`"4"` / `"0"`…`"8"`), потому что их якоря зависят от конкретного пункта и смешивают частоту, выраженность, удовлетворённость и нарушение функционирования. Для таких шкал числовая шкала с серверной валидацией `value` принята как безопасный и воспроизводимый контракт; текстовые пояснения лучше показывать в UI по конкретному вопросу, а не в общем `answer_scale`.
   Источники:
   - Shear MK, et al. Multicenter collaborative panic disorder severity scale // American Journal of Psychiatry, 1997.
   - Bastien CH, Vallières A, Morin CM. Validation of the Insomnia Severity Index as an outcome measure for insomnia research // Sleep Medicine, 2001.

@@ -49,3 +49,43 @@ class QuestionnaireInfo(BaseModel):
     questions_count: int
     max_score: int
     version: str
+from typing import Any
+
+
+class AnswerOptionSchema(BaseModel):
+    value: int
+    label: str
+
+
+class QuestionSchema(BaseModel):
+    id: str
+    text: str
+    order: int
+    max_value: int | None = None
+    anchors: list[AnswerOptionSchema] | None = None
+
+
+class SeverityBandSchema(BaseModel):
+    min_score: int
+    max_score: int
+    label: str
+
+
+class QuestionnaireDetailSchema(BaseModel):
+    code: str
+    version: str
+    title: str
+    description: str | None = None
+    questions: list[QuestionSchema]
+    answer_scale: list[AnswerOptionSchema]
+    scoring: Any = None
+    max_score: int
+    severity_bands: list[SeverityBandSchema]
+    critical_rules: Any = None
+
+
+class QuestionnaireDetailEnvelope(BaseModel):
+    data: QuestionnaireDetailSchema | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+    error: dict[str, Any] | None = None
+

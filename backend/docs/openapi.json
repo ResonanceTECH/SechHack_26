@@ -1272,7 +1272,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EnvelopeResponse"
+                  "$ref": "#/components/schemas/QuestionnaireDetailEnvelope"
                 }
               }
             }
@@ -1339,7 +1339,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EnvelopeResponse"
+                  "$ref": "#/components/schemas/QuestionnaireDetailEnvelope"
                 }
               }
             }
@@ -4693,6 +4693,24 @@
         "type": "object",
         "title": "AlertUpdate"
       },
+      "AnswerOptionSchema": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "AnswerOptionSchema"
+      },
       "AssessmentPlanCreate": {
         "properties": {
           "patient_id": {
@@ -6065,6 +6083,156 @@
         "type": "object",
         "title": "PrescriptionUpdate"
       },
+      "QuestionSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value"
+          },
+          "anchors": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AnswerOptionSchema"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "order"
+        ],
+        "title": "QuestionSchema"
+      },
+      "QuestionnaireDetailEnvelope": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuestionnaireDetailSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meta"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "QuestionnaireDetailEnvelope"
+      },
+      "QuestionnaireDetailSchema": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionSchema"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "answer_scale": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerOptionSchema"
+            },
+            "type": "array",
+            "title": "Answer Scale"
+          },
+          "scoring": {
+            "title": "Scoring"
+          },
+          "max_score": {
+            "type": "integer",
+            "title": "Max Score"
+          },
+          "severity_bands": {
+            "items": {
+              "$ref": "#/components/schemas/SeverityBandSchema"
+            },
+            "type": "array",
+            "title": "Severity Bands"
+          },
+          "critical_rules": {
+            "title": "Critical Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "version",
+          "title",
+          "questions",
+          "answer_scale",
+          "max_score",
+          "severity_bands"
+        ],
+        "title": "QuestionnaireDetailSchema"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -6430,6 +6598,29 @@
           "questionnaire_type": "phq9",
           "questionnaire_version": "1.0"
         }
+      },
+      "SeverityBandSchema": {
+        "properties": {
+          "min_score": {
+            "type": "integer",
+            "title": "Min Score"
+          },
+          "max_score": {
+            "type": "integer",
+            "title": "Max Score"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_score",
+          "max_score",
+          "label"
+        ],
+        "title": "SeverityBandSchema"
       },
       "SmsRequestModel": {
         "properties": {

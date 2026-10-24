@@ -600,3 +600,10 @@ Evidence:
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
 - OpenAPI: committed spec содержит 41 пути, совпадает с runtime  
 - Миграции: 12 миграций, head = 0012_integration_events, downgrade есть у всех  
+
+
+## Questionnaire anchors update
+
+- Question now supports anchors: list[AnswerOption] | None.
+- PDSS and ISI expose item-specific anchors in questionnaire payload.
+- YMRS remains clinician-rated with numeric labels.

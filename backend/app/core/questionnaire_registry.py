@@ -10,6 +10,7 @@ class Question:
     text: str
     order: int
     max_value: int | None = None
+    anchors: list[AnswerOption] | None = None
 
 
 @dataclass(frozen=True)
@@ -50,7 +51,7 @@ class QuestionnaireDefinition:
             "version": self.version,
             "title": self.title,
             "description": self.description,
-            "questions": [{"id": q.id, "text": q.text, "order": q.order, "max_value": q.max_value} for q in self.questions],
+            "questions": [{"id": q.id, "text": q.text, "order": q.order, "max_value": q.max_value, "anchors": [{"value": a.value, "label": a.label} for a in q.anchors] if q.anchors else None} for q in self.questions],
             "answer_scale": [{"value": a.value, "label": a.label} for a in self.answer_scale],
             "scoring": self.scoring,
             "max_score": self.max_score,
@@ -122,6 +123,8 @@ _register(QuestionnaireDefinition(
 ))
 
 
+_PDSS_ANCHORS = [[AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкая"), AnswerOption(2, "Умеренная"), AnswerOption(3, "Тяжёлая"), AnswerOption(4, "Крайняя")], [AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкий"), AnswerOption(2, "Умеренный"), AnswerOption(3, "Тяжёлый"), AnswerOption(4, "Невыносимый")], [AnswerOption(0, "Нет"), AnswerOption(1, "Редко/лёгкая"), AnswerOption(2, "Иногда/умеренная"), AnswerOption(3, "Часто/тяжёлая"), AnswerOption(4, "Постоянно/крайняя")], [AnswerOption(0, "Нет"), AnswerOption(1, "Редко"), AnswerOption(2, "Иногда"), AnswerOption(3, "Часто"), AnswerOption(4, "Постоянно")], [AnswerOption(0, "Нет"), AnswerOption(1, "Редко"), AnswerOption(2, "Иногда"), AnswerOption(3, "Часто"), AnswerOption(4, "Постоянно")], [AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкое"), AnswerOption(2, "Умеренное"), AnswerOption(3, "Тяжёлое"), AnswerOption(4, "Крайнее")], [AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкое"), AnswerOption(2, "Умеренное"), AnswerOption(3, "Тяжёлое"), AnswerOption(4, "Крайнее")]]
+
 _PDSS_QUESTIONS = [
     "Как много развернутых или неразвернутых панических атак у вас было за прошедшие 7 дней?",
     "Если у вас были панические атаки за прошедшие 7 дней, насколько сильный дискомфорт они вам причинили в момент их появления?",
@@ -136,7 +139,7 @@ _register(QuestionnaireDefinition(
     version="1.0",
     title="PDSS",
     description="Panic Disorder Severity Scale",
-    questions=[Question(id=f"q{i+1}", text=text, order=i+1) for i, text in enumerate(_PDSS_QUESTIONS)],
+    questions=[Question(id=f"q{i+1}", text=text, order=i+1, anchors=_PDSS_ANCHORS[i]) for i, text in enumerate(_PDSS_QUESTIONS)],
     answer_scale=[AnswerOption(i, str(i)) for i in range(5)],
     scoring="sum",
     max_score=28,
@@ -165,6 +168,8 @@ _register(QuestionnaireDefinition(
     critical_rules={"any_yes": True},
 ))
 
+_ISI_ANCHORS = [[AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкая"), AnswerOption(2, "Умеренная"), AnswerOption(3, "Тяжёлая"), AnswerOption(4, "Очень тяжёлая")], [AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкая"), AnswerOption(2, "Умеренная"), AnswerOption(3, "Тяжёлая"), AnswerOption(4, "Очень тяжёлая")], [AnswerOption(0, "Нет"), AnswerOption(1, "Лёгкая"), AnswerOption(2, "Умеренная"), AnswerOption(3, "Тяжёлая"), AnswerOption(4, "Очень тяжёлая")], [AnswerOption(0, "Очень доволен"), AnswerOption(1, "Доволен"), AnswerOption(2, "Умеренно"), AnswerOption(3, "Недоволен"), AnswerOption(4, "Очень недоволен")], [AnswerOption(0, "Совсем нет"), AnswerOption(1, "Немного"), AnswerOption(2, "Умеренно"), AnswerOption(3, "Сильно"), AnswerOption(4, "Очень сильно")], [AnswerOption(0, "Совсем нет"), AnswerOption(1, "Немного"), AnswerOption(2, "Умеренно"), AnswerOption(3, "Сильно"), AnswerOption(4, "Очень сильно")], [AnswerOption(0, "Совсем нет"), AnswerOption(1, "Немного"), AnswerOption(2, "Умеренно"), AnswerOption(3, "Сильно"), AnswerOption(4, "Очень сильно")]]
+
 _ISI_QUESTIONS = [
     "Трудности с засыпанием",
     "Трудности с поддержанием сна",
@@ -180,7 +185,7 @@ _register(QuestionnaireDefinition(
     version="1.0",
     title="ISI",
     description="Insomnia Severity Index",
-    questions=[Question(id=f"q{i+1}", text=text, order=i+1) for i, text in enumerate(_ISI_QUESTIONS)],
+    questions=[Question(id=f"q{i+1}", text=text, order=i+1, anchors=_ISI_ANCHORS[i]) for i, text in enumerate(_ISI_QUESTIONS)],
     answer_scale=[AnswerOption(i, str(i)) for i in range(5)],
     scoring="sum",
     max_score=28,
@@ -265,11 +270,11 @@ _YMRS_QUESTIONS = [
     "Сон",
     "Раздражительность",
     "Речь (скорость и количество)",
-    "Нарушение мышления",
+    "Нарушение (формы) мышления",
     "Содержание идей",
     "Агрессивное поведение",
     "Внешний вид",
-    "Сознание болезни",
+    "Критика к своему состоянию (осознание болезни)",
 ]
 
 _YMRS_MAX_VALUES = [4, 4, 4, 4, 8, 8, 4, 8, 8, 4, 4]
