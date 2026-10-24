@@ -75,6 +75,8 @@
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
 | Appointment scheduling | READY | `/api/v1/appointments` (GET/POST) |
 | Reports (pre-visit, clinic analytics) | READY | `/api/v1/reports/pre-visit/{patient_id}` (GET), `/api/v1/reports/clinic-analytics` (GET) |
+| Admin staff management | READY | `/api/v1/admin/staff` (GET), `/api/v1/admin/staff/{id}/role` (PATCH) |
+| Audit logs | READY | `/api/v1/audit/logs` (GET) |
 
 ## 4. Screen → Endpoint Matrix (Frontend — frontend_dev)
 

@@ -27,21 +27,16 @@
 | medication-service | ✅ Реализован | app/api/v1/medications.py, app/services/medication_service.py, app/repositories/medication_repository.py, app/models/medication.py, app/schemas/medication.py |
 | exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
 | message-service | ✅ Реализован (базовый CRUD + read-state) | app/api/v1/messages.py, app/services/message_service.py, app/repositories/message_repository.py, app/models/message.py, app/schemas/message.py |
+| appointment-service | ✅ Реализован | app/api/v1/appointments.py, app/services/appointment_service.py |
+| report-service | ✅ Реализован (JSON aggregates) | app/api/v1/reports.py, app/services/report_service.py |
+| admin-service | ✅ Реализован (staff list, role change) | app/api/v1/admin.py |
+| audit-service (API) | ✅ Реализован (read logs) | app/api/v1/audit.py, app/services/audit_service.py |
 
-**Source:** app/api/v1/router.py (21 include_router calls), docs/openapi.json (59 путей)
+**Source:** app/api/v1/router.py (include_router calls), docs/openapi.json
 
 ### 2.2 Отсутствующие модули (документированы, не реализованы в коде)
 
-| Модуль | Документировано в | Реализовано в коде | Status |
-|--------|-------------------|-------------------|--------|
-| appointment-service | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` | UNVERIFIED |
-| report-service | MODULES.md §10 | Нет роутера `/api/v1/reports` | UNVERIFIED |
-| admin-service | MODULES.md §10 | Нет роутера `/api/v1/admin` | UNVERIFIED |
-| audit-service (API) | AUTH_PLAN.md §6 | Нет роутера `/api/v1/audit` (только сервис записи) | PARTIALLY VERIFIED |
-
-Evidence:
-- app/api/v1/router.py — регистрирует health, auth, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary, integrations, medications (3 routers), exercises (2 routers), messages
-- Нет файлов: app/api/v1/appointments.py, app/api/v1/reports.py, app/api/v1/admin.py, app/api/v1/audit.py
+Нет — все перечисленные модули реализованы (см. 2.1).
 
 ### 2.3 Контрадикция документации и кода (CONTRADICTED)
 
