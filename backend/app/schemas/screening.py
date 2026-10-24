@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class ScreeningAnswer(BaseModel):
     question_id: str
-    value: int = Field(ge=0, le=3)
+    value: int = Field(ge=0, le=8)
 
 
 class ScreeningCreateRequest(BaseModel):

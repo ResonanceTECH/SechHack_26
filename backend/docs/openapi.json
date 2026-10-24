@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Clinical Compass API",
-    "description": "Backend «Клинический компас»",
+    "description": "Бэкенд «Клинический компас» — актуальный контракт: OpenAPI, BACKEND_SPEC.md, CLIENT_MAPPING.md",
     "version": "0.1.0"
   },
   "paths": {
@@ -887,7 +887,7 @@
           "screenings"
         ],
         "summary": "List Questionnaires",
-        "description": "?????? ????????? ?????????? (PHQ-9, GAD-7).",
+        "description": "Список вопросников из реестра (все поддерживаемые).",
         "operationId": "list_questionnaires_api_v1_screenings_get",
         "parameters": [
           {
@@ -6379,7 +6379,7 @@
           },
           "value": {
             "type": "integer",
-            "maximum": 3.0,
+            "maximum": 8.0,
             "minimum": 0.0,
             "title": "Value"
           }

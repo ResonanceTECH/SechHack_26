@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Clinical Compass API",
     version=settings.app_version,
-    description="Бэкенд «Клинический компас» — API_CONTRACTS.md",
+    description="Бэкенд «Клинический компас» — актуальный контракт: OpenAPI, BACKEND_SPEC.md, CLIENT_MAPPING.md",
     lifespan=lifespan,
 )
 

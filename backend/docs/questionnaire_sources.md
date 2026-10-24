@@ -39,3 +39,23 @@
 - PDSS: Panic Disorder Severity Scale; критический порог суммы >= 15. Источник: Shear MK, et al. Multicenter collaborative panic disorder severity scale // American Journal of Psychiatry, 1997.
 - YMRS: Young Mania Rating Scale; 11 пунктов, максимум 60; критический порог суммы >= 20. Источник: Young RC, et al. A rating scale for mania: reliability, validity and sensitivity // British Journal of Psychiatry, 1978.
 - ISI: Insomnia Severity Index; критический порог суммы >= 15. Источник: Bastien CH, Vallieres A, Morin CM. Validation of the Insomnia Severity Index as an outcome measure for insomnia research // Sleep Medicine, 2001.
+
+## Формулировки ответов (answer_scale)
+
+Бэкенд отдаёт для каждого вопросника `answer_scale: [{value, label}]`. `value` — канонический балл для скоринга, `label` — человекочитаемая формулировка для мобильного клиента. Клиент рендерит `label` и отправляет выбранный `value`.
+
+Текущая политика формулировок:
+
+- PHQ-9 и GAD-7 используют официальные частотные якоря PHQ/GAD-7: «Совсем нет», «Несколько дней», «Более половины дней», «Почти каждый день».
+  Источники:
+  - Pfizer PHQ/GAD-7 instruction manual: https://manuals.dshs.wa.gov/sites/default/files/ALTSA/stakeholders/documents/duals/toolkit/Pfizer%20Instruction%20Manual%20for%20the%20PHQ-9.pdf
+  - Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure // Journal of General Internal Medicine, 2001.
+  - Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7 // Archives of Internal Medicine, 2006.
+- HCL-8, HCL-33 и C-SSRS используют бинарные якоря «Нет» / «Да» (ответ на наличие симптома/признака).
+- PDSS, ISI и YMRS сохраняют числовые метки (`"0"`…`"4"` / `"0"`…`"8"`), потому что их якоря зависят от конкретного пункта и смешивают частоту, выраженность, удовлетворённость и нарушение функционирования. Для таких шкал числовая шкала с серверной валидацией `value` принята как безопасный и воспроизводимый контракт; текстовые пояснения лучше показывать в UI по конкретному вопросу, а не в общем `answer_scale`.
+  Источники:
+  - Shear MK, et al. Multicenter collaborative panic disorder severity scale // American Journal of Psychiatry, 1997.
+  - Bastien CH, Vallières A, Morin CM. Validation of the Insomnia Severity Index as an outcome measure for insomnia research // Sleep Medicine, 2001.
+  - Young RC, et al. A rating scale for mania: reliability, validity and sensitivity // British Journal of Psychiatry, 1978.
+
+Если для PDSS/ISI/YMRS потребуются полностью текстовые якоря, их следует добавлять как item-specific metadata (`max_value`/anchors) отдельным расширением реестра, а не подменять общий `answer_scale`.

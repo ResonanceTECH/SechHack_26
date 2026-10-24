@@ -59,7 +59,12 @@ class QuestionnaireDefinition:
         }
 
 
-_ANSWER_SCALE_0_3 = [AnswerOption(i, str(i)) for i in range(4)]
+_ANSWER_SCALE_0_3 = [
+    AnswerOption(0, "Совсем нет"),
+    AnswerOption(1, "Несколько дней"),
+    AnswerOption(2, "Более половины дней"),
+    AnswerOption(3, "Почти каждый день"),
+]
 
 _PHQ9_QUESTIONS = [
     "Мало интереса или удовольствия от дел",
