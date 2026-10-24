@@ -125,6 +125,33 @@ class MedicationRepository:
         await db.refresh(row)
         return row
 
+    async def get_adherence(self, db: AsyncSession, adherence_id: str) -> MedicationAdherence | None:
+        try:
+            aid = uuid.UUID(str(adherence_id))
+        except ValueError:
+            return None
+        return (await db.execute(select(MedicationAdherence).where(MedicationAdherence.id == aid))).scalar_one_or_none()
+
+    async def update_adherence(self, db, adherence_id: str, data: dict, corrected_by: str | None = None):
+        row = await self.get_adherence(db, adherence_id)
+        if row is None:
+            return None
+        for key, value in data.items():
+            if value is None:
+                continue
+            if hasattr(row, key):
+                setattr(row, key, value)
+        from datetime import datetime, timezone
+        import uuid
+        row.updated_at = datetime.now(timezone.utc)
+        row.corrected_at = datetime.now(timezone.utc)
+        row.corrected_by = uuid.UUID(str(corrected_by)) if corrected_by else row.corrected_by
+        if 'correction_reason' in data:
+            row.correction_reason = data.get('correction_reason')
+        await db.commit()
+        await db.refresh(row)
+        return row
+
     async def list_adherence(self, db: AsyncSession, prescription_id: str) -> list[MedicationAdherence]:
         try:
             pid = uuid.UUID(str(prescription_id))

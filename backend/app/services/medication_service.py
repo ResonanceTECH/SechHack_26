@@ -73,5 +73,8 @@ class MedicationService:
     async def list_adherence(self, db: AsyncSession, prescription_id: str) -> list[MedicationAdherence]:
         return await self.repo.list_adherence(db, prescription_id)
 
+    async def update_adherence(self, db: AsyncSession, adherence_id: str, data: dict, corrected_by: str | None = None) -> MedicationAdherence | None:
+        return await self.repo.update_adherence(db, adherence_id, data, corrected_by=corrected_by)
+
     async def adherence_rate(self, db: AsyncSession, prescription_id: str) -> float | None:
         return await self.repo.adherence_rate(db, prescription_id)

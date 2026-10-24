@@ -413,10 +413,11 @@
 | `assessment-plan` | `assessment_plans.py`, `care.py` (CarePlan) | ✅ Реализован | assessment-plans (CRUD) |
 | `safety-service` | `safety.py` | ✅ Реализован | safety/plans, safety/crisis-signals |
 | `exercise-service` | `exercises.py`, `exercise_service.py`, `exercise_repository.py` | ✅ Реализован | care-plans (CRUD), exercises (list/detail/create/update/deactivate/complete/compliance) |
-| `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create) |
+| `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create/correct) |
 | `integrations` | `integrations.py`, `base.py`, `emergency_adapter.py`, `mis_adapter.py`, `fhir_mapper.py` | ✅ Частично | integration events router |
-| `message-service` | `messages.py`, `message_service.py`, `message_repository.py`, `message.py` (model/schema) | ✅ Реализован | messages (list/create/get/read-state) |
+| `message-service` | `messages.py`, `message_service.py`, `message_repository.py`, `message.py` (model/schema) | ✅ Реализован | messages (list/create/get/read-state), SLA availability (`/sla/{practitioner_id}`) |
 | `appointment-service` | `appointments.py`, `appointment_service.py`, `appointment_repository.py`, `appointment.py` (model/schema) | ✅ Реализован | appointments (list/create) |
+| `assignment-service` | `assignments.py`, `assignment_service.py`, `assignment_repository.py` | ✅ Реализован | assignments (create/list/deactivate) |
 
 ### 5.3 Отсутствующие модули (документированы, не реализованы в коде)
 
@@ -718,15 +719,15 @@ CRUD записей дневника; bulk-sync с дедупликацией п
 
 ### Этап 8. Уведомления и сообщения (Partial)
 
-Push-уведомления (planned); чат между пациентом и врачом реализован: `GET/POST /api/v1/messages`, `PATCH /api/v1/messages/{id}/read` (миграция 0016).
+Push-уведомления (planned); чат между пациентом и врачом реализован: `GET/POST /api/v1/messages`, `PATCH /api/v1/messages/{id}/read` (миграция 0016), metadata редактирования сообщений (миграция 0019).
 
-### Этап 9. Аналитика и отчёты (Planned)
+### Этап 9. Аналитика и отчёты (Partial)
 
-Отчёт перед визитом (PDF); выгрузка аналитики клиники.
+Реализованы JSON-агрегаты: `GET /api/v1/reports/clinic`, `GET /api/v1/reports/patient/{id}`. PDF-отчёт перед визитом и выгрузка аналитики клиники — planned.
 
-### Этап 10. Администрирование и безопасность (Planned)
+### Этап 10. Администрирование и безопасность (Completed)
 
-Аудит-логи (API); управление сотрудниками; настройки клиники.
+Аудит-логи (API) реализованы: `GET /api/v1/audit`; управление сотрудниками: `GET /api/v1/admin/staff`, `PATCH /api/v1/admin/staff/{id}/role`; настройки клиники: `GET/PUT /api/v1/clinics/{clinic_id}/settings`. Push/SLA и полный audit coverage — planned.
 
 ### Этап 11. Расписание врачей и доступность чата (Partial)
 
@@ -735,17 +736,15 @@ Push-уведомления (planned); чат между пациентом и �
 - `GET/PUT /api/v1/practitioners/{id}/schedule`
 - `POST/DELETE /api/v1/practitioners/{id}/schedule/exceptions/{exception_id}`
 - `GET /api/v1/practitioners/{id}/availability`
-RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_available_now/next_available_at` реализован. Интеграция с чатом/SLA и полный audit logging — planned.
+RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_available_now/next_available_at` реализован. Endpoint SLA доступности для чата `/api/v1/messages/sla/{practitioner_id}` реализован; полный audit logging — planned.
 
-### Этап 12. Базовая строгость данных (Partial)
+### Этап 12. Базовая строгость данных (Completed)
 
-Реализовано (миграция 0019): `updated_at` для `messages` и `crisis_signals`; metadata редактирования сообщений (`edited_at`, `edited_by`, `is_edited`). Приоритет/статус crisis signals и audit old/new уже присутствуют. Полное покрытие updated_at для всех таблиц — planned.
+Реализовано (миграции 0019, 0020): `updated_at` для `messages`, `crisis_signals`, `diary_entries`; metadata редактирования сообщений (`edited_at`, `edited_by`, `is_edited`). Приоритет/статус crisis signals и audit old/new уже присутствуют. Полное покрытие updated_at для всех таблиц — future work.
 
-### Этап 13. Корректировки клинических данных (Planned)
+### Этап 13. Корректировки клинических данных (Partial)
 
-Diary entries, medication adherence, patient assignment lifecycle.
-
-### Этап 14. Строгая клиническая история (Planned)
+Реализовано: `updated_at` для diary_entries (миграция 0020); correction endpoint PATCH /api/v1/adherence/{id} с audit logging; adherence correction metadata (миграция 0021). Patient assignment lifecycle (create/list/deactivate, audit events) реализован.## Этап 14. Строгая клиническая история (Planned)
 
 Отдельная история ФИО, versioning/addendum, retention policy.
 

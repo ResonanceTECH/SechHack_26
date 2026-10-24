@@ -26,11 +26,11 @@
 | safety-service | ✅ Реализован | app/api/v1/safety.py, migrations 0004, 0009 |
 | medication-service | ✅ Реализован | app/api/v1/medications.py, app/services/medication_service.py, app/repositories/medication_repository.py, app/models/medication.py, app/schemas/medication.py |
 | exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
-| message-service | ✅ Реализован (базовый CRUD + read-state) | app/api/v1/messages.py, app/services/message_service.py, app/repositories/message_repository.py, app/models/message.py, app/schemas/message.py |
+| message-service | ✅ Реализован (базовый CRUD + read-state + edit metadata) | app/api/v1/messages.py, app/services/message_service.py, app/repositories/message_repository.py, app/models/message.py, app/schemas/message.py, migrations 0016, 0019 |
 | appointment-service | ✅ Реализован | app/api/v1/appointments.py, app/services/appointment_service.py |
 | schedule-service | ✅ Реализован (Phase 11 Partial) | app/api/v1/schedule.py, app/services/schedule_service.py, app/repositories/schedule_repository.py, app/models/schedule.py, migrations 0018 |
 | report-service | ✅ Реализован (JSON aggregates) | app/api/v1/reports.py, app/services/report_service.py |
-| admin-service | ✅ Реализован (staff list, role change) | app/api/v1/admin.py |
+| admin-service | ✅ Реализован (staff list, role change, clinic settings) | app/api/v1/admin.py, app/api/v1/schedule.py |
 | audit-service (API) | ✅ Реализован (read logs) | app/api/v1/audit.py, app/services/audit_service.py |
 
 **Source:** app/api/v1/router.py (include_router calls), docs/openapi.json

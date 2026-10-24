@@ -41,6 +41,13 @@ KNOWN_ACTIONS = frozenset(
         "assessment_plan.create",
         "assessment_plan.update",
         "assessment_plan.delete",
+        "schedule.update",
+        "schedule.exception_create",
+        "schedule.exception_delete",
+        "clinic_settings.update",
+        "medication_adherence.update",
+        "patient_assignment.create",
+        "patient_assignment.deactivate",
     }
 )
 

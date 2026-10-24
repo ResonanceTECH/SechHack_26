@@ -135,6 +135,14 @@ class AdherenceCreate(BaseModel):
     note: Optional[str] = None
 
 
+
+
+class AdherenceUpdate(BaseModel):
+    is_taken: Optional[bool] = None
+    note: Optional[str] = None
+    correction_reason: Optional[str] = None
+
+
 class AdherenceResponse(BaseModel):
     id: str
     prescription_id: str
@@ -142,6 +150,10 @@ class AdherenceResponse(BaseModel):
     is_taken: bool
     note: Optional[str] = None
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    corrected_at: Optional[datetime] = None
+    corrected_by: Optional[str] = None
+    correction_reason: Optional[str] = None
 
     @field_validator("id", "prescription_id", mode="before")
     @classmethod

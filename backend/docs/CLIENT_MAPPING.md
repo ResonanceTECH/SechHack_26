@@ -117,10 +117,10 @@
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | C-SSRS | BLOCKED | endpoint planned, not implemented |
-| Medication skip | READY | `/api/v1/adherence` (GET/POST), `/api/v1/prescriptions/{id}/adherence-rate` (GET) |
+| Medication skip | READY | `/api/v1/adherence` (GET/POST/PATCH), `/api/v1/prescriptions/{id}/adherence-rate` (GET) |
 | Screening trend frontend charts | PARTIAL | endpoint exists, UI wiring pending |
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |
-| Chat / messaging | BLOCKED | chat endpoints not implemented |
+| Chat / messaging | PARTIAL | `/api/v1/messages` (list/create/read-state), SLA availability `/api/v1/messages/sla/{practitioner_id}` (GET) |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
 
 ## 4.5 Schedule / Availability (Planned)
@@ -160,6 +160,7 @@
 3. Открыть карточку пациента и summary.
 4. Создать диагнозы и планы оценок.
 5. Управлять планами безопасности и кризисными сигналами.
+6. Управлять назначениями пациентов `/api/v1/assignments` (create/list/deactivate).
 
 ## 7. Error Handling (общий)
 

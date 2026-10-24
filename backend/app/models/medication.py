@@ -80,6 +80,14 @@ class MedicationAdherence(UUIDPkMixin, Base):
     taken_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_taken: Mapped[bool] = mapped_column(Boolean, nullable=False)
     note: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
+    )
+    corrected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    corrected_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    correction_reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
     )

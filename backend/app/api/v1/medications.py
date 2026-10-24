@@ -16,6 +16,7 @@ from app.schemas.medication import (
     PrescriptionUpdate,
     PrescriptionResponse,
     AdherenceCreate,
+    AdherenceUpdate,
     AdherenceResponse,
 )
 from app.schemas.common import EnvelopeResponse
@@ -186,4 +187,22 @@ async def list_adherence(request: Request, current_user: CurrentUser, db: DbSess
     from app.schemas.medication import AdherenceResponse
     data = [AdherenceResponse.model_validate(a).model_dump() for a in items]
     return {"data": {"items": data, "total": len(data)}, "request_id": getattr(request.state, "request_id", "")}
+
+from fastapi import status
+
+
+@adherence_router.patch("/{adherence_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+                        dependencies=[Depends(require_permission("prescription:write"))])
+async def update_adherence(adherence_id: str, body: AdherenceUpdate, request: Request, current_user: CurrentUser, db: DbSession):
+    svc = _svc()
+    old = await svc.repo.get_adherence(db, adherence_id)
+    row = await svc.update_adherence(db, adherence_id, body.model_dump(exclude_unset=True), corrected_by=str(current_user.id))
+    if row is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Adherence not found")
+    from app.schemas.medication import AdherenceResponse
+    from app.services import audit_service as audit_svc
+    import uuid
+    await audit_svc.record(db, user_id=current_user.id, action="medication_adherence.update", entity_type="medication_adherence", entity_id=uuid.UUID(str(row.id)), old_values={"is_taken": getattr(old, "is_taken", None), "note": getattr(old, "note", None)} if old else None, new_values=body.model_dump(exclude_unset=True), commit=True)
+    return {"data": AdherenceResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
 
