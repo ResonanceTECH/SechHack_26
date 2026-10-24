@@ -1,6 +1,7 @@
 """Модели SQLAlchemy — концепт01 (общий контур). Импорт здесь нужен Alembic
 для autogenerate: metadata должен знать все таблицы."""
 
+from app.models.appointment import Appointment
 from app.models.assignment import PatientAssignment
 from app.models.audit import AuditLog
 from app.models.auth import InviteCode, RefreshToken, SmsCode
@@ -17,6 +18,7 @@ from app.models.safety import CrisisSignal, SafetyPlan
 from app.models.user import User
 
 __all__ = [
+    "Appointment",
     "Alert",
     "AuditLog",
     "CarePlan",

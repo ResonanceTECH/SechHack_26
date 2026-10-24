@@ -416,12 +416,12 @@
 | `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create) |
 | `integrations` | `integrations.py`, `base.py`, `emergency_adapter.py`, `mis_adapter.py`, `fhir_mapper.py` | ✅ Частично | integration events router |
 | `message-service` | `messages.py`, `message_service.py`, `message_repository.py`, `message.py` (model/schema) | ✅ Реализован | messages (list/create/get/read-state) |
+| `appointment-service` | `appointments.py`, `appointment_service.py`, `appointment_repository.py`, `appointment.py` (model/schema) | ✅ Реализован | appointments (list/create) |
 
 ### 5.3 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Статус в коде |
 |--------|-------------------|---------------|
-| `appointment-service` | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` |
 | `report-service` | MODULES.md §10 | Нет роутера `/api/v1/reports` |
 | `admin-service` | MODULES.md §10 | Нет роутера `/api/v1/admin` |
 | `audit-service` (API) | AUTH_PLAN.md §6 | Нет роутера `/api/v1/audit` (только сервис записи) |
@@ -527,6 +527,7 @@ Deny by default. `super_admin` имеет все права.
 | `medication:read:brief` | patient, doctor, psychologist, coordinator, super_admin |
 | `prescription:write` | doctor, super_admin |
 | `prescription:read` | patient, doctor, super_admin |
+| `appointment:read` | patient, doctor, psychologist, coordinator, super_admin |
 | `appointment:write` | doctor, psychologist, coordinator, super_admin |
 | `message:read` | patient, doctor, psychologist, coordinator, super_admin |
 | `analytics:read` | doctor, psychologist, coordinator, clinic_admin, super_admin |
@@ -727,26 +728,28 @@ Push-уведомления (planned); чат между пациентом и �
 
 Аудит-логи (API); управление сотрудниками; настройки клиники.
 
-### Этап 11. Подключение фронтенда и выпуск (Planned)
-
-Замена mock-данных на реальные API-вызовы; docker-compose развёртывание.
-
-### Этап 12. Расписание врачей и доступность чата (Planned)
+### Этап 11. Расписание врачей и доступность чата (Planned)
 
 `ClinicSettings` с timezone клиники; `PractitionerSchedule` и `PractitionerScheduleException`; endpoints управления расписанием и расчёта `is_available_now` / `next_available_at`. Чат остаётся доступным 24/7; расписание влияет на UX-индикаторы и SLA, но не блокирует сообщения. RBAC: `schedule:read`, `schedule:write`, `clinic_settings:read`, `clinic_settings:write`; clinic isolation и audit logging обязательны.
 
-### Этап 13. Базовая строгость данных (Planned)
+### Этап 12. Базовая строгость данных (Planned)
 
 `updated_at`, priority/status для crisis signals, metadata редактирования сообщений, audit log с old/new values.
 
-### Этап 14. Корректировки клинических данных (Planned)
+### Этап 13. Корректировки клинических данных (Planned)
 
 Diary entries, medication adherence, patient assignment lifecycle.
 
-### Этап 15. Строгая клиническая история (Planned)
+### Этап 14. Строгая клиническая история (Planned)
 
 Отдельная история ФИО, versioning/addendum, retention policy.
 
+Подробности и полный набор правил: раздел `### Data Integrity and Correction Policy — Future Phases (Planned)`.
+
+
+### Этап 15. Подключение фронтенда и выпуск (Planned)
+
+Замена mock-данных на реальные API-вызовы; docker-compose развёртывание.
 
 ### Порядок по критичности
 

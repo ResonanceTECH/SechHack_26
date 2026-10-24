@@ -73,7 +73,7 @@
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
-| Appointment scheduling | BLOCKED | appointment endpoints not implemented |
+| Appointment scheduling | READY | `/api/v1/appointments` (GET/POST) |
 
 ## 4. Screen → Endpoint Matrix (Frontend — frontend_dev)
 
@@ -169,7 +169,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 59 путей (актуальное состояние runtime, совпадает с committed spec)
+- 62 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 
