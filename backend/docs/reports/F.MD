@@ -1,6 +1,6 @@
 # F.MD — Independent System Audit (Clinical Compass Backend)
 
-**Дата аудита:** 23.10.2026  
+**Дата аудита:** 24.10.2026  
 **Объект аудита:** бэкенд «Клинический компас» (SechHack_26/backend)  
 **Источники доказательств:** source code, migrations, OpenAPI, runtime, tests, frontend code, mobile code, figma artifacts  
 **Правила:** EVIDENCE RULES — документация НЕ является доказательством реализации. Каждое утверждение имеет статус VERIFIED / PARTIALLY VERIFIED / UNVERIFIED / CONTRADICTED со ссылкой на доказательство.
@@ -24,18 +24,15 @@
 | diagnosis-service | ✅ Реализован (Phase 13/14) | app/api/v1/diagnoses.py, app/models/diagnosis.py, migrations 0006, 0007 |
 | assessment-plan | ✅ Реализован (Phase 15) | app/api/v1/assessment_plans.py, app/models/care.py (CarePlan), migration 0008 |
 | safety-service | ✅ Реализован | app/api/v1/safety.py, migrations 0004, 0009 |
+| medication-service | ✅ Реализован | app/api/v1/medications.py, app/services/medication_service.py, app/repositories/medication_repository.py, app/models/medication.py, app/schemas/medication.py |
 | exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
 
-**Source:** app/api/v1/router.py (14 роутеров зарегистрированы), docs/openapi.json (59 путей)
+**Source:** app/api/v1/router.py (20 include_router calls), docs/openapi.json (59 путей)
 
 ### 2.2 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Реализовано в коде | Status |
 |--------|-------------------|-------------------|--------|
-| medication-service | API_CONTRACTS.md §3, MEDICATIONS.md | `/api/v1/medications` | VERIFIED |
-| prescription-service | API_CONTRACTS.md, MEDICATIONS.md §3.3 | `/api/v1/prescriptions` | VERIFIED |
-| adherence-service | MEDICATIONS.md §3.4 | `/api/v1/adherence` | VERIFIED |
-| program-service (exercises) | MODULES.md §8 | `/api/v1/exercises`, `/api/v1/care-plans` | VERIFIED |
 | message-service | API_CONTRACTS.md | Нет роутера `/api/v1/messages` | UNVERIFIED |
 | appointment-service | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` | UNVERIFIED |
 | report-service | MODULES.md §10 | Нет роутера `/api/v1/reports` | UNVERIFIED |
@@ -43,8 +40,8 @@
 | audit-service (API) | AUTH_PLAN.md §6 | Нет роутера `/api/v1/audit` (только сервис записи) | PARTIALLY VERIFIED |
 
 Evidence:
-- app/api/v1/router.py — регистрирует только: health, auth, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary, integrations
-- Нет файлов: app/api/v1/medications.py, app/api/v1/prescriptions.py, app/api/v1/adherence.py, app/api/v1/exercises.py, app/api/v1/messages.py, app/api/v1/appointments.py, app/api/v1/reports.py, app/api/v1/admin.py, app/api/v1/audit.py
+- app/api/v1/router.py — регистрирует health, auth, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary, integrations, medications (3 routers), exercises (2 routers)
+- Нет файлов: app/api/v1/messages.py, app/api/v1/appointments.py, app/api/v1/reports.py, app/api/v1/admin.py, app/api/v1/audit.py
 
 ### 2.3 Контрадикция документации и кода (CONTRADICTED)
 
@@ -224,7 +221,7 @@ Evidence:
 |---------|----------------|---------------------------|--------|
 | Diary API | ✅ (smoke только) | auth required + openapi paths | PARTIALLY VERIFIED (нет CRUD тестов) |
 
-## 7. Frontend (wt_frontend)
+## 7. Frontend (frontend_dev)
 
 ### 7.1 Состояние (UI ONLY / MOCK ONLY)
 
@@ -236,9 +233,9 @@ Evidence:
 | Реальная интеграция с backend | Нет | UNVERIFIED |
 
 Evidence:
-- Поиск `fetch\(` в wt_frontend/frontend/src — 0 результатов
-- Поиск `axios` в wt_frontend/frontend/src — 0 результатов
-- Поиск `/api/v1` в wt_frontend/frontend/src — 0 результатов (только в отчетах архива)
+- Поиск `fetch\(` в frontend_dev/frontend/src — 0 результатов
+- Поиск `axios` в frontend_dev/frontend/src — 0 результатов
+- Поиск `/api/v1` в frontend_dev/frontend/src — 0 результатов (только в отчетах архива)
 - src/data/ содержит: mockAccessLog.ts, mockAdmin.ts, mockAlerts.ts, mockAnalytics.ts, mockDiary.ts, mockDoctor.ts, mockExercises.ts, mockMedications.ts, mockMessages.ts, mockPatientCard.ts, mockPatients.ts, mockPreVisitReport.ts, mockProgram.ts, mockQuestionnaires.ts, mockTreatmentPlan.ts и др.
 
 ### 7.2 Страницы (из router.tsx)
@@ -258,7 +255,7 @@ Evidence:
 | Pre-visit reports | /reports | mock | UI ONLY / MOCK ONLY |
 
 Evidence:
-- wt_frontend/frontend/src/app/router.tsx — все роуты с страницами
+- frontend_dev/frontend/src/app/router.tsx — все роуты с страницами
 - src/data/ — 35+ mock файлов
 
 | Medications API | ❌ | — | UNVERIFIED |
@@ -269,7 +266,7 @@ Evidence:
 | Appointments API | ❌ | — | UNVERIFIED |
 | Reports API | ❌ | — | UNVERIFIED |
 
-## 8. Mobile (wt_mobile)
+## 8. Mobile (mobile_dev)
 
 ### 8.1 Состояние (UI ONLY / MOCK ONLY)
 
@@ -280,9 +277,9 @@ Evidence:
 | Реальные API-вызовы к backend | **Только health endpoints** | UNVERIFIED (для клинических функций) |
 
 Evidence:
-- wt_mobile/mobile/src/api/client.ts — только 2 функции: getHealth() (GET /health), getDbHealth() (GET /db/health)
-- Поиск `fetch\(` в wt_mobile/mobile/src — только 2 результата (оба в client.ts для health)
-- Поиск `/api/v1` в wt_mobile/mobile/src — 0 результатов
+- mobile_dev/mobile/src/api/client.ts — только 2 функции: getHealth() (GET /health), getDbHealth() (GET /db/health)
+- Поиск `fetch\(` в mobile_dev/mobile/src — только 2 результата (оба в client.ts для health)
+- Поиск `/api/v1` в mobile_dev/mobile/src — 0 результатов
 
 ### 8.2 Экраны (из App.tsx)
 
@@ -297,7 +294,7 @@ Evidence:
 | HomeScreen, NotificationsScreen, MyDataScreen | UI ONLY |
 
 Evidence:
-- wt_mobile/mobile/App.tsx — импортирует все экраны
+- mobile_dev/mobile/App.tsx — импортирует все экраны
 - Нет файлов API-сервисов кроме client.ts с 2 health-функциями
 
 | Admin API | ❌ | — | UNVERIFIED |
@@ -447,7 +444,7 @@ Evidence:
    - Evidence: app/services/alert_service.py, lines 214-215
 
 3. **Frontend and Mobile not integrated with backend** — only mock data and 2 health functions.
-   - Evidence: search fetch/axios in wt_frontend/frontend/src (0 results), wt_mobile/mobile/src/api/client.ts (only getHealth, getDbHealth)
+   - Evidence: search fetch/axios in frontend_dev/frontend/src (0 results), mobile_dev/mobile/src/api/client.ts (only getHealth, getDbHealth)
 
 4. **Missing tests** for medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit API.
    - Evidence: tests/ directory listing — no such test files
@@ -511,10 +508,10 @@ docs/openapi.json — 41 paths
 tests/ (20 files, 89 passed)
 
 ### Frontend
-wt_frontend/frontend/src/app/router.tsx — 60+ routes; wt_frontend/frontend/src/data/ — 35+ mock files; no fetch/axios calls
+frontend_dev/frontend/src/app/router.tsx — 60+ routes; frontend_dev/frontend/src/data/ — 35+ mock files; no fetch/axios calls
 
 ### Mobile
-wt_mobile/mobile/src/api/client.ts — only getHealth, getDbHealth; wt_mobile/mobile/App.tsx — ~40 screens; no clinical API calls
+mobile_dev/mobile/src/api/client.ts — only getHealth, getDbHealth; mobile_dev/mobile/App.tsx — ~40 screens; no clinical API calls
 
 ### Figma
 clinicalcompass/docs/figma/ — prototype images; clinicalcompass/docs/figma/CLINICAL_ARCHITECTURE_REVIEW.md

@@ -3,8 +3,9 @@
 **Статус:** актуальная спецификация (source of truth для реализации)  
 **Язык:** Python 3.11+ · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL 15+  
 **Порт:** 3001 · **База:** `sechhack` (одна БД, логическое разделение concept01/concept02)  
-**Мобильный клиент:** React Native + Expo (`wt_mobile`, ветка `mobile_dev`)  
-**Веб-клиент:** React + Vite + TypeScript (`wt_frontend`, ветка `frontend_dev`)
+**Мобильный клиент:** React Native + Expo (`mobile_dev`, ветка `mobile_dev`)  
+**Веб-клиент:** React + Vite + TypeScript (`frontend_dev`, ветка `frontend_dev`)  
+**ML/эксперименты:** `ml_dev` (ветка `ml_dev`)
 
 > **Правило:** код и миграции — source of truth. Где документация противоречит коду — приоритет за кодом.  
 > Пример контрадикции: `DOMAIN_MODEL.md` §7 и `DB_SCHEMA.md` §7 указывают `mood_score BETWEEN 1 AND 5`, а миграция `0011_diary_entries.py` и модель `app/models/clinical.py` используют `mood_score BETWEEN -3 AND 3`. Актуальное значение — из кода/миграции.
@@ -343,6 +344,7 @@
 | `diagnosis-service` | `diagnoses.py`, `diagnosis.py` | ✅ Реализован | diagnoses, icd10 (deprecated alias), patient diagnoses |
 | `assessment-plan` | `assessment_plans.py`, `care.py` (CarePlan) | ✅ Реализован | assessment-plans (CRUD) |
 | `safety-service` | `safety.py` | ✅ Реализован | safety/plans, safety/crisis-signals |
+| `exercise-service` | `exercises.py`, `exercise_service.py`, `exercise_repository.py` | ✅ Реализован | care-plans (CRUD), exercises (list/detail/create/update/deactivate/complete/compliance) |
 | `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create) |
 | `integrations` | `integrations.py`, `base.py`, `emergency_adapter.py`, `mis_adapter.py`, `fhir_mapper.py` | ✅ Частично | integration events router |
 
@@ -350,7 +352,6 @@
 
 | Модуль | Документировано в | Статус в коде |
 |--------|-------------------|---------------|
-| `program-service` (exercises) | MODULES.md §8 | Нет роутера `/api/v1/exercises` |
 | `message-service` | API_CONTRACTS.md | Нет роутера `/api/v1/messages` |
 | `appointment-service` | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` |
 | `report-service` | MODULES.md §10 | Нет роутера `/api/v1/reports` |
@@ -634,7 +635,7 @@ CRUD записей дневника; bulk-sync с дедупликацией п
 
 Создание алерта по правилам скрининга; приоритеты; жизненный цикл алерта (new → in_progress → resolved/dismissed); план безопасности; кризисные сигналы.
 
-### Этап 7. Лекарства и рецепты (Planned)
+### Этап 7. Лекарства и рецепты ✅ Completed
 
 Справочник препаратов `rx.medications`; назначения `rx.prescriptions`; отметки приёма `rx.medication_adherence`; сокращённый контур пациента / полный контур врача.
 

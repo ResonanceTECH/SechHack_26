@@ -45,7 +45,7 @@
 | Psychologist | `c3860428-8b82-494d-a617-cb2a546b649a` | — |
 | Coordinator | `9efa3cfa-503f-46d2-8f41-61c22f4f2d10` | — |
 
-## 3. Screen → Endpoint Matrix (Mobile — wt_mobile)
+## 3. Screen → Endpoint Matrix (Mobile — mobile_dev)
 
 | Screen | Endpoint | Method | Request DTO | Response DTO | Role | Status |
 |--------|----------|--------|-------------|--------------|------|--------|
@@ -75,7 +75,7 @@
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
 | Appointment scheduling | BLOCKED | appointment endpoints not implemented |
 
-## 4. Screen → Endpoint Matrix (Frontend — wt_frontend)
+## 4. Screen → Endpoint Matrix (Frontend — frontend_dev)
 
 | Screen | Endpoint | Method | Request DTO | Response DTO | Role | Status |
 |--------|----------|--------|-------------|--------------|------|--------|
