@@ -81,6 +81,21 @@
 | `clinic_id` | UUID (FK → Clinic.id, nullable) | Привязанная клиника |
 | `created_at` / `updated_at` | DateTime | Метки времени |
 
+#### `Message`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | PK |
+| `sender_id` | UUID NOT NULL (FK → User.id) | Отправитель |
+| `recipient_id` | UUID NOT NULL (FK → User.id) | Получатель |
+| `patient_id` | UUID (nullable, FK → PatientProfile.id) | Контекст пациента |
+| `body` | Text NOT NULL | Текст сообщения |
+| `is_read` | Boolean DEFAULT FALSE | Прочитано |
+| `created_at` | DateTime | Время отправки |
+| `read_at` | DateTime (nullable) | Время прочтения |
+
+**Бизнес-правила:** чат между пациентом и врачом; сообщения считаются append-only в базовой модели; состояние прочтения фиксируется через `is_read` / `read_at`. В плане будущих фаз возможны `is_edited`, `edited_at`, `deleted_at`, `is_deleted`, `edit_count` без изменения `created_at`.
+
 #### `PractitionerProfile`
 
 | Поле | Тип | Описание |
@@ -94,6 +109,46 @@
 | `is_active` | Boolean | Активен |
 | `created_at` | DateTime | Дата создания |
 
+#### `PatientAssignment`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | PK |
+| `patient_id` | UUID NOT NULL (FK → PatientProfile.id) | Пациент |
+| `practitioner_id` | UUID NOT NULL (FK → PractitionerProfile.id) | Врач |
+| `clinic_id` | UUID NOT NULL (FK → Clinic.id) | Клиника |
+| `is_active` | Boolean DEFAULT TRUE | Активно |
+| `assigned_at` | DateTime | Время назначения |
+
+**Бизнес-правила:** уникальность (`patient_id`, `practitioner_id`, `clinic_id`); при смене врача старое назначение закрывается с причиной и датой окончания, создаётся новое.
+
+#### `PractitionerSchedule`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | PK |
+| `practitioner_id` | UUID NOT NULL (FK → PractitionerProfile.id) | Врач |
+| `clinic_id` | UUID NOT NULL (FK → Clinic.id) | Клиника |
+| `weekday` | Integer NOT NULL CHECK (0..6) | День недели (0=пн) |
+| `start_time` | Time NOT NULL | Начало рабочего интервала |
+| `end_time` | Time NOT NULL | Конец рабочего интервала |
+| `is_available` | Boolean DEFAULT TRUE | Доступен в этот интервал |
+| `created_at` / `updated_at` | DateTime | Метки времени |
+
+#### `PractitionerScheduleException`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | PK |
+| `practitioner_id` | UUID NOT NULL (FK → PractitionerProfile.id) | Врач |
+| `clinic_id` | UUID NOT NULL (FK → Clinic.id) | Клиника |
+| `date` | Date NOT NULL | Дата исключения |
+| `start_time` | Time (nullable) | Начало (null = весь день) |
+| `end_time` | Time (nullable) | Конец (null = весь день) |
+| `is_available` | Boolean NOT NULL | Доступен/недоступен в период |
+| `reason` | String (nullable) | Причина |
+| `created_at` | DateTime | Дата создания |
+
 #### `Clinic`
 
 | Поле | Тип | Описание |
@@ -103,7 +158,17 @@
 | `address` | Text | Адрес |
 | `inn` | String (nullable) | ИНН |
 | `is_active` | Boolean | Активна |
-| `created_at` | DateTime | Дата создания |
+| `created_at` / `updated_at` | DateTime | Метки времени |
+
+#### `ClinicSettings`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `clinic_id` | UUID PK/FK → Clinic.id | Клиника (1:1) |
+| `timezone` | String NOT NULL | IANA timezone, например `Europe/Moscow` |
+| `created_at` / `updated_at` | DateTime | Метки времени |
+
+`ClinicSettings` хранит `timezone` клиники (IANA). Расписание интерпретируется в timezone клиники; чат остаётся доступным 24/7, расписание влияет только на UX-индикаторы (`is_available_now`, `next_available_at`) и SLA.
 
 #### `ScreeningResult`
 
@@ -138,7 +203,7 @@
 | `synced_at` | DateTime (nullable) | Время синхронизации |
 | `created_at` | DateTime DEFAULT NOW() | Дата создания |
 
-> **Важно:** Документы `DOMAIN_MODEL.md` §7 и `DB_SCHEMA.md` §7 ранее указывали диапазоны `mood_score BETWEEN 1 AND 5` и `anxiety_score BETWEEN 1 AND 5`. Актуальные значения — из миграции `0011_diary_entries.py` и модели `app/models/clinical.py`: `mood_score BETWEEN -3 AND 3`, `anxiety_score BETWEEN 0 AND 4`. Документы требуют обновления.
+> **Важно:** Документы `DOMAIN_MODEL.md` §7 и `DB_SCHEMA.md` §7 ранее указывали диапазоны `mood_score BETWEEN 1 AND 5` и `anxiety_score BETWEEN 1 AND 5`. Актуальные значения — из миграции `0011_diary_entries.py` и модели `app/models/clinical.py`: `mood_score BETWEEN -3 AND 3`, `anxiety_score BETWEEN 0 AND 4`.
 
 #### `PatientDiagnosis`
 
@@ -173,6 +238,7 @@
 | `parent_code` | String (nullable) | Родительский код |
 | `is_active` | Boolean DEFAULT TRUE | Активен |
 | `version` | String (nullable) | Версия справочника |
+| `created_at` / `updated_at` | DateTime DEFAULT NOW() | Метки времени |
 
 **Ограничение:** UNIQUE(`coding_system`, `code`).
 
@@ -214,6 +280,7 @@
 | `side_effects` | ❌ | Только полный контур (врач) |
 | `interactions` | ❌ | Только полный контур (врач) |
 | `patient_instruction` | ❌ | Краткая инструкция для пациента |
+| `created_at` / `updated_at` | ✅ | Метки времени |
 
 #### `rx.prescriptions`
 
@@ -227,6 +294,7 @@
 | `start_date` | ✅ | Дата начала |
 | `end_date` | ✅ | Дата окончания курса |
 | `is_active` | ✅ | Флаг активности |
+| `created_at` / `updated_at` | ✅ | Метки времени |
 
 **Бизнес-правила:** назначение создаёт только врач (`prescription:write`); снятие — `is_active=false` (не удаление); одновременно активных назначений одного препарата у пациента не должно быть.
 
@@ -347,12 +415,12 @@
 | `exercise-service` | `exercises.py`, `exercise_service.py`, `exercise_repository.py` | ✅ Реализован | care-plans (CRUD), exercises (list/detail/create/update/deactivate/complete/compliance) |
 | `medication-service` | `medications.py`, `medication_service.py`, `medication_repository.py`, `medication.py` (models), `medication.py` (schemas) | ✅ Реализован | medications (list/detail), prescriptions (CRUD, deactivate, adherence-rate), adherence (list/create) |
 | `integrations` | `integrations.py`, `base.py`, `emergency_adapter.py`, `mis_adapter.py`, `fhir_mapper.py` | ✅ Частично | integration events router |
+| `message-service` | `messages.py`, `message_service.py`, `message_repository.py`, `message.py` (model/schema) | ✅ Реализован | messages (list/create/get/read-state) |
 
 ### 5.3 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Статус в коде |
 |--------|-------------------|---------------|
-| `message-service` | API_CONTRACTS.md | Нет роутера `/api/v1/messages` |
 | `appointment-service` | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` |
 | `report-service` | MODULES.md §10 | Нет роутера `/api/v1/reports` |
 | `admin-service` | MODULES.md §10 | Нет роутера `/api/v1/admin` |
@@ -409,7 +477,7 @@
 ### 6.3 Хеширование паролей
 
 - Алгоритм: **Argon2id** (`argon2-cffi`)
-- Параметры MVP: `time_cost=3`, `memory_cost=64 MiB`, `parallelism=4`, `hash_len=32`, `salt_len=16`
+- Параметры Argon2id: `time_cost=3`, `memory_cost=64 MiB`, `parallelism=4`, `hash_len=32`, `salt_len=16`
 - Политика: минимум 10 символов, буквы разных регистров и цифра
 - Для телефон+SMS входа пароль не создаётся (`users.password_hash = NULL`)
 
@@ -428,6 +496,11 @@
 | Параметр | Значение |
 |----------|----------|
 | Алфавит | `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (32 символа) |
+| `schedule:read` | все роли |
+| `schedule:write` | doctor, clinic_admin, super_admin |
+| `clinic_settings:read` | все роли |
+| `clinic_settings:write` | clinic_admin, super_admin |
+
 | Формат | `PREFIX-NNNNN`, например `RAV-27400`; дефис — только маска в UI, на бэкенд без дефиса |
 | Длина | Префикс врача/клиники + 5 символов из алфавита |
 | TTL | Задаёт врач при генерации |
@@ -471,7 +544,7 @@ Deny by default. `super_admin` имеет все права.
 
 ### 6.7 Аудит (AUTH_PLAN.md §6)
 
-События записываются в `audit_logs` с whitelist полей. Известные действия: `auth.register`, `auth.login`, `auth.logout`, `auth.refresh`, `auth.revoke_all`, `auth.password_change`, `auth.sms_verify`, `invite.verify`, `patient.read`, `patient.update`, `prescription.create`, `prescription.update`, `alert.resolve`, `alert.created`, `alert.dismiss`, `alert.updated`, `employee.role_change`, `assessment_plan.create`, `assessment_plan.update`, `assessment_plan.delete`.
+События записываются в `audit_logs` с whitelist полей. Известные действия: `auth.register`, `auth.login`, `auth.logout`, `auth.refresh`, `auth.revoke_all`, `auth.password_change`, `auth.sms_verify`, `invite.verify`, `patient.read`, `patient.update`, `prescription.create`, `prescription.update`, `alert.resolve`, `alert.created`, `alert.dismiss`, `alert.updated`, `employee.role_change`, `assessment_plan.create`, `assessment_plan.update`, `assessment_plan.delete`, `clinic_settings.update`, `schedule.create`, `schedule.update`, `schedule.delete`, `schedule_exception.create`, `schedule_exception.delete`.
 
 Поля `password`, `token`, `secret`, `code_hash`, `authorization` никогда не пишутся в аудит-логи.
 
@@ -589,6 +662,8 @@ pytest tests/security -v
 | `care_plan_id` | UUID NOT NULL (FK → CarePlan.id) | План ухода |
 | `exercise_type` | String NOT NULL | Тип упражнения |
 | `payload` | JSONB (nullable) | Параметры упражнения |
+| `scheduled_for` | Date (nullable) | Плановая дата |
+| `due_at` | DateTime (nullable) | Срок выполнения |
 
 ## 8. Порядок реализации (TASKS.md)
 
@@ -626,6 +701,7 @@ CRUD записей дневника; bulk-sync с дедупликацией п
 ### Этап 5. Программы и упражнения ✅ Completed
 
 Реализованы care plans и exercise assignments/completions/compliance:
+
 - `GET/POST /api/v1/care-plans`
 - `GET/POST/PUT /api/v1/exercises`, `POST /api/v1/exercises/{id}/complete`, `GET /api/v1/exercises/{id}/compliance`
 - Автосоздание default care plan при назначении упражнения без `care_plan_id`
@@ -639,9 +715,9 @@ CRUD записей дневника; bulk-sync с дедупликацией п
 
 Справочник препаратов `rx.medications`; назначения `rx.prescriptions`; отметки приёма `rx.medication_adherence`; сокращённый контур пациента / полный контур врача.
 
-### Этап 8. Уведомления и сообщения (Planned)
+### Этап 8. Уведомления и сообщения (Partial)
 
-Push-уведомления; чат между пациентом и врачом.
+Push-уведомления (planned); чат между пациентом и врачом реализован: `GET/POST /api/v1/messages`, `PATCH /api/v1/messages/{id}/read` (миграция 0016).
 
 ### Этап 9. Аналитика и отчёты (Planned)
 
@@ -654,6 +730,23 @@ Push-уведомления; чат между пациентом и врачо�
 ### Этап 11. Подключение фронтенда и выпуск (Planned)
 
 Замена mock-данных на реальные API-вызовы; docker-compose развёртывание.
+
+### Этап 12. Расписание врачей и доступность чата (Planned)
+
+`ClinicSettings` с timezone клиники; `PractitionerSchedule` и `PractitionerScheduleException`; endpoints управления расписанием и расчёта `is_available_now` / `next_available_at`. Чат остаётся доступным 24/7; расписание влияет на UX-индикаторы и SLA, но не блокирует сообщения. RBAC: `schedule:read`, `schedule:write`, `clinic_settings:read`, `clinic_settings:write`; clinic isolation и audit logging обязательны.
+
+### Этап 13. Базовая строгость данных (Planned)
+
+`updated_at`, priority/status для crisis signals, metadata редактирования сообщений, audit log с old/new values.
+
+### Этап 14. Корректировки клинических данных (Planned)
+
+Diary entries, medication adherence, patient assignment lifecycle.
+
+### Этап 15. Строгая клиническая история (Planned)
+
+Отдельная история ФИО, versioning/addendum, retention policy.
+
 
 ### Порядок по критичности
 
@@ -673,10 +766,6 @@ Push-уведомления; чат между пациентом и врачо�
 - **Diary Rework** (Phase 11): новые шкалы mood -3..+3, anxiety 0..4, energy 0..4, functioning 0..4; `functioning_score` добавлен; micro-diary (частичные записи, nullable поля).
 - **Safety Plan Architecture**: переиспользуемый клинический контент → `SafetyPlanTemplate` / `ClinicalContentLibrary` (планируется).
 - **Screening Expansion**: реестр вопросников содержит 8 кодов (PHQ-9, GAD-7, YMRS, HCL-8, HCL-33, PDSS, C-SSRS, ISI); HCL-33 использует 33 пункта и band-пороги 0-7 низкий, 8-13 умеренный, >=14 высокий.
-- **Patient Card Requirements**: отсутствуют блоки screening trends.
-
-| `scheduled_for` | Date (nullable) | Плановая дата |
-| `due_at` | DateTime (nullable) | Срок выполнения |
 
 #### `ExerciseCompletion`
 
@@ -690,6 +779,70 @@ Push-уведомления; чат между пациентом и врачо�
 | `created_at` | DateTime DEFAULT NOW() | Дата выполнения |
 
 **Invite-код:** алфавит `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, формат UI `RAV-27400` (дефис — маска, на бэкенд без дефиса), TTL задаёт врач.
+
+### Data Integrity and Correction Policy — Future Phases (Planned)
+
+Следующие правила зафиксированы как архитектурные улучшения для будущих фаз. Они не меняют текущий контракт и будут реализованы поэтапно после завершения оставшихся сервисов.
+
+- **Классификация сущностей:**
+  - `mutable` — изменяемые конфигурационные/профильные сущности;
+  - `append-only` — события и журналы;
+  - `correction-aware` — клинически значимые записи, где допустимы исправления, но без молчаливой перезаписи.
+
+- **Политика timestamps:**
+  - `mutable` → `TimestampMixin` (`created_at`, `updated_at`);
+  - `append-only` → только `created_at`;
+  - `correction-aware` → `created_at`, `updated_at`, `corrected_at`, `corrected_by`, `correction_reason`.
+
+- **Клинически строгие исправления:**
+  - клинически значимые записи не перезаписываются молча;
+  - исправления фиксируются через correction/addendum/versioning;
+  - audit log хранит old/new values для критичных полей;
+  - секреты, токены, коды и персональные данные не пишутся в audit log.
+
+- **История ФИО:**
+  - для `PractitionerProfile` (и при необходимости `PatientProfile`) хранить историю смены ФИО;
+  - минимальный вариант: audit log с old/new values;
+  - строгий вариант: отдельная таблица истории с `changed_by`, `changed_at`, `reason`, `effective_from`, `effective_to`.
+
+- **`CrisisSignal`:**
+  - приоритеты: `critical`, `high`, `medium`, `low`;
+  - статусы: `new`, `acknowledged`, `in_progress`, `resolved`, `false_alarm`, `escalated`;
+  - хранить `created_at`, `updated_at`, `acknowledged_at`, `resolved_at`, `escalated_at` и ответственных пользователей;
+  - приоритет и статус могут меняться после создания сигнала.
+
+- **`PatientAssignment`:**
+  - при смене врача старое назначение закрывается с причиной (`end_reason`) и датой окончания;
+  - создаётся новое назначение;
+  - история назначений сохраняется для аудита и аналитики.
+
+- **`DiaryEntry`:**
+  - разрешено редактирование недавних записей с `updated_at` и флагом `is_edited`;
+  - строгий режим: correction/addendum с ссылкой на исходную запись и причиной исправления.
+
+- **`MedicationAdherence`:**
+  - допускается корректировка отметки приёма;
+  - хранить `updated_at`, `corrected_at`, `corrected_by`, `correction_reason`;
+  - изменение логируется в audit log.
+
+- **`Message`:**
+  - базовая модель остаётся append-only;
+  - при поддержке редактирования/удаления добавить `is_edited`, `edited_at`, `deleted_at`, `is_deleted`, `edit_count`;
+  - исходное время отправки (`created_at`) не изменяется.
+
+- **`PractitionerSchedule` / `PractitionerScheduleException`:**
+  - обе сущности mutable;
+  - использовать `created_at / updated_at`;
+  - изменения расписания логировать в audit log.
+
+- **Soft delete и retention:**
+  - soft delete (`deleted_at`) допускается для сообщений и вспомогательных сущностей;
+  - для клинически значимых данных политика хранения и удаления должна быть определена отдельно перед реализацией.
+
+- **Порядок реализации:**
+  1. Минимальная строгость: `updated_at`, priority/status для crisis signals, metadata редактирования сообщений, audit log с old/new values.
+  2. Корректировки: diary entries, medication adherence, patient assignment lifecycle.
+  3. Строгая клиническая история: отдельная история ФИО, versioning/addendum, retention policy.
 
 ## Questionnaire anchors
 

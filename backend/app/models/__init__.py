@@ -10,6 +10,7 @@ from app.models.clinical import DiaryEntry, ScreeningResult
 from app.models.diagnosis import DiagnosisReference, PatientDiagnosis
 from app.models.integration import IntegrationEvent
 from app.models.medication import Medication, Prescription, MedicationAdherence
+from app.models.message import Message
 
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.safety import CrisisSignal, SafetyPlan
@@ -29,6 +30,7 @@ __all__ = [
     "IntegrationEvent",
     "Medication",
     "MedicationAdherence",
+    "Message",
     "Prescription",
     "InviteCode",
     "PatientAssignment",

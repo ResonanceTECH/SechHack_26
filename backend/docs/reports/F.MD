@@ -26,22 +26,22 @@
 | safety-service | ✅ Реализован | app/api/v1/safety.py, migrations 0004, 0009 |
 | medication-service | ✅ Реализован | app/api/v1/medications.py, app/services/medication_service.py, app/repositories/medication_repository.py, app/models/medication.py, app/schemas/medication.py |
 | exercise-service | ✅ Реализован | app/api/v1/exercises.py, app/services/exercise_service.py, app/repositories/exercise_repository.py |
+| message-service | ✅ Реализован (базовый CRUD + read-state) | app/api/v1/messages.py, app/services/message_service.py, app/repositories/message_repository.py, app/models/message.py, app/schemas/message.py |
 
-**Source:** app/api/v1/router.py (20 include_router calls), docs/openapi.json (59 путей)
+**Source:** app/api/v1/router.py (21 include_router calls), docs/openapi.json (59 путей)
 
 ### 2.2 Отсутствующие модули (документированы, не реализованы в коде)
 
 | Модуль | Документировано в | Реализовано в коде | Status |
 |--------|-------------------|-------------------|--------|
-| message-service | API_CONTRACTS.md | Нет роутера `/api/v1/messages` | UNVERIFIED |
 | appointment-service | API_CONTRACTS.md | Нет роутера `/api/v1/appointments` | UNVERIFIED |
 | report-service | MODULES.md §10 | Нет роутера `/api/v1/reports` | UNVERIFIED |
 | admin-service | MODULES.md §10 | Нет роутера `/api/v1/admin` | UNVERIFIED |
 | audit-service (API) | AUTH_PLAN.md §6 | Нет роутера `/api/v1/audit` (только сервис записи) | PARTIALLY VERIFIED |
 
 Evidence:
-- app/api/v1/router.py — регистрирует health, auth, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary, integrations, medications (3 routers), exercises (2 routers)
-- Нет файлов: app/api/v1/messages.py, app/api/v1/appointments.py, app/api/v1/reports.py, app/api/v1/admin.py, app/api/v1/audit.py
+- app/api/v1/router.py — регистрирует health, auth, practitioners, patients, screenings, questionnaires, alerts, diagnoses, assessment_plans, safety, diary, integrations, medications (3 routers), exercises (2 routers), messages
+- Нет файлов: app/api/v1/appointments.py, app/api/v1/reports.py, app/api/v1/admin.py, app/api/v1/audit.py
 
 ### 2.3 Контрадикция документации и кода (CONTRADICTED)
 
@@ -119,7 +119,7 @@ Evidence:
 Примечание: downgrade `0015_screening_registry` создаёт `chk_screening_score_range` с `NOT VALID`, чтобы rollback работал при наличии строк с новыми типами вопросников (`hcl8`, `pdss`, `cssrs`, `isi`, `hcl33`); такие строки сохраняются, но новые вставки/обновления проверяются.
 
 Evidence:
-- alembic/versions/ — 15 файлов миграций, все с upgrade() и downgrade()
+- alembic/versions/ — 17 файлов миграций, все с upgrade() и downgrade()
 - alembic.ini, env.py
 
 ### 4.2 Модели ORM (VERIFIED)
@@ -132,6 +132,16 @@ Evidence:
 | ScreeningResult | screening_results | app/models/clinical.py |
 | DiaryEntry | diary_entries | app/models/clinical.py |
 | PatientDiagnosis | patient_diagnoses | app/models/diagnosis.py |
+| PatientAssignment | patient_assignments | app/models/assignment.py |
+| Message | messages | app/models/message.py |
+| AuditLog | audit_logs | app/models/audit.py |
+| Clinic | clinics | app/models/clinic.py |
+| Medication | rx.medications | app/models/medication.py |
+| SafetyPlan | safety_plans | app/models/safety.py |
+| CrisisSignal | crisis_signals | app/models/safety.py |
+| AssessmentPlan | assessment_plans | app/models/assessment_plan.py |
+| CarePlan | care_plans | app/models/care.py |
+| IntegrationEvent | integration_events | app/models/integration.py |
 
 ## 5. API
 
@@ -139,8 +149,8 @@ Evidence:
 
 | Показатель | Значение | Evidence |
 |------------|----------|----------|
-| Путей в committed openapi.json | 41 | docs/openapi.json |
-| Путей в runtime | 41 | app/api/v1/router.py, custom_openapi() |
+| Путей в committed openapi.json | 61 | docs/openapi.json |
+| Путей в runtime | 61 | app/api/v1/router.py, custom_openapi() |
 | Диапазон путей | /health, /db/health, /api/v1/* | openapi.json |
 | Конверт ответа | {data, meta, error} | app/core/response.py |
 | BearerAuth схема | ✅ | app/main.py custom_openapi() |

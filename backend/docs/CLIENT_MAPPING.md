@@ -120,6 +120,26 @@
 | Chat / messaging | BLOCKED | chat endpoints not implemented |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
 
+## 4.5 Schedule / Availability (Planned)
+
+Чат остаётся доступным 24/7; расписание влияет только на UX-индикаторы и SLA.
+
+| Endpoint | Method | Request | Response | Role | Status |
+|----------|--------|---------|----------|------|--------|
+| `/api/v1/clinics/{clinic_id}/settings` | GET | — | `ClinicSettings` | все роли | PLANNED |
+| `/api/v1/clinics/{clinic_id}/settings` | PUT | `ClinicSettingsUpdate` | `ClinicSettings` | clinic_admin, super_admin | PLANNED |
+| `/api/v1/practitioners/{id}/schedule` | GET | — | `PractitionerScheduleResponse` | все роли | PLANNED |
+| `/api/v1/practitioners/{id}/schedule` | PUT | `PractitionerScheduleReplace` | `PractitionerScheduleResponse` | doctor, clinic_admin, super_admin | PLANNED |
+| `/api/v1/practitioners/{id}/schedule/exceptions` | POST | `ScheduleExceptionCreate` | `ScheduleException` | doctor, clinic_admin, super_admin | PLANNED |
+| `/api/v1/practitioners/{id}/schedule/exceptions/{exception_id}` | DELETE | — | 204 | doctor, clinic_admin, super_admin | PLANNED |
+| `/api/v1/practitioners/{id}/availability` | GET | `at?` | `{timezone, is_available_now, next_available_at}` | все роли | PLANNED |
+
+## 4.6 Partial / Blocked (Frontend)
+
+| Screen/Feature | Status | Reason |
+|----------------|--------|--------|
+| Clinic settings timezone | MOCK ONLY | frontend `ClinicSettingsModal` uses mock data; backend `ClinicSettings` planned |
+| Doctor schedule / availability | PLANNED | backend endpoints not implemented |
 
 ## 5. Patient Flow (общий)
 
