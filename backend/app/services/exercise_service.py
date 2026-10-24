@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.care import CarePlan, ExerciseAssignment
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.exercise_repository import ExerciseRepository
+from app.services.clinic_isolation import practitioner_clinic_id, patient_clinic_id, enforce_clinic_match
 
 
 class ExerciseService:
@@ -31,6 +32,12 @@ class ExerciseService:
             raise ValueError("Practitioner profile not found")
         data = dict(data)
         data["practitioner_id"] = str(prof.id)
+        role = getattr(current_user, "role", None)
+        if role not in ("patient", "super_admin"):
+            p_clinic = await practitioner_clinic_id(db, current_user)
+            if p_clinic is not None:
+                pat_clinic = await patient_clinic_id(db, data.get("patient_id"))
+                enforce_clinic_match(p_clinic, pat_clinic)
         return await self.repo.create_care_plan(db, data)
 
     async def list_care_plans(self, db: AsyncSession, current_user, patient_id: str | None = None) -> list[CarePlan]:
@@ -39,7 +46,18 @@ class ExerciseService:
             if prof is None:
                 return []
             patient_id = str(prof.id)
-        return await self.repo.list_care_plans(db, patient_id)
+        items = await self.repo.list_care_plans(db, patient_id)
+        role = getattr(current_user, "role", None)
+        if role not in ("patient", "super_admin"):
+            p_clinic = await practitioner_clinic_id(db, current_user)
+            if p_clinic is not None:
+                filtered = []
+                for cp in items:
+                    pc = await patient_clinic_id(db, str(cp.patient_id))
+                    if pc is None or pc == p_clinic:
+                        filtered.append(cp)
+                items = filtered
+        return items
 
     # Exercises (assignments)
     async def list_exercises(self, db: AsyncSession, current_user, patient_id: str | None = None) -> list[ExerciseAssignment]:
@@ -49,7 +67,28 @@ class ExerciseService:
                 return []
             patient_id = str(prof.id)
         items = await self.repo.list_assignments(db, patient_id=patient_id)
-        # attach patient_id via care plan lazily not needed
+        # clinic isolation filter applied below
+        role = getattr(current_user, "role", None)
+        if role not in ("patient", "super_admin"):
+            p_clinic = await practitioner_clinic_id(db, current_user)
+            if p_clinic is not None:
+                filtered = []
+                for a in items:
+                    cp = await self.repo.get_care_plan(db, str(a.care_plan_id))
+                    if cp is None:
+                        continue
+                    pc = await patient_clinic_id(db, str(cp.patient_id))
+                    if pc is None or pc == p_clinic:
+                        filtered.append(a)
+        role = getattr(current_user, "role", None)
+        if role not in ("patient", "super_admin"):
+            p_clinic = await practitioner_clinic_id(db, current_user)
+            if p_clinic is not None:
+                pat_clinic = await patient_clinic_id(db, patient_id)
+                enforce_clinic_match(p_clinic, pat_clinic)
+
+                items = filtered
+
         return items
 
     async def create_exercise(self, db: AsyncSession, current_user, data: dict) -> ExerciseAssignment:
@@ -69,6 +108,12 @@ class ExerciseService:
                 "title": "Care plan",
             })
             care_plan_id = str(cp.id)
+        role = getattr(current_user, "role", None)
+        if role not in ("patient", "super_admin"):
+            p_clinic = await practitioner_clinic_id(db, current_user)
+            if p_clinic is not None:
+                pat_clinic = await patient_clinic_id(db, patient_id)
+                enforce_clinic_match(p_clinic, pat_clinic)
         return await self.repo.create_assignment(db, {
             "care_plan_id": care_plan_id,
             "exercise_type": data["exercise_type"],
@@ -80,7 +125,19 @@ class ExerciseService:
     async def get_assignment(self, db: AsyncSession, assignment_id: str) -> ExerciseAssignment | None:
         return await self.repo.get_assignment(db, assignment_id)
 
-    async def update_exercise(self, db: AsyncSession, assignment_id: str, data: dict) -> ExerciseAssignment | None:
+    async def update_exercise(self, db: AsyncSession, assignment_id: str, data: dict, current_user=None) -> ExerciseAssignment | None:
+        row = await self.repo.get_assignment(db, assignment_id)
+        if row is None:
+            return None
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("patient", "super_admin"):
+                cp = await self.repo.get_care_plan(db, str(row.care_plan_id))
+                patient_id = str(cp.patient_id) if cp else None
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and patient_id is not None:
+                    pat_clinic = await patient_clinic_id(db, patient_id)
+                    enforce_clinic_match(p_clinic, pat_clinic)
         return await self.repo.update_assignment(db, assignment_id, data)
 
     async def complete_exercise(self, db: AsyncSession, current_user, assignment_id: str, data: dict) -> ExerciseCompletion:
@@ -92,5 +149,15 @@ class ExerciseService:
         data["patient_id"] = str(prof.id)
         return await self.repo.create_completion(db, data)
 
-    async def compliance(self, db: AsyncSession, assignment_id: str) -> dict:
+    async def compliance(self, db: AsyncSession, assignment_id: str, current_user=None) -> dict:
+        row = await self.repo.get_assignment(db, assignment_id)
+        if row is not None and current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("patient", "super_admin"):
+                cp = await self.repo.get_care_plan(db, str(row.care_plan_id))
+                patient_id = str(cp.patient_id) if cp else None
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and patient_id is not None:
+                    pat_clinic = await patient_clinic_id(db, patient_id)
+                    enforce_clinic_match(p_clinic, pat_clinic)
         return await self.repo.compliance(db, assignment_id)

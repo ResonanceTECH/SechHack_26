@@ -854,3 +854,58 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 ## Questionnaire anchors
 
 См. [questionnaire_sources](./questionnaire_sources.md) (раздел «Формулировки ответов»): PDSS/ISI имеют item-specific `anchors`; YMRS остаётся clinician-rated с числовыми метками.
+
+## Phase 32 Update
+Clinic isolation enforcement added to assignment, message and medication services via shared helper module.
+
+## Phase 33 Update
+Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 102 passed.
+
+## Future: Real-time Presence & Chat (WebSocket) — Planned
+
+### Goal
+Provide real-time messaging, delivery acknowledgements, read receipts, and practitioner presence/availability for chat SLA indicators.
+
+### Transport
+- Protocol: WebSocket (WSS in production).
+- Endpoint (planned): /ws/v1/chat or /ws/v1/presence.
+- Auth: short-lived access token in query/header or first auth message; validate on connect and on token refresh.
+- Heartbeat: server ping / client pong every 20-30s; disconnect stale sockets after 2 missed heartbeats.
+
+### Presence Model
+- States: online, away, offline, busy.
+- last_seen_at updated on connect, message activity, and graceful disconnect.
+- Availability combines schedule availability, presence state, manual override / do-not-disturb.
+- Presence stored in Redis with TTL; DB stores only last_seen summary for audit/analytics.
+
+### Message Delivery
+- Client sends message.send with idempotency_key.
+- Server persists message, returns message.accepted with server id.
+- Server pushes message.new to recipient channel.
+- Recipient sends message.read -> server updates read state and pushes message.read_receipt.
+- Offline recipients: messages remain in DB and are delivered on next connect (inbox sync by since cursor).
+
+### Scaling
+- Single instance: in-memory connection registry.
+- Multi-instance: Redis Pub/Sub or message broker for fan-out.
+- Sticky sessions or broker-based routing; avoid relying on local memory in production.
+- Rate limiting per user/socket and per IP.
+
+### Reliability
+- Reconnect with exponential backoff + jitter.
+- Resume using last_event_id / cursor.
+- Idempotent message creation prevents duplicates on retry.
+- Graceful shutdown drains sockets and notifies clients.
+
+### Security
+- Validate permissions per action (message:read, message:write).
+- Clinic isolation enforced on every message/presence event.
+- No secrets in query strings in production; prefer header or first-message auth.
+- Audit log for connection lifecycle and sensitive actions.
+
+### Migration Strategy
+1. Add presence HTTP endpoint and Redis-backed presence store.
+2. Add WebSocket endpoint for presence only.
+3. Add WebSocket message delivery while keeping REST endpoints.
+4. Gradually move clients to WebSocket; keep REST fallback.
+5. Add tests for connect/auth/heartbeat/reconnect/delivery/read receipts.

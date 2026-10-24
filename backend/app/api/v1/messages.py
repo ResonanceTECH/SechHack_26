@@ -1,4 +1,4 @@
-"""Messages API endpoints."""
+﻿"""Messages API endpoints."""
 from __future__ import annotations
 
 from typing import Optional
@@ -41,12 +41,12 @@ async def practitioner_sla(practitioner_id: str, request: Request, current_user:
     from app.services.schedule_service import ScheduleService
     from app.repositories.schedule_repository import ScheduleRepository
     svc = ScheduleService(ScheduleRepository())
-    data = await svc.availability(db, practitioner_id, at)
+    data = await svc.availability(db, practitioner_id, at, current_user)
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
 
 async def mark_read(message_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.mark_read(db, message_id)
+    row = await svc.mark_read(db, current_user, message_id)
     if row is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Message not found")
@@ -58,7 +58,8 @@ from fastapi import status, HTTPException
                       dependencies=[Depends(require_permission("message:read"))])
 async def mark_read(message_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.mark_read(db, message_id)
+    row = await svc.mark_read(db, current_user, message_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Message not found")
     return {"data": MessageResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
+

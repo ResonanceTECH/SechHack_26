@@ -5,35 +5,91 @@ from __future__ import annotations
 import uuid
 from datetime import date, time
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.schedule_repository import ScheduleRepository
+from app.services.clinic_isolation import practitioner_clinic_id
 
 
 class ScheduleService:
     def __init__(self, repo: ScheduleRepository | None = None):
         self.repo = repo or ScheduleRepository()
 
-    async def get_clinic_settings(self, db: AsyncSession, clinic_id: str):
+    async def get_clinic_settings(self, db: AsyncSession, clinic_id: str, current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and p_clinic != str(clinic_id):
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         return await self.repo.get_clinic_settings(db, uuid.UUID(clinic_id))
 
-    async def update_clinic_settings(self, db: AsyncSession, clinic_id: str, timezone: str):
+    async def update_clinic_settings(self, db: AsyncSession, clinic_id: str, timezone: str, current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and p_clinic != str(clinic_id):
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         return await self.repo.upsert_clinic_settings(db, uuid.UUID(clinic_id), timezone)
 
-    async def get_schedule(self, db: AsyncSession, practitioner_id: str):
+    async def get_schedule(self, db: AsyncSession, practitioner_id: str, current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                from app.models.profile import PractitionerProfile
+                res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
+                prof = res.scalar_one_or_none()
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         return await self.repo.list_schedule(db, uuid.UUID(practitioner_id))
 
-    async def replace_schedule(self, db: AsyncSession, practitioner_id: str, entries: list[dict]):
+    async def replace_schedule(self, db: AsyncSession, practitioner_id: str, entries: list[dict], current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                from app.models.profile import PractitionerProfile
+                res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
+                prof = res.scalar_one_or_none()
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         return await self.repo.replace_schedule(db, uuid.UUID(practitioner_id), entries)
 
-    async def add_exception(self, db: AsyncSession, practitioner_id: str, data: dict):
+    async def add_exception(self, db: AsyncSession, practitioner_id: str, data: dict, current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                from app.models.profile import PractitionerProfile
+                res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
+                prof = res.scalar_one_or_none()
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         return await self.repo.add_exception(db, uuid.UUID(practitioner_id), data)
 
     async def delete_exception(self, db: AsyncSession, exception_id: str):
         await self.repo.delete_exception(db, uuid.UUID(exception_id))
         return True
 
-    async def availability(self, db: AsyncSession, practitioner_id: str, at: str | None = None) -> dict:
+    async def availability(self, db: AsyncSession, practitioner_id: str, at: str | None = None, current_user=None):
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                from app.models.profile import PractitionerProfile
+                res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
+                prof = res.scalar_one_or_none()
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
         from datetime import datetime, time, timedelta, timezone
 
         now = datetime.fromisoformat(at) if at else datetime.now(timezone.utc)

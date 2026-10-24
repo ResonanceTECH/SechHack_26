@@ -25,7 +25,7 @@ def _svc() -> ReportService:
 )
 async def pre_visit_report(request: Request, current_user: CurrentUser, db: DbSession, patient_id: str):
     svc = _svc()
-    data = await svc.pre_visit_report(db, patient_id)
+    data = await svc.pre_visit_report(db, patient_id, current_user)
     if data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
@@ -39,5 +39,5 @@ async def pre_visit_report(request: Request, current_user: CurrentUser, db: DbSe
 )
 async def clinic_analytics(request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    data = await svc.clinic_analytics(db)
+    data = await svc.clinic_analytics(db, current_user)
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}

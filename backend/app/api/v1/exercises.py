@@ -88,7 +88,7 @@ async def create_exercise(body: ExerciseAssignmentCreate, request: Request, curr
                       dependencies=[Depends(require_permission("exercise:assign"))])
 async def update_exercise(assignment_id: str, body: ExerciseAssignmentUpdate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.update_exercise(db, assignment_id, body.model_dump(exclude_unset=True))
+    row = await svc.update_exercise(db, assignment_id, body.model_dump(exclude_unset=True), current_user)
     if row is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Exercise not found")
@@ -114,5 +114,5 @@ async def complete_exercise(assignment_id: str, body: ExerciseCompletionCreate, 
                       dependencies=[Depends(require_permission("exercise:assign"))])
 async def exercise_compliance(assignment_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    data = await svc.compliance(db, assignment_id)
+    data = await svc.compliance(db, assignment_id, current_user)
     return {"data": ComplianceResponse.model_validate(data).model_dump(), "request_id": getattr(request.state, "request_id", "")}

@@ -13,10 +13,11 @@ from app.models.care import CarePlan
 from app.models.clinical import DiaryEntry, ScreeningResult
 from app.models.diagnosis import PatientDiagnosis
 from app.models.profile import PatientProfile, PractitionerProfile
+from app.services.clinic_isolation import practitioner_clinic_id
 
 
 class ReportService:
-    async def pre_visit_report(self, db: AsyncSession, patient_id: str) -> dict | None:
+    async def pre_visit_report(self, db: AsyncSession, patient_id: str, current_user=None) -> dict | None:
         try:
             pid = uuid.UUID(str(patient_id))
         except ValueError:
@@ -24,6 +25,13 @@ class ReportService:
         patient = await db.get(PatientProfile, pid)
         if patient is None:
             return None
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin", "patient"):
+                p_clinic = await practitioner_clinic_id(db, current_user)
+                if p_clinic is not None and str(patient.clinic_id) != p_clinic:
+                    from app.core.errors import forbidden
+                    raise forbidden("Clinic isolation violation")
 
         diagnoses = list(
             (
@@ -138,17 +146,38 @@ class ReportService:
             "diary_summary": diary_summary,
         }
 
-    async def clinic_analytics(self, db: AsyncSession) -> dict:
-        patients_total = (await db.execute(select(func.count()).select_from(PatientProfile))).scalar() or 0
-        practitioners_total = (await db.execute(select(func.count()).select_from(PractitionerProfile))).scalar() or 0
-        appointments_total = (await db.execute(select(func.count()).select_from(Appointment))).scalar() or 0
-        screenings_total = (await db.execute(select(func.count()).select_from(ScreeningResult))).scalar() or 0
-        diary_entries_total = (await db.execute(select(func.count()).select_from(DiaryEntry))).scalar() or 0
+    async def clinic_analytics(self, db: AsyncSession, current_user=None) -> dict:
+        p_clinic = None
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role not in ("super_admin",):
+                p_clinic = await practitioner_clinic_id(db, current_user)
+        patients_total_q = select(func.count()).select_from(PatientProfile)
+        if p_clinic is not None:
+            patients_total_q = patients_total_q.where(PatientProfile.clinic_id == uuid.UUID(p_clinic))
+        patients_total = (await db.execute(patients_total_q)).scalar() or 0
+        practitioners_total_q = select(func.count()).select_from(PractitionerProfile)
+        if p_clinic is not None:
+            practitioners_total_q = practitioners_total_q.where(PractitionerProfile.clinic_id == uuid.UUID(p_clinic))
+        practitioners_total = (await db.execute(practitioners_total_q)).scalar() or 0
+        appointments_total_q = select(func.count()).select_from(Appointment)
+        if p_clinic is not None:
+            appointments_total_q = appointments_total_q.where(Appointment.clinic_id == uuid.UUID(p_clinic))
+        appointments_total = (await db.execute(appointments_total_q)).scalar() or 0
+        screenings_total_q = select(func.count()).select_from(ScreeningResult).join(PatientProfile, PatientProfile.id == ScreeningResult.patient_id)
+        if p_clinic is not None:
+            screenings_total_q = screenings_total_q.where(PatientProfile.clinic_id == uuid.UUID(p_clinic))
+        screenings_total = (await db.execute(screenings_total_q)).scalar() or 0
+        diary_entries_total_q = select(func.count()).select_from(DiaryEntry).join(PatientProfile, PatientProfile.id == DiaryEntry.patient_id)
+        if p_clinic is not None:
+            diary_entries_total_q = diary_entries_total_q.where(PatientProfile.clinic_id == uuid.UUID(p_clinic))
+        diary_entries_total = (await db.execute(diary_entries_total_q)).scalar() or 0
 
+        status_q = select(Appointment.status, func.count()).group_by(Appointment.status)
+        if p_clinic is not None:
+            status_q = status_q.where(Appointment.clinic_id == uuid.UUID(p_clinic))
         status_rows = (
-            await db.execute(
-                select(Appointment.status, func.count()).group_by(Appointment.status)
-            )
+            await db.execute(status_q)
         ).all()
         appointments_by_status = {str(status): int(count) for status, count in status_rows}
 

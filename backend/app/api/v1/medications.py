@@ -1,4 +1,4 @@
-"""Medications API endpoints."""
+﻿"""Medications API endpoints."""
 from __future__ import annotations
 
 from typing import Optional
@@ -121,7 +121,7 @@ async def create_prescription(body: PrescriptionCreate, request: Request, curren
                           dependencies=[Depends(require_permission("prescription:read"))])
 async def get_prescription(prescription_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.get_prescription(db, prescription_id)
+    row = await svc.get_prescription(db, current_user, prescription_id)
     if row is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Prescription not found")
@@ -136,7 +136,7 @@ async def get_prescription(prescription_id: str, request: Request, current_user:
                           dependencies=[Depends(require_permission("prescription:write"))])
 async def update_prescription(prescription_id: str, body: PrescriptionUpdate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.update_prescription(db, prescription_id, body.model_dump(exclude_unset=True))
+    row = await svc.update_prescription(db, current_user, prescription_id, body.model_dump(exclude_unset=True))
     if row is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Prescription not found")
@@ -151,7 +151,7 @@ async def update_prescription(prescription_id: str, body: PrescriptionUpdate, re
                            dependencies=[Depends(require_permission("prescription:write"))])
 async def deactivate_prescription(prescription_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.deactivate_prescription(db, prescription_id)
+    row = await svc.deactivate_prescription(db, current_user, prescription_id)
     if row is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Prescription not found")
@@ -166,7 +166,7 @@ async def deactivate_prescription(prescription_id: str, request: Request, curren
                           dependencies=[Depends(require_permission("prescription:read"))])
 async def adherence_rate(prescription_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    rate = await svc.adherence_rate(db, prescription_id)
+    rate = await svc.adherence_rate(db, current_user, prescription_id)
     return {"data": {"prescription_id": prescription_id, "adherence": rate}, "request_id": getattr(request.state, "request_id", "")}
 
 
@@ -174,7 +174,7 @@ async def adherence_rate(prescription_id: str, request: Request, current_user: C
                        dependencies=[Depends(require_permission("prescription:read"))])
 async def create_adherence(body: AdherenceCreate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.create_adherence(db, body.model_dump())
+    row = await svc.create_adherence(db, current_user, body.model_dump())
     from app.schemas.medication import AdherenceResponse
     return {"data": AdherenceResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
 
@@ -183,7 +183,7 @@ async def create_adherence(body: AdherenceCreate, request: Request, current_user
                       dependencies=[Depends(require_permission("prescription:read"))])
 async def list_adherence(request: Request, current_user: CurrentUser, db: DbSession, prescription_id: str):
     svc = _svc()
-    items = await svc.list_adherence(db, prescription_id)
+    items = await svc.list_adherence(db, current_user, prescription_id)
     from app.schemas.medication import AdherenceResponse
     data = [AdherenceResponse.model_validate(a).model_dump() for a in items]
     return {"data": {"items": data, "total": len(data)}, "request_id": getattr(request.state, "request_id", "")}
@@ -205,4 +205,5 @@ async def update_adherence(adherence_id: str, body: AdherenceUpdate, request: Re
     import uuid
     await audit_svc.record(db, user_id=current_user.id, action="medication_adherence.update", entity_type="medication_adherence", entity_id=uuid.UUID(str(row.id)), old_values={"is_taken": getattr(old, "is_taken", None), "note": getattr(old, "note", None)} if old else None, new_values=body.model_dump(exclude_unset=True), commit=True)
     return {"data": AdherenceResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
+
 

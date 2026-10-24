@@ -32,7 +32,7 @@ def _svc() -> ScheduleService:
                    dependencies=[Depends(require_permission("clinic_settings:read"))])
 async def get_clinic_settings(clinic_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.get_clinic_settings(db, clinic_id)
+    row = await svc.get_clinic_settings(db, clinic_id, current_user)
     if row is None:
         # create default
         row = await svc.update_clinic_settings(db, clinic_id, "Europe/Moscow")
@@ -45,7 +45,7 @@ async def get_clinic_settings(clinic_id: str, request: Request, current_user: Cu
                    dependencies=[Depends(require_permission("clinic_settings:write"))])
 async def update_clinic_settings(clinic_id: str, body: ClinicSettingsUpdate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.update_clinic_settings(db, clinic_id, body.timezone)
+    row = await svc.update_clinic_settings(db, clinic_id, body.timezone, current_user)
     await db.commit()
     import uuid as _uuid
     await audit_svc.record(db, user_id=current_user.id, action="clinic_settings.update", entity_type="clinic_settings", entity_id=row.id, new_values={"timezone": body.timezone}, commit=True)
@@ -57,7 +57,7 @@ async def update_clinic_settings(clinic_id: str, body: ClinicSettingsUpdate, req
                    dependencies=[Depends(require_permission("schedule:read"))])
 async def get_schedule(practitioner_id: str, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    rows = await svc.get_schedule(db, practitioner_id)
+    rows = await svc.get_schedule(db, practitioner_id, current_user)
     data = [PractitionerScheduleResponse(id=str(r.id), practitioner_id=str(r.practitioner_id), weekday=r.weekday, start_time=r.start_time, end_time=r.end_time, is_available=r.is_available).model_dump() for r in rows]
     return {"data": {"items": data, "total": len(data)}, "request_id": getattr(request.state, "request_id", "")}
 
@@ -67,7 +67,7 @@ async def get_schedule(practitioner_id: str, request: Request, current_user: Cur
 async def replace_schedule(practitioner_id: str, body: List[PractitionerScheduleEntry], request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
     entries = [e.model_dump() for e in body]
-    rows = await svc.replace_schedule(db, practitioner_id, entries)
+    rows = await svc.replace_schedule(db, practitioner_id, entries, current_user)
     await db.commit()
     import uuid as _uuid
     await audit_svc.record(db, user_id=current_user.id, action="schedule.update", entity_type="practitioner_schedule", entity_id=_uuid.UUID(practitioner_id), new_values={"count": len(entries)}, commit=True)
@@ -79,7 +79,7 @@ async def replace_schedule(practitioner_id: str, body: List[PractitionerSchedule
                    dependencies=[Depends(require_permission("schedule:write"))])
 async def add_exception(practitioner_id: str, body: PractitionerScheduleExceptionCreate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    row = await svc.add_exception(db, practitioner_id, body.model_dump())
+    row = await svc.add_exception(db, practitioner_id, body.model_dump(), current_user)
     await db.commit()
     import uuid as _uuid
     await audit_svc.record(db, user_id=current_user.id, action="schedule.exception_create", entity_type="practitioner_schedule_exception", entity_id=row.id, new_values=body.model_dump(), commit=True)
@@ -91,7 +91,7 @@ async def add_exception(practitioner_id: str, body: PractitionerScheduleExceptio
                    dependencies=[Depends(require_permission("schedule:read"))])
 async def availability(practitioner_id: str, request: Request, current_user: CurrentUser, db: DbSession, at: Optional[str] = None):
     svc = _svc()
-    data = await svc.availability(db, practitioner_id, at)
+    data = await svc.availability(db, practitioner_id, at, current_user)
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
 
 @schedule_router.delete("/practitioners/{practitioner_id}/schedule/exceptions/{exception_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
