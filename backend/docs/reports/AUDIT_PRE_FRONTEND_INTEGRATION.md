@@ -1,3 +1,13 @@
+## 0. Методология и статус верификации (повторный аудит)
+
+Перепроверено кодом: pytest=131 passed/3 warn; OpenAPI=76 paths/51 schemas; миграции=32 (head 0032); тесты=27 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+
+Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; 3 gaps (агрегированный home endpoint, search param patients, N+1 patient card).
+
+НЕ верифицировано независимо: миграции upgrade/downgrade, Docker runtime, frontend/mobile source построчно.
+
+---
+
 # AUDIT PRE-FRONTEND INTEGRATION — Всесторонний аудит бэкенда перед подключением фронтенда
 
 **Дата:** 25.10.2026  
@@ -732,14 +742,21 @@ server {
 | AdminPage | `staff_list` | `StaffOut[]` | users + roles | ✅ |
 | AdminPage | `clinic_settings` | `ClinicSettingsOut` | clinic_settings.* | ✅ |
 
-### 15.3 DTO Mismatch Summary
+### 15.3 DTO Mismatch Summary (актуализировано по FIGMA_DTO_VERIFICATION.md)
 
 | Issue Type | Count | Details |
 |------------|-------|---------|
 | MISSING (field in UI, no API) | 5 | Consent storage, User profile, Home dashboard, QR invite, Invite verification from QR |
 | CONTRACT MISMATCH (name differs) | 1 | Diary date filter params (`dateFrom`/`dateTo` vs `from`/`to`) |
+| AGGREGATION GAP (multiple calls needed) | 2 | Mobile home "today" view; Web patient card tabs (N+1) |
+| SEARCH PARAM UNVERIFIED | 1 | `GET /api/v1/patients` — `search`/`q` param not confirmed in OpenAPI |
 | TYPE MISMATCH | 0 | — |
 | NULLABILITY MISMATCH | 0 | — |
 
-**Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/home/dashboard` for home screen data.
+**Verified gaps (from FIGMA_DTO_VERIFICATION.md):**
+1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`.
+2. Web patient card tabs require separate endpoints — use React Query caching.
+3. Patient registry search param needs verification in OpenAPI spec.
+
+**Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/patients/{id}/home` for home screen data.
 
