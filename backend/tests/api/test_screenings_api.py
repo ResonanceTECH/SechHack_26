@@ -33,4 +33,14 @@ def test_patient_screenings_history():
     from app.main import app
     client = TestClient(app)
     resp = client.get(f"/api/v1/patients/{PATIENT_PROFILE_ID}/screenings", headers={"Authorization": f"Bearer {PATIENT_TOKEN}"})
+@pytest.mark.db
+def test_patient_screening_trend():
+    from app.main import app
+    client = TestClient(app)
+    resp = client.get(f"/api/v1/patients/{PATIENT_PROFILE_ID}/screening-trend?questionnaire_code=phq9",
+                      headers={"Authorization": f"Bearer {PATIENT_TOKEN}"})
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["questionnaire_code"] == "phq9"
+    assert "trend" in data
     assert resp.status_code == 200

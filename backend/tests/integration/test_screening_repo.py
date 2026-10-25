@@ -15,3 +15,24 @@ async def test_repo_create_and_list():
         assert len(items) >= 1
         latest = await repo.get_latest_screening(db, PATIENT_PROFILE_ID)
         assert latest is not None
+
+
+@pytest.mark.db
+@pytest.mark.asyncio
+async def test_repo_create_new_registry_questionnaires():
+    repo = ScreeningRepository()
+    cases = [
+        ("hcl8", "1.0", 3, [1, 1, 1, 0, 0, 0, 0, 0]),
+        ("pdss", "1.0", 5, [1, 1, 1, 1, 1, 0, 0]),
+        ("cssrs", "1.0", 2, [1, 1, 0, 0, 0, 0]),
+        ("isi", "1.0", 10, [2, 2, 2, 1, 1, 1, 1]),
+        ("hcl33", "1.0", 15, [1] * 15 + [0] * 18),
+    ]
+    async with session_factory() as db:
+        for code, version, score, answers in cases:
+            row = await repo.create_screening(
+                db, PATIENT_PROFILE_ID, code, version, score, answers, False
+            )
+            assert row.id is not None
+            assert row.questionnaire_type == code
+            assert row.score == score

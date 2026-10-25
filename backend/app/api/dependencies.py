@@ -5,8 +5,8 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, Header
-from sqlalchemy import select
+from fastapi import Depends, Header, Request
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import forbidden, unauthorized
@@ -20,7 +20,9 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(
-    db: DbSession, authorization: Annotated[str | None, Header()] = None
+    request: Request,
+    db: DbSession,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> User:
     """Извлечь пользователя из Bearer access-токена. Проверяется только
     access: его отзыв неявный (по exp), 15 минут — окно реагирования."""
@@ -33,6 +35,53 @@ async def get_current_user(
     ).scalar_one_or_none()
     if user is None or not user.is_active:
         raise unauthorized("Учётная запись не найдена или заблокирована")
+
+    # RLS context: ограничиваем SQL-запросы текущей клиникой пользователя.
+    # Для multi-clinic practitioner контекст не выставляем (RLS остается пермиссивным,
+    # изоляция обеспечивается application-level проверками).
+    try:
+        clinic_ids: list[str] = []
+        if user.role in ("doctor", "psychologist", "coordinator", "clinic_admin"):
+            from app.services.clinic_isolation import practitioner_clinic_ids
+
+            clinic_ids = await practitioner_clinic_ids(db, user)
+        elif user.role == "patient":
+            from app.models.profile import PatientProfile
+
+            prof = (
+                await db.execute(
+                    select(PatientProfile).where(PatientProfile.user_id == user.id)
+                )
+            ).scalar_one_or_none()
+            if prof is not None and prof.clinic_id is not None:
+                clinic_ids = [str(prof.clinic_id)]
+        if len(clinic_ids) == 1:
+            await db.execute(
+                text("SELECT set_config('app.current_clinic_id', :v, true)"),
+                {"v": clinic_ids[0]},
+            )
+    except Exception:
+        # RLS — дополнительный слой; не ломаем запрос при ошибке контекста
+        pass
+
+    # Security audit: successful authenticated access (success-path wiring).
+    try:
+        from app.services.audit_service import record_security_event
+
+        await record_security_event(
+            db,
+            action="clinic_isolation.allowed",
+            resource_type=request.url.path,
+            result="allowed",
+            user_id=user.id,
+            user_role=user.role,
+            clinic_id=uuid.UUID(clinic_ids[0]) if len(clinic_ids) == 1 else None,
+            request_id=getattr(request.state, "request_id", None),
+        )
+    except Exception:
+        pass
+
+    request.state.current_user = user
     return user
 
 

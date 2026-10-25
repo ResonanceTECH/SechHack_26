@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     # ---- Логирование ----
     log_level: str = "INFO"
 
+    # ---- Интеграции (МИС / неотложки) ----
+    mis_base_url: str = ""
+    mis_api_token: str = ""
+    emergency_base_url: str = ""
+    emergency_api_token: str = ""
+
     # ---- Тесты ----
     skip_db_tests: bool = False
 

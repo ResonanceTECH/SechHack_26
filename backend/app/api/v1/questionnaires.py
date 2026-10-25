@@ -3,6 +3,7 @@
 from app.api.dependencies import CurrentUser, DbSession, require_permission
 from app.schemas.common import EnvelopeResponse
 from app.core.questionnaire_registry import get_definition, get_versions, list_codes
+from app.schemas.screening import QuestionnaireDetailEnvelope
 
 router = APIRouter(prefix="/api/v1/questionnaires", tags=["questionnaires"])
 
@@ -17,7 +18,7 @@ async def list_questionnaires(request: Request) -> dict:
     return {"data": {"questionnaires": items}, "request_id": getattr(request.state, "request_id", "")}
 
 
-@router.get("/{code}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+@router.get("/{code}", status_code=status.HTTP_200_OK, response_model=QuestionnaireDetailEnvelope,
             dependencies=[Depends(require_permission("screening:read"))])
 async def get_questionnaire(code: str, request: Request) -> dict:
     defn = get_definition(code)
@@ -27,7 +28,7 @@ async def get_questionnaire(code: str, request: Request) -> dict:
     return {"data": defn.to_dict(), "request_id": getattr(request.state, "request_id", "")}
 
 
-@router.get("/{code}/versions/{version}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+@router.get("/{code}/versions/{version}", status_code=status.HTTP_200_OK, response_model=QuestionnaireDetailEnvelope,
             dependencies=[Depends(require_permission("screening:read"))])
 async def get_questionnaire_version(code: str, version: str, request: Request) -> dict:
     defn = get_definition(code, version)

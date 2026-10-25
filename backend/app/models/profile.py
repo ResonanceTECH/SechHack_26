@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -76,3 +76,59 @@ class PractitionerProfile(UUIDPkMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
     )
+
+
+class PractitionerNameHistory(UUIDPkMixin, Base):
+    """Strict clinical history: practitioner name changes."""
+
+    __tablename__ = "practitioner_name_history"
+    __table_args__ = (
+        Index("idx_practitioner_name_history_practitioner_id", "practitioner_id"),
+        Index("idx_practitioner_name_history_changed_at", "changed_at"),
+    )
+
+    practitioner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("practitioner_profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), nullable=False
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+    effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    old_first_name: Mapped[str | None] = mapped_column(String(100))
+    old_last_name: Mapped[str | None] = mapped_column(String(100))
+    old_middle_name: Mapped[str | None] = mapped_column(String(100))
+    new_first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    new_last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    new_middle_name: Mapped[str | None] = mapped_column(String(100))
+class PatientNameHistory(UUIDPkMixin, Base):
+    """Strict clinical history: patient name changes."""
+
+    __tablename__ = "patient_name_history"
+    __table_args__ = (
+        Index("idx_patient_name_history_patient_id", "patient_id"),
+        Index("idx_patient_name_history_changed_at", "changed_at"),
+    )
+
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("patient_profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), nullable=False
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+    effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    old_first_name: Mapped[str | None] = mapped_column(String(100))
+    old_last_name: Mapped[str | None] = mapped_column(String(100))
+    old_middle_name: Mapped[str | None] = mapped_column(String(100))
+    new_first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    new_last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    new_middle_name: Mapped[str | None] = mapped_column(String(100))

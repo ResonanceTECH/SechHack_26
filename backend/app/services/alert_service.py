@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import uuid
 from typing import Any
@@ -43,7 +43,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(alert)
 
     async def generate_alerts_for_screening(self, db, screening):
@@ -82,11 +83,12 @@ class AlertService:
             ).scalar_one_or_none()
             if not prac:
                 return set()
-            rows = (
-                await db.execute(
-                    select(PatientAssignment.patient_id).where(PatientAssignment.practitioner_id == prac.id)
-                )
-            ).scalars().all()
+            stmt = select(PatientAssignment.patient_id).join(
+                PatientProfile, PatientProfile.id == PatientAssignment.patient_id
+            ).where(PatientAssignment.practitioner_id == prac.id)
+            if prac.clinic_id is not None:
+                stmt = stmt.where(PatientProfile.clinic_id == prac.clinic_id)
+            rows = (await db.execute(stmt)).scalars().all()
             return {str(x) for x in rows}
         return None
 
@@ -140,7 +142,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(updated)
 
     async def dismiss_alert(self, db, alert_id, current_user, comment=None):
@@ -169,7 +172,8 @@ class AlertService:
                 commit=True,
             )
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception('audit record failed')
         return self._to_dict(updated)
 
     async def update_alert(self, db, alert_id, current_user, data):
@@ -209,7 +213,8 @@ class AlertService:
                     commit=True,
                 )
             except Exception:
-                pass
+                import logging
+                logging.getLogger(__name__).exception('audit record failed')
             return self._to_dict(updated)
         return self._to_dict(alert)
 

@@ -50,7 +50,14 @@ class AssessmentPlanRepository:
 
         q = select(AssessmentPlan).join(PatientProfile, PatientProfile.id == AssessmentPlan.patient_id)
         if clinic_id is not None:
-            q = q.where(PatientProfile.clinic_id == clinic_id)
+            if isinstance(clinic_id, (list, tuple, set)):
+                ids = [str(c) for c in clinic_id if c is not None]
+                if ids:
+                    q = q.where(PatientProfile.clinic_id.in_(ids))
+                else:
+                    return []
+            else:
+                q = q.where(PatientProfile.clinic_id == clinic_id)
         q = q.order_by(AssessmentPlan.created_at.desc())
         result = await db.execute(q)
         return list(result.scalars().all())

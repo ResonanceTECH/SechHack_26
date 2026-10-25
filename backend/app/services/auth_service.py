@@ -14,7 +14,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.errors import conflict, invalid_credentials, unauthorized
+from app.core.errors import ApiError, conflict, invalid_credentials, unauthorized
 from app.core.security import jwt as jwt_service
 from app.core.security.passwords import hash_password, verify_password
 from app.db.base import utcnow
@@ -171,7 +171,9 @@ async def refresh(session: AsyncSession, *, refresh_token: str) -> TokenPair:
     признак компрометации: отзываем ВСЕ сессии пользователя (AUTH_PLAN.md §2)."""
     try:
         payload = jwt_service.decode_token(refresh_token, expected_type="refresh")
-    except Exception:
+    except (ValueError, ApiError):
+        import logging
+        logging.getLogger(__name__).warning('invalid refresh token decode')
         raise unauthorized("Недействительный refresh-токен") from None
 
     user = (
@@ -257,6 +259,45 @@ async def logout(
     )
     await session.commit()
 
+
+async def store_consent(
+    session: AsyncSession,
+    *,
+    user: User,
+    consent_personal_data: bool,
+    consent_medical_data: bool,
+    consent_data_sharing_with_doctor: bool = False,
+) -> dict:
+    """Persist 152-ФЗ consents for the current patient profile."""
+    profile = (
+        await session.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))
+    ).scalar_one_or_none()
+    if profile is None:
+        raise not_found("Профиль пациента не найден")
+    profile.consent_personal_data = consent_personal_data
+    profile.consent_medical_data = consent_medical_data
+    profile.consent_data_sharing_with_doctor = consent_data_sharing_with_doctor
+    profile.consent_data_processing_at = utcnow()
+    await audit_service.record(
+        session,
+        user_id=user.id,
+        action="auth.consent",
+        entity_type="PatientProfile",
+        entity_id=profile.id,
+        new_values={
+            "consent_personal_data": consent_personal_data,
+            "consent_medical_data": consent_medical_data,
+            "consent_data_sharing_with_doctor": consent_data_sharing_with_doctor,
+        },
+    )
+    await session.commit()
+    await session.refresh(profile)
+    return {
+        "consent_personal_data": profile.consent_personal_data,
+        "consent_medical_data": profile.consent_medical_data,
+        "consent_data_sharing_with_doctor": profile.consent_data_sharing_with_doctor,
+        "consent_data_processing_at": profile.consent_data_processing_at.isoformat() if profile.consent_data_processing_at else None,
+    }
 
 async def change_password(
     session: AsyncSession, *, user: User, current_password: str, new_password: str
