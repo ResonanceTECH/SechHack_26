@@ -123,26 +123,26 @@
 | Chat / messaging | PARTIAL | `/api/v1/messages` (list/create/read-state), SLA availability `/api/v1/messages/sla/{practitioner_id}` (GET) |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
 
-## 4.5 Schedule / Availability (Planned)
+## 4.5 Schedule / Availability
 
 Чат остаётся доступным 24/7; расписание влияет только на UX-индикаторы и SLA.
 
 | Endpoint | Method | Request | Response | Role | Status |
 |----------|--------|---------|----------|------|--------|
-| `/api/v1/clinics/{clinic_id}/settings` | GET | — | `ClinicSettings` | все роли | PLANNED |
-| `/api/v1/clinics/{clinic_id}/settings` | PUT | `ClinicSettingsUpdate` | `ClinicSettings` | clinic_admin, super_admin | PLANNED |
-| `/api/v1/practitioners/{id}/schedule` | GET | — | `PractitionerScheduleResponse` | все роли | PLANNED |
-| `/api/v1/practitioners/{id}/schedule` | PUT | `PractitionerScheduleReplace` | `PractitionerScheduleResponse` | doctor, clinic_admin, super_admin | PLANNED |
-| `/api/v1/practitioners/{id}/schedule/exceptions` | POST | `ScheduleExceptionCreate` | `ScheduleException` | doctor, clinic_admin, super_admin | PLANNED |
-| `/api/v1/practitioners/{id}/schedule/exceptions/{exception_id}` | DELETE | — | 204 | doctor, clinic_admin, super_admin | PLANNED |
-| `/api/v1/practitioners/{id}/availability` | GET | `at?` | `{timezone, is_available_now, next_available_at}` | все роли | PLANNED |
+| `/api/v1/clinics/{clinic_id}/settings` | GET | — | `ClinicSettings` | все роли | READY |
+| `/api/v1/clinics/{clinic_id}/settings` | PUT | `ClinicSettingsUpdate` | `ClinicSettings` | clinic_admin, super_admin | READY |
+| `/api/v1/practitioners/{id}/schedule` | GET | — | `PractitionerScheduleResponse` | все роли | READY |
+| `/api/v1/practitioners/{id}/schedule` | PUT | `PractitionerScheduleReplace` | `PractitionerScheduleResponse` | doctor, clinic_admin, super_admin | READY |
+| `/api/v1/practitioners/{id}/schedule/exceptions` | POST | `ScheduleExceptionCreate` | `ScheduleException` | doctor, clinic_admin, super_admin | READY |
+| `/api/v1/practitioners/{id}/schedule/exceptions/{exception_id}` | DELETE | — | 204 | doctor, clinic_admin, super_admin | READY |
+| `/api/v1/practitioners/{id}/availability` | GET | `at?` | `{timezone, is_available_now, next_available_at}` | все роли | READY |
 
 ## 4.6 Partial / Blocked (Frontend)
 
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | Clinic settings timezone | PARTIAL | backend `GET/PUT /api/v1/clinics/{id}/settings` implemented; frontend mock |
-| Doctor schedule / availability | PARTIAL | backend `GET/PUT /api/v1/practitioners/{id}/schedule`, exceptions implemented; availability calc planned |
+| Doctor schedule / availability | PARTIAL | backend `GET/PUT /api/v1/practitioners/{id}/schedule`, exceptions implemented; availability calc on frontend pending |
 
 ## 5. Patient Flow (общий)
 

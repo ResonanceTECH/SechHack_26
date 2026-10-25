@@ -580,7 +580,7 @@ Evidence:
 | Принцип | Статус | Evidence |
 |---------|--------|----------|
 | Модульный монолит | ✅ | app/main.py, все сервисы в одном репозитории |
-| Одна БД (PostgreSQL) | ✅ | app/db/session.py, alembic, 12 миграций |
+| Одна БД (PostgreSQL) | ✅ | app/db/session.py, alembic, 32 миграции |
 | Синхронный REST API | ✅ | FastAPI, async SQLAlchemy 2.0 |
 | Асинхронные события (Redis/Celery) | ⏳ Планируется | app/core/config.py: redis_url настроен, но Celery не используется в коде |
 | Офлайн-синхронизация | ✅ Частично | diary bulk-sync с device_id/recorded_at дедупликацией |
@@ -607,8 +607,8 @@ Evidence:
 - P1 проблемы: есть (отсутствующие эндпоинты, swallowed exceptions, отсутствие интеграции frontend/mobile с backend)  
 - CONTRADICTED утверждения: есть (DB_SCHEMA.md §7 vs код — диапазоны mood_score/anxiety_score)  
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
-- OpenAPI: committed spec содержит 59 путей, совпадает с runtime  
-- Миграции: 15 миграций, head = 0015_screening_registry, downgrade есть у всех  
+- OpenAPI: committed spec содержит 76 путей, совпадает с runtime  
+- Миграции: 32 миграции, head = 0032_versions_trends, downgrade есть у всех  
 
 
 ## Phase 39-41 Update (2026-10-25)
@@ -619,18 +619,18 @@ Evidence:
 - RLS context is wired in `get_current_user` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`.
 - Cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary).
 - Negative cross-clinic tests added: `tests/test_cross_clinic_isolation.py`.
-- Test suite: 104 passed. Migration head: `0030_rls_settings_memberships`. OpenAPI: 76 paths.
+- Test suite: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
 
 ## Questionnaire anchors update
 ## Phase 43 Update (2026-10-25)
 - RLS extended to remaining patient-linked PHI tables via migration `0031_rls_remaining_phi`.
 - Migration verified upgrade → downgrade → upgrade.
-- Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
+- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
 
 ## Phase 44 Update (2026-10-25)
 - `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` translated to multi-clinic membership (`practitioner_clinic_ids()`).
 - `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
 - Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
-- Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
+- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
 
 См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.
