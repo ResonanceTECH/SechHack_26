@@ -6,7 +6,7 @@ Following the pattern: router -> service -> repository -> database
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -22,6 +22,7 @@ class PatientRepository:
         db: AsyncSession,
         user_id: str,
         current_user: User,
+        search: str | None = None,
     ) -> list:
         """Get patients assigned to current user based on role.
 
@@ -41,6 +42,9 @@ class PatientRepository:
                 .join(User, PatientProfile.user_id == User.id)
                 .where(PatientProfile.user_id == user_id)
             )
+            if search:
+                term = f"%{search}%"
+                stmt = stmt.where(or_(PatientProfile.first_name.ilike(term), PatientProfile.last_name.ilike(term), User.email.ilike(term)))
             result = await db.execute(stmt)
             row = result.first()
             if not row:
@@ -83,6 +87,9 @@ class PatientRepository:
             )
             if practitioner.clinic_id is not None:
                 stmt = stmt.where(PatientProfile.clinic_id == practitioner.clinic_id)
+            if search:
+                term = f"%{search}%"
+                stmt = stmt.where(or_(PatientProfile.first_name.ilike(term), PatientProfile.last_name.ilike(term), User.email.ilike(term)))
             result = await db.execute(stmt)
             patients = []
             for profile, user in result.all():
@@ -100,6 +107,9 @@ class PatientRepository:
         # Coordinator/Admin: see all patients
         if current_user.role in ("coordinator", "clinic_admin", "super_admin"):
             stmt = select(PatientProfile, User).join(User, PatientProfile.user_id == User.id).where(User.role == "patient").order_by(User.email)
+            if search:
+                term = f"%{search}%"
+                stmt = stmt.where(or_(PatientProfile.first_name.ilike(term), PatientProfile.last_name.ilike(term), User.email.ilike(term)))
             result = await db.execute(stmt)
             patients = []
             for profile, user in result.all():

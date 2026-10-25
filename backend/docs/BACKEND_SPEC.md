@@ -924,3 +924,9 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 3. Add WebSocket message delivery while keeping REST endpoints.
 4. Gradually move clients to WebSocket; keep REST fallback.
 5. Add tests for connect/auth/heartbeat/reconnect/delivery/read receipts.
+## Phase 47 Update (2026-10-25) — Patient search
+
+- `GET /api/v1/patients` now accepts optional `search` (alias `q`) query parameter for filtering by first name, last name, or email (case-insensitive `ILIKE`).
+- Applied across patient/doctor/coordinator RBAC branches in `PatientRepository.get_patients_by_user`.
+- OpenAPI updated (`docs/openapi.json`): `search` and `q` query params on `/api/v1/patients`.
+- Tests: 131 passed (existing suite).

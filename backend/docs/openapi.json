@@ -642,6 +642,42 @@
         "operationId": "get_patients_api_v1_patients_get",
         "parameters": [
           {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Поиск по имени/фамилии/email",
+              "title": "Search"
+            },
+            "description": "Поиск по имени/фамилии/email"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Алиас для search",
+              "title": "Q"
+            },
+            "description": "Алиас для search"
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,

@@ -145,14 +145,14 @@ Evidence:
 
 | Показатель | Значение | Evidence |
 |------------|----------|----------|
-| Путей в committed openapi.json | 61 | docs/openapi.json |
-| Путей в runtime | 61 | app/api/v1/router.py, custom_openapi() |
+| Путей в committed openapi.json | 76 | docs/openapi.json |
+| Путей в runtime | 76 | app/api/v1/router.py, custom_openapi() |
 | Диапазон путей | /health, /db/health, /api/v1/* | openapi.json |
 | Конверт ответа | {data, meta, error} | app/core/response.py |
 | BearerAuth схема | ✅ | app/main.py custom_openapi() |
 
 Evidence:
-- docs/openapi.json — 41 путь, включая /api/v1/diary*, /api/v1/diagnoses*, /api/v1/assessment-plans*, /api/v1/safety/*
+- docs/openapi.json — 76 путей, включая /api/v1/diary*, /api/v1/diagnoses*, /api/v1/assessment-plans*, /api/v1/safety/*
 - app/main.py — custom_openapi() добавляет bearerAuth
 
 ### 5.2 Реализованные эндпоинты (VERIFIED)
@@ -600,7 +600,7 @@ Evidence:
 | Tests | PARTIALLY VERIFIED | 7/10 |
 | Frontend | UNVERIFIED (UI ONLY / MOCK ONLY) | 2/10 |
 | Mobile | UNVERIFIED (UI ONLY / MOCK ONLY) | 2/10 |
-| Figma | UNVERIFIED | 3/10 |
+| Figma | PARTIALLY VERIFIED (DTO field-by-field) | 4/10 |
 
 **Итоговый вердикт: PARTIALLY READY**  
 - P0 проблем: нет  
@@ -632,5 +632,25 @@ Evidence:
 - `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
 - Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
 - Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
+
+## Phase 45 Update / Pre-frontend audit (2026-10-25)
+
+Новые отчёты:
+- `docs/reports/AUDIT_PRE_FRONTEND_INTEGRATION.md` — всесторонний pre-frontend аудит; вердикт NOT READY (критический блокер: frontend/mobile не подключены к API, 0 fetch/axios).
+- `docs/reports/FIGMA_DTO_VERIFICATION.md` — field-by-field сопоставление 45 mobile + 60 web экранов с backend endpoints; contract coverage ~95%; 3 gaps.
+
+Проверенные статусы (код + OpenAPI + source):
+- `GET /api/v1/patients` — параметр `search`/`q` **реализован** (Phase 47): фильтрация по имени/фамилии/email. Gap закрыт.
+- Symptoms endpoint **не существует** — UI-only фича (нет маршрута). Gap → UI-only.
+- Агрегированный home endpoint `GET /api/v1/patients/{id}/home` отсутствует; web patient card tabs требуют отдельных вызовов (N+1 patient card).
+- Mobile home «today» view требует агрегированного `today_tasks[]` в `PatientSummary` или нового endpoint.
+
+Документация:
+- `F.MD` confidence Figma обновлён с UNVERIFIED 3/10 → PARTIALLY VERIFIED 4/10 (есть FIGMA_DTO_VERIFICATION.md).
+- Frontend/Mobile остаются UNVERIFIED (UI ONLY / MOCK ONLY): 0 fetch/axios на фронтенде, только `getHealth()`/`getDbHealth()` на mobile; 37 mock-файлов.
+
+Миграции:
+- 32 миграции, head `0032_versions_trends`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
+- 5 недостающих индексов (diary_entries, messages, alerts, audit_logs, screening_results) и 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
 
 См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.

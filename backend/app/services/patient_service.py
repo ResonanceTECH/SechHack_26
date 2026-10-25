@@ -28,9 +28,10 @@ class PatientService:
         self,
         db: AsyncSession,
         current_user: object,
+        search: str | None = None,
     ) -> dict:
         """List patients based on user RBAC role."""
-        result = await self.repository.get_patients_by_user(db, str(getattr(current_user, "id", "")), current_user)
+        result = await self.repository.get_patients_by_user(db, str(getattr(current_user, "id", "")), current_user, search)
         return {"patients": result}
 
     async def get_patient(

@@ -749,7 +749,7 @@ server {
 | MISSING (field in UI, no API) | 5 | Consent storage, User profile, Home dashboard, QR invite, Invite verification from QR |
 | CONTRACT MISMATCH (name differs) | 1 | Diary date filter params (`dateFrom`/`dateTo` vs `from`/`to`) |
 | AGGREGATION GAP (multiple calls needed) | 2 | Mobile home "today" view; Web patient card tabs (N+1) |
-| SEARCH PARAM UNVERIFIED | 1 | `GET /api/v1/patients` — `search`/`q` param not confirmed in OpenAPI |
+| SEARCH PARAM UNVERIFIED | 0 | Resolved: `GET /api/v1/patients?search=` (alias `q`) implemented (Phase 47) |
 | TYPE MISMATCH | 0 | — |
 | NULLABILITY MISMATCH | 0 | — |
 

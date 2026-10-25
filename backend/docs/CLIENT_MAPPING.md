@@ -86,7 +86,7 @@
 | Register phone | `/api/v1/auth/sms/request` | POST | `SmsRequestModel` | `{status}` | all | READY |
 | Register SMS | `/api/v1/auth/sms/verify` | POST | `SmsVerifyRequest` | tokens + user | all | READY |
 | Invite verify | `/api/v1/auth/invite/verify` | POST | `InviteVerifyRequest` | binding | doctor/clinic_admin | READY |
-| Patient list | `/api/v1/patients` | GET | — | `Patient[]` | doctor/psychologist/coordinator | READY |
+| Patient list | `/api/v1/patients` | GET | `?search`/`?q` | `Patient[]` | doctor/psychologist/coordinator | READY |
 | Patient card | `/api/v1/patients/{id}` | GET | — | `Patient` | patient/doctor | READY |
 | Patient update | `/api/v1/patients/{id}` | PATCH | `PatientUpdate` | `Patient` | patient/doctor | READY |
 | Patient summary | `/api/v1/patients/{id}/summary` | GET | — | `PatientSummary` | all clinical | READY |
