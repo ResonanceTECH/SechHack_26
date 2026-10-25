@@ -139,7 +139,7 @@
 | SMS подтверждение | PARTIAL | `/api/v1/auth/sms/verify` ✅, frontend MOCK |
 | Согласия 152-ФЗ | UI ONLY | Только на фронте, нет API для сохранения |
 | Invite-код врача | PARTIAL | `/api/v1/auth/invite/verify` ✅, QR сканер MISSING |
-| Home / дашборд | BLOCKED | Нет API эндпоинта для home dashboard |
+| Home / дашборд | PARTIAL | `GET /api/v1/patients/{id}/home` ✅ (Phase 48) |
 | Daily Check-in | PARTIAL | `/api/v1/diary` POST ✅, frontend MOCK |
 | Дневник | PARTIAL | `/api/v1/diary` GET ✅, `/api/v1/diary/summary` ✅, frontend MOCK |
 | Скрининги | PARTIAL | `/api/v1/screenings` POST ✅, frontend MOCK |

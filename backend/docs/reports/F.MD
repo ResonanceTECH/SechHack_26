@@ -642,7 +642,7 @@ Evidence:
 Проверенные статусы (код + OpenAPI + source):
 - `GET /api/v1/patients` — параметр `search`/`q` **реализован** (Phase 47): фильтрация по имени/фамилии/email. Gap закрыт.
 - Symptoms endpoint **не существует** — UI-only фича (нет маршрута). Gap → UI-only.
-- Агрегированный home endpoint `GET /api/v1/patients/{id}/home` отсутствует; web patient card tabs требуют отдельных вызовов (N+1 patient card).
+- Агрегированный home endpoint `GET /api/v1/patients/{id}/home` реализован (Phase 48): агрегирует карточку пациента, активные алерты, последнюю запись дневника и ближайший приём. Gap закрыт.
 - Mobile home «today» view требует агрегированного `today_tasks[]` в `PatientSummary` или нового endpoint.
 
 Документация:

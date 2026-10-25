@@ -149,6 +149,20 @@ class InviteCodeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ConsentRequest(BaseModel):
+    """Согласия 152-ФЗ (мобильный экран RegisterConsentScreen)."""
+
+    consent_personal_data: bool
+    consent_medical_data: bool
+    consent_data_sharing_with_doctor: bool = False
+
+    @field_validator("consent_personal_data", "consent_medical_data")
+    @classmethod
+    def _required(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Требуется согласие на обработку данных (152-ФЗ)")
+        return value
+
 class InviteVerifyResult(BaseModel):
     """Ответ успешной привязки пациента к врачу."""
 

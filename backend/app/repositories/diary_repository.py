@@ -38,7 +38,7 @@ class DiaryRepository:
             return None
         return (await db.execute(select(DiaryEntry).where(DiaryEntry.id == eid))).scalar_one_or_none()
 
-    async def list_for_patient(self, db: AsyncSession, patient_id: str, date_from=None, date_to=None) -> list[DiaryEntry]:
+    async def list_for_patient(self, db: AsyncSession, patient_id: str, date_from=None, date_to=None, limit: int | None = None) -> list[DiaryEntry]:
         try:
             pid = uuid.UUID(str(patient_id))
         except ValueError:
@@ -49,6 +49,8 @@ class DiaryRepository:
         if date_to is not None:
             stmt = stmt.where(DiaryEntry.recorded_at <= date_to)
         stmt = stmt.order_by(DiaryEntry.recorded_at.desc())
+        if limit is not None and limit > 0:
+            stmt = stmt.limit(limit)
         result = await db.execute(stmt)
         return list(result.scalars().all())
 

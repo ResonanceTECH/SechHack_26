@@ -930,3 +930,9 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Applied across patient/doctor/coordinator RBAC branches in `PatientRepository.get_patients_by_user`.
 - OpenAPI updated (`docs/openapi.json`): `search` and `q` query params on `/api/v1/patients`.
 - Tests: 131 passed (existing suite).
+
+## Phase 48 Update (2026-10-25) — Aggregated patient home endpoint
+
+- Added `GET /api/v1/patients/{id}/home` aggregating patient card, active alerts count, latest diary entry, and next scheduled appointment.
+- OpenAPI updated: 77 paths.
+- Tests: 131 passed.

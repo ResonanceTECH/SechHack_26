@@ -131,3 +131,51 @@ class PatientService:
             "latest_completion_at": latest_completion_at,
         }
         return result
+    async def get_patient_home(
+        self,
+        db: AsyncSession,
+        patient_id: str,
+        current_user: object,
+    ) -> dict:
+        """Aggregated home view for a patient (mobile/web home screen)."""
+        patient = await self.get_patient(db, patient_id, current_user)
+
+        from app.repositories.alert_repository import AlertRepository
+        alerts, _ = await AlertRepository().list_alerts(db, {"patient_id": patient_id, "status": "new"})
+
+        from app.repositories.diary_repository import DiaryRepository
+        entries = await DiaryRepository().list_for_patient(db, patient_id, limit=1)
+        latest = entries[0] if entries else None
+        latest_diary = None
+        if latest is not None:
+            latest_diary = {
+                "id": str(latest.id),
+                "recorded_at": latest.recorded_at.isoformat() if getattr(latest, "recorded_at", None) else None,
+                "mood_score": getattr(latest, "mood_score", None),
+                "anxiety_score": getattr(latest, "anxiety_score", None),
+                "sleep_hours": getattr(latest, "sleep_hours", None),
+                "sleep_quality": getattr(latest, "sleep_quality", None),
+            }
+
+        from app.repositories.appointment_repository import AppointmentRepository
+        from datetime import datetime, timezone
+        appts = await AppointmentRepository().list_appointments(db, patient_id=patient_id, status="scheduled")
+        now = datetime.now(timezone.utc)
+        upcoming = [a for a in appts if getattr(a, "scheduled_at", None) and a.scheduled_at >= now]
+        next_appt = upcoming[0] if upcoming else None
+        next_appointment = None
+        if next_appt is not None:
+            next_appointment = {
+                "id": str(next_appt.id),
+                "scheduled_at": next_appt.scheduled_at.isoformat() if getattr(next_appt, "scheduled_at", None) else None,
+                "status": getattr(next_appt, "status", None),
+                "reason": getattr(next_appt, "reason", None),
+                "practitioner_id": str(next_appt.practitioner_id) if getattr(next_appt, "practitioner_id", None) else None,
+            }
+
+        return {
+            "patient": patient,
+            "alerts": {"active": len(alerts)},
+            "latest_diary": latest_diary,
+            "next_appointment": next_appointment,
+        }

@@ -52,6 +52,7 @@
 | Welcome / Register phone | `/api/v1/auth/sms/request` | POST | `SmsRequestModel` | `{status}` | patient | READY |
 | Register SMS | `/api/v1/auth/sms/verify` | POST | `SmsVerifyRequest` | tokens + user | patient | READY |
 | Register doctor confirm | `/api/v1/auth/invite/verify` | POST | `InviteVerifyRequest` | binding | patient | READY |
+| Register consent | `/api/v1/auth/consent` | POST | `ConsentRequest` | consent state | patient | READY |
 | Home | `/api/v1/patients/{id}/summary` | GET | — | `PatientSummary` | patient | READY |
 | Check-in mood | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
 | Check-in anxiety | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
@@ -87,6 +88,7 @@
 | Register SMS | `/api/v1/auth/sms/verify` | POST | `SmsVerifyRequest` | tokens + user | all | READY |
 | Invite verify | `/api/v1/auth/invite/verify` | POST | `InviteVerifyRequest` | binding | doctor/clinic_admin | READY |
 | Patient list | `/api/v1/patients` | GET | `?search`/`?q` | `Patient[]` | doctor/psychologist/coordinator | READY |
+| Patient home | `/api/v1/patients/{id}/home` | GET | — | `PatientHome` | patient/doctor | READY |
 | Patient card | `/api/v1/patients/{id}` | GET | — | `Patient` | patient/doctor | READY |
 | Patient update | `/api/v1/patients/{id}` | PATCH | `PatientUpdate` | `Patient` | patient/doctor | READY |
 | Patient summary | `/api/v1/patients/{id}/summary` | GET | — | `PatientSummary` | all clinical | READY |
@@ -173,7 +175,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 76 путей (актуальное состояние runtime, совпадает с committed spec)
+- 79 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 

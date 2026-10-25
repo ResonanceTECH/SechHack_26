@@ -19,6 +19,7 @@ from app.core.response import envelope
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.schemas.auth import (
     ChangePasswordRequest,
+    ConsentRequest,
     InviteVerifyRequest,
     InviteVerifyResult,
     LoginRequest,
@@ -158,6 +159,21 @@ async def me(db: DbSession, user: CurrentUser, request: Request) -> dict:
         last_name=profile.last_name if profile else None,
     )
     return envelope(data=MeResponse(user=brief).model_dump(mode="json"), request_id=_rid(request))
+
+
+@router.post("/consent", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Профиль не найден"}, 422: {"description": "Ошибка валидации"}})
+async def store_consent(
+    body: ConsentRequest, request: Request, db: DbSession, user: CurrentUser
+) -> dict:
+    """Сохранение согласий 152-ФЗ для текущего пациента."""
+    result = await auth_service.store_consent(
+        db,
+        user=user,
+        consent_personal_data=body.consent_personal_data,
+        consent_medical_data=body.consent_medical_data,
+        consent_data_sharing_with_doctor=body.consent_data_sharing_with_doctor,
+    )
+    return envelope(data=result, request_id=_rid(request))
 
 
 @router.post("/change-password", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 422: {"description": "Ошибка валидации"}})
