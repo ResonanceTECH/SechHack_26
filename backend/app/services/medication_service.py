@@ -1,4 +1,4 @@
-﻿"""Medication service."""
+"""Medication service."""
 from __future__ import annotations
 
 import uuid
@@ -11,7 +11,7 @@ from app.core.permissions import has_permission
 from app.models.medication import Medication, Prescription, MedicationAdherence
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.medication_repository import MedicationRepository
-from app.services.clinic_isolation import practitioner_clinic_id, patient_clinic_id, enforce_clinic_match
+from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
 
 
 class MedicationService:
@@ -45,10 +45,10 @@ class MedicationService:
         data["practitioner_id"] = str(prof.id)
         role = getattr(current_user, "role", "")
         if role not in ("patient", "super_admin"):
-            p_clinic = await practitioner_clinic_id(db, current_user)
-            if p_clinic is not None:
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
                 pat_clinic = await patient_clinic_id(db, data.get("patient_id"))
-                enforce_clinic_match(p_clinic, pat_clinic)
+                enforce_clinic_match(p_clinics, pat_clinic)
         return await self.repo.create_prescription(db, data)
 
     async def list_prescriptions(self, db: AsyncSession, current_user, patient_id: str | None = None) -> list[Prescription]:
@@ -62,12 +62,12 @@ class MedicationService:
         items = await self.repo.list_prescriptions(db, patient_id)
         role = getattr(current_user, "role", "")
         if role not in ("patient", "super_admin"):
-            p_clinic = await practitioner_clinic_id(db, current_user)
-            if p_clinic is not None:
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
                 filtered = []
                 for p in items:
                     pat_clinic = await patient_clinic_id(db, p.patient_id)
-                    if pat_clinic is None or pat_clinic == p_clinic:
+                    if pat_clinic is None or pat_clinic in p_clinics:
                         filtered.append(p)
                 items = filtered
         return items
@@ -78,10 +78,10 @@ class MedicationService:
             return None
         role = getattr(current_user, "role", "")
         if role not in ("patient", "super_admin"):
-            p_clinic = await practitioner_clinic_id(db, current_user)
-            if p_clinic is not None:
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
                 pat_clinic = await patient_clinic_id(db, row.patient_id)
-                if pat_clinic is not None and pat_clinic != p_clinic:
+                if pat_clinic is not None and pat_clinic not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return row
@@ -91,10 +91,10 @@ class MedicationService:
         if row is not None:
             role = getattr(current_user, "role", "")
             if role not in ("patient", "super_admin"):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics:
                     pat_clinic = await patient_clinic_id(db, row.patient_id)
-                    if pat_clinic is not None and pat_clinic != p_clinic:
+                    if pat_clinic is not None and pat_clinic not in p_clinics:
                         from app.core.errors import forbidden
                         raise forbidden("Clinic isolation violation")
         return await self.repo.update_prescription(db, prescription_id, data)
@@ -104,10 +104,10 @@ class MedicationService:
         if row is not None:
             role = getattr(current_user, "role", "")
             if role not in ("patient", "super_admin"):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics:
                     pat_clinic = await patient_clinic_id(db, row.patient_id)
-                    if pat_clinic is not None and pat_clinic != p_clinic:
+                    if pat_clinic is not None and pat_clinic not in p_clinics:
                         from app.core.errors import forbidden
                         raise forbidden("Clinic isolation violation")
         return await self.repo.deactivate_prescription(db, prescription_id)
@@ -118,10 +118,10 @@ class MedicationService:
         if presc is not None:
             role = getattr(current_user, "role", "")
             if role not in ("patient", "super_admin"):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics:
                     pat_clinic = await patient_clinic_id(db, presc.patient_id)
-                    enforce_clinic_match(p_clinic, pat_clinic)
+                    enforce_clinic_match(p_clinics, pat_clinic)
         return await self.repo.create_adherence(db, data)
 
     async def list_adherence(self, db: AsyncSession, current_user, prescription_id: str) -> list[MedicationAdherence]:
@@ -129,10 +129,10 @@ class MedicationService:
         if presc is not None:
             role = getattr(current_user, "role", "")
             if role not in ("patient", "super_admin"):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics:
                     pat_clinic = await patient_clinic_id(db, presc.patient_id)
-                    enforce_clinic_match(p_clinic, pat_clinic)
+                    enforce_clinic_match(p_clinics, pat_clinic)
         return await self.repo.list_adherence(db, prescription_id)
 
     async def update_adherence(self, db: AsyncSession, adherence_id: str, data: dict, corrected_by: str | None = None) -> MedicationAdherence | None:
@@ -143,8 +143,8 @@ class MedicationService:
         if presc is not None:
             role = getattr(current_user, "role", "")
             if role not in ("patient", "super_admin"):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics:
                     pat_clinic = await patient_clinic_id(db, presc.patient_id)
-                    enforce_clinic_match(p_clinic, pat_clinic)
+                    enforce_clinic_match(p_clinics, pat_clinic)
         return await self.repo.adherence_rate(db, prescription_id)

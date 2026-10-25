@@ -54,7 +54,14 @@ class DiagnosisRepository:
         from app.models.profile import PatientProfile
         q = select(PatientDiagnosis).join(PatientProfile, PatientProfile.id == PatientDiagnosis.patient_id)
         if clinic_id is not None:
-            q = q.where(PatientProfile.clinic_id == clinic_id)
+            if isinstance(clinic_id, (list, tuple, set)):
+                ids = [str(c) for c in clinic_id if c is not None]
+                if ids:
+                    q = q.where(PatientProfile.clinic_id.in_(ids))
+                else:
+                    return []
+            else:
+                q = q.where(PatientProfile.clinic_id == clinic_id)
         if coding_system:
             q = q.where(PatientDiagnosis.coding_system == coding_system)
         q = q.order_by(PatientDiagnosis.diagnosed_at.desc())

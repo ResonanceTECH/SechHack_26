@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import forbidden
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.appointment_repository import AppointmentRepository
-from app.services.clinic_isolation import practitioner_clinic_id, patient_clinic_id, enforce_clinic_match
+from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
 
 
 class AppointmentService:
@@ -35,9 +35,10 @@ class AppointmentService:
         items = await self.repo.list_appointments(db, patient_id=patient_id)
         role = getattr(current_user, "role", None)
         if role not in ("super_admin",):
-            p_clinic = await practitioner_clinic_id(db, current_user)
-            if p_clinic is not None:
-                items = [a for a in items if str(a.clinic_id) == p_clinic]
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
+                allowed = {str(c) for c in p_clinics}
+                items = [a for a in items if str(a.clinic_id) in allowed]
         return items
 
     async def create_appointment(self, db: AsyncSession, current_user, data: dict) -> "Appointment":
@@ -55,9 +56,9 @@ class AppointmentService:
                     data["clinic_id"] = str(prof.clinic_id)
         role = getattr(current_user, "role", None)
         if role not in ("patient", "super_admin"):
-            p_clinic = await practitioner_clinic_id(db, current_user)
-            if p_clinic is not None:
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
                 pat_clinic = await patient_clinic_id(db, data.get("patient_id"))
-                enforce_clinic_match(p_clinic, pat_clinic)
-                data["clinic_id"] = p_clinic
+                enforce_clinic_match(p_clinics, pat_clinic)
+                data["clinic_id"] = pat_clinic if pat_clinic in p_clinics else p_clinics[0]
         return await self.repo.create_appointment(db, data)

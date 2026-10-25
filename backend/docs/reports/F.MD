@@ -611,6 +611,26 @@ Evidence:
 - Миграции: 15 миграций, head = 0015_screening_registry, downgrade есть у всех  
 
 
+## Phase 39-41 Update (2026-10-25)
+- Added `audit_events` table/model and `record_security_event`.
+- Added RLS preparation for `patient_profiles`.
+- Added `practitioner_clinic_memberships` table/model (migration `0029`).
+- Clinic-isolation helpers now support primary + membership clinic ids; `enforce_clinic_match()` accepts list of allowed clinics.
+- RLS context is wired in `get_current_user` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`.
+- Cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary).
+- Negative cross-clinic tests added: `tests/test_cross_clinic_isolation.py`.
+- Test suite: 104 passed. Migration head: `0030_rls_settings_memberships`. OpenAPI: 76 paths.
+
 ## Questionnaire anchors update
+## Phase 43 Update (2026-10-25)
+- RLS extended to remaining patient-linked PHI tables via migration `0031_rls_remaining_phi`.
+- Migration verified upgrade → downgrade → upgrade.
+- Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
+
+## Phase 44 Update (2026-10-25)
+- `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` translated to multi-clinic membership (`practitioner_clinic_ids()`).
+- `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
+- Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
+- Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
 
 См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.

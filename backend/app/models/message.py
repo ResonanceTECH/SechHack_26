@@ -43,3 +43,5 @@ class Message(UUIDPkMixin, Base):
     )
     is_edited: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")

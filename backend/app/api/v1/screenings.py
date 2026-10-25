@@ -60,6 +60,14 @@ async def get_screening(screening_id: str, current_user: CurrentUser, db: DbSess
         if profile is None or str(profile.id) != str(row.patient_id):
             from app.core.errors import forbidden
             raise forbidden()
+    # clinic isolation for practitioners
+    elif current_user.role not in ("super_admin",):
+        from app.models.profile import PractitionerProfile
+        prac = (await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == current_user.id))).scalar_one_or_none()
+        pat = (await db.execute(select(PatientProfile).where(PatientProfile.id == row.patient_id))).scalar_one_or_none()
+        if prac is not None and pat is not None and prac.clinic_id is not None and pat.clinic_id is not None and str(prac.clinic_id) != str(pat.clinic_id):
+            from app.core.errors import forbidden
+            raise forbidden()
     service = _get_service()
     defn = get_definition(row.questionnaire_type, row.questionnaire_version)
     interpretation = defn.severity_for(row.score) if defn is not None else row.severity

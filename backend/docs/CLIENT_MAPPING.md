@@ -173,7 +173,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 71 путей (актуальное состояние runtime, совпадает с committed spec)
+- 76 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 

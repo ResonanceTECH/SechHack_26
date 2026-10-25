@@ -94,3 +94,36 @@ class DiaryEntry(UUIDPkMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
     )
+    is_edited: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    edited_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    edit_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    corrected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    corrected_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    correction_reason: Mapped[str | None] = mapped_column(Text)
+class DiaryEntryVersion(UUIDPkMixin, Base):
+    """Strict clinical history: diary entry versions/addenda."""
+
+    __tablename__ = "diary_entry_versions"
+    __table_args__ = (
+        Index("idx_diary_entry_versions_entry_id", "diary_entry_id"),
+        Index("idx_diary_entry_versions_changed_at", "changed_at"),
+    )
+
+    diary_entry_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("diary_entries.id", ondelete="CASCADE"), nullable=False
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), nullable=False
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+    is_addendum: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)

@@ -83,11 +83,12 @@ class AlertService:
             ).scalar_one_or_none()
             if not prac:
                 return set()
-            rows = (
-                await db.execute(
-                    select(PatientAssignment.patient_id).where(PatientAssignment.practitioner_id == prac.id)
-                )
-            ).scalars().all()
+            stmt = select(PatientAssignment.patient_id).join(
+                PatientProfile, PatientProfile.id == PatientAssignment.patient_id
+            ).where(PatientAssignment.practitioner_id == prac.id)
+            if prac.clinic_id is not None:
+                stmt = stmt.where(PatientProfile.clinic_id == prac.clinic_id)
+            rows = (await db.execute(stmt)).scalars().all()
             return {str(x) for x in rows}
         return None
 

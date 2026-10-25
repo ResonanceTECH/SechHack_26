@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.schedule_repository import ScheduleRepository
-from app.services.clinic_isolation import practitioner_clinic_id
+from app.services.clinic_isolation import practitioner_clinic_ids
 
 
 class ScheduleService:
@@ -20,8 +20,8 @@ class ScheduleService:
         if current_user is not None:
             role = getattr(current_user, "role", None)
             if role not in ("super_admin",):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and p_clinic != str(clinic_id):
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and p_clinic != str(clinic_id):
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.get_clinic_settings(db, uuid.UUID(clinic_id))
@@ -30,8 +30,8 @@ class ScheduleService:
         if current_user is not None:
             role = getattr(current_user, "role", None)
             if role not in ("super_admin",):
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and p_clinic != str(clinic_id):
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and p_clinic != str(clinic_id):
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.upsert_clinic_settings(db, uuid.UUID(clinic_id), timezone)
@@ -43,8 +43,8 @@ class ScheduleService:
                 from app.models.profile import PractitionerProfile
                 res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
                 prof = res.scalar_one_or_none()
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and prof is not None and str(prof.clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.list_schedule(db, uuid.UUID(practitioner_id))
@@ -56,8 +56,8 @@ class ScheduleService:
                 from app.models.profile import PractitionerProfile
                 res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
                 prof = res.scalar_one_or_none()
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and prof is not None and str(prof.clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.replace_schedule(db, uuid.UUID(practitioner_id), entries)
@@ -69,8 +69,8 @@ class ScheduleService:
                 from app.models.profile import PractitionerProfile
                 res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
                 prof = res.scalar_one_or_none()
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and prof is not None and str(prof.clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.add_exception(db, uuid.UUID(practitioner_id), data)
@@ -86,8 +86,8 @@ class ScheduleService:
                 from app.models.profile import PractitionerProfile
                 res = await db.execute(select(PractitionerProfile).where(PractitionerProfile.id == uuid.UUID(practitioner_id)))
                 prof = res.scalar_one_or_none()
-                p_clinic = await practitioner_clinic_id(db, current_user)
-                if p_clinic is not None and prof is not None and str(prof.clinic_id) != p_clinic:
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if p_clinics and prof is not None and str(prof.clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         from datetime import datetime, time, timedelta, timezone

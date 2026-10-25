@@ -81,6 +81,8 @@ class PatientRepository:
                 )
                 .order_by(User.email)
             )
+            if practitioner.clinic_id is not None:
+                stmt = stmt.where(PatientProfile.clinic_id == practitioner.clinic_id)
             result = await db.execute(stmt)
             patients = []
             for profile, user in result.all():
@@ -141,6 +143,9 @@ class PatientRepository:
             if not assignment:
                 from app.core.errors import forbidden
                 raise forbidden()
+            if prac.clinic_id is not None and profile.clinic_id is not None and str(profile.clinic_id) != str(prac.clinic_id):
+                from app.core.errors import forbidden
+                raise forbidden()
         return {
             "id": str(profile.id),
             "email": user.email,
@@ -177,6 +182,9 @@ class PatientRepository:
                 PatientAssignment.practitioner_id == prac.id,
             ))).scalar_one_or_none()
             if not assignment:
+                from app.core.errors import forbidden
+                raise forbidden()
+            if prac.clinic_id is not None and profile.clinic_id is not None and str(profile.clinic_id) != str(prac.clinic_id):
                 from app.core.errors import forbidden
                 raise forbidden()
         for key, value in data.items():

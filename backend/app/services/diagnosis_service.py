@@ -41,11 +41,9 @@ class DiagnosisService:
         profile = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))).scalar_one_or_none()
         return str(profile.id) if profile else None
 
-    async def _practitioner_clinic_id(self, db, user) -> Optional[str]:
-        if getattr(user, "role", None) not in ("doctor", "psychologist", "coordinator", "clinic_admin"):
-            return None
-        profile = (await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == user.id))).scalar_one_or_none()
-        return str(profile.clinic_id) if profile and profile.clinic_id else None
+    async def _practitioner_clinic_ids(self, db, user) -> list[str]:
+        from app.services.clinic_isolation import practitioner_clinic_ids
+        return await practitioner_clinic_ids(db, user)
 
     async def _patient_clinic_id(self, db, patient_id) -> Optional[str]:
         try:
@@ -61,9 +59,9 @@ class DiagnosisService:
         payload = dict(data)
         # clinic isolation
         if getattr(current_user, "role", None) != "super_admin":
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = await self._patient_clinic_id(db, payload.get("patient_id"))
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         payload["diagnosed_by"] = str(current_user.id)
         row = await self.repository.create(db, payload)
@@ -89,9 +87,9 @@ class DiagnosisService:
             raise not_found("Диагноз не найден")
         # clinic isolation
         if getattr(current_user, "role", None) != "super_admin":
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = await self._patient_clinic_id(db, row.patient_id)
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         old = {"status": row.status, "is_primary": row.is_primary}
         updated = await self.repository.update(db, diagnosis_id, data)
@@ -115,11 +113,13 @@ class DiagnosisService:
             if patient_id and patient_id != own:
                 raise forbidden()
             patient_id = own
-        clinic_id = None
+        clinic_ids = None
         if getattr(current_user, "role", None) not in ("patient", "super_admin") and not patient_id:
-            clinic_id = await self._practitioner_clinic_id(db, current_user)
+            clinic_ids = await self._practitioner_clinic_ids(db, current_user)
+            if not clinic_ids:
+                return {"items": [], "total": 0}
         if patient_id:
             rows = await self.repository.list_by_patient(db, patient_id, coding_system)
         else:
-            rows = await self.repository.list_all(db, coding_system, clinic_id)
+            rows = await self.repository.list_all(db, coding_system, clinic_ids)
         return {"items": [self._to_response(r) for r in rows], "total": len(rows)}

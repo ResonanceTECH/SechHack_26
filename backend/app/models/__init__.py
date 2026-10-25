@@ -3,10 +3,11 @@
 
 from app.models.appointment import Appointment
 from app.models.assignment import PatientAssignment
-from app.models.audit import AuditLog
+from app.models.audit import AuditLog, AuditEvent
 from app.models.auth import InviteCode, RefreshToken, SmsCode
 from app.models.care import Alert, CarePlan, ExerciseAssignment, ExerciseCompletion
 from app.models.clinic import Clinic
+from app.models.clinic_membership import PractitionerClinicMembership
 from app.models.clinical import DiaryEntry, ScreeningResult
 from app.models.diagnosis import DiagnosisReference, PatientDiagnosis
 from app.models.integration import IntegrationEvent
@@ -21,6 +22,7 @@ from app.models.user import User
 __all__ = [
     "Appointment",
     "Alert",
+    "AuditEvent",
     "AuditLog",
     "CarePlan",
     "Clinic",

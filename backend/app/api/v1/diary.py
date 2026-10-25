@@ -65,6 +65,11 @@ async def list_diary(request: Request, current_user: CurrentUser, db: DbSession,
         if not patient_id:
             raise validation_error("patient_id обязателен")
         pid = patient_id
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
+
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, pid)
+        enforce_clinic_match(p_clinics, pat_clinic)
     rows = await _repo().list_for_patient(db, pid, date_from, date_to)
     items = [_to_response(r) for r in rows]
     return {"data": {"items": items, "total": len(items)}, "request_id": getattr(request.state, "request_id", "")}
@@ -147,6 +152,11 @@ async def diary_summary(request: Request, current_user: CurrentUser, db: DbSessi
         if not patient_id:
             raise validation_error("patient_id обязателен")
         pid = patient_id
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
+
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, pid)
+        enforce_clinic_match(p_clinics, pat_clinic)
     rows = await _repo().list_for_patient(db, pid, date_from, date_to)
     def _avg(attr):
         vals = [getattr(r, attr) for r in rows if getattr(r, attr) is not None]

@@ -18,6 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.db.session import session_factory
 from app.core.errors import ApiError
 from app.core.response import envelope
 
@@ -123,6 +124,24 @@ async def http_error_handler(request: Request, exc: StarletteHTTPException) -> J
         status.HTTP_409_CONFLICT: "conflict",
         status.HTTP_429_TOO_MANY_REQUESTS: "rate_limited",
     }
+    if exc.status_code == status.HTTP_403_FORBIDDEN and str(exc.detail) == "Clinic isolation violation":
+        user = getattr(request.state, "current_user", None)
+        try:
+            from app.services.audit_service import record_security_event
+
+            async with session_factory() as session:
+                await record_security_event(
+                    session,
+                    action="clinic_isolation.denied",
+                    resource_type=request.url.path,
+                    result="denied",
+                    user_id=getattr(user, "id", None),
+                    user_role=getattr(user, "role", None),
+                    request_id=getattr(request.state, "request_id", None),
+                    commit=True,
+                )
+        except Exception:
+            logger.exception("Failed to record clinic isolation audit event")
     return JSONResponse(
         status_code=exc.status_code,
         content=envelope(

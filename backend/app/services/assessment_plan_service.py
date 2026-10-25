@@ -63,11 +63,9 @@ class AssessmentPlanService:
         profile = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))).scalars().first()
         return str(profile.id) if profile else None
 
-    async def _practitioner_clinic_id(self, db, user) -> Optional[str]:
-        if getattr(user, "role", None) not in ("doctor", "psychologist", "coordinator", "clinic_admin"):
-            return None
-        profile = (await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == user.id))).scalars().first()
-        return str(profile.clinic_id) if profile and profile.clinic_id else None
+    async def _practitioner_clinic_ids(self, db, user) -> list[str]:
+        from app.services.clinic_isolation import practitioner_clinic_ids
+        return await practitioner_clinic_ids(db, user)
 
     async def _get_patient_profile(self, db: AsyncSession, patient_id) -> Optional[PatientProfile]:
         try:
@@ -106,9 +104,9 @@ class AssessmentPlanService:
         if patient_profile is None:
             raise not_found("Пациент не найден")
         if role != "super_admin":
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         self._validate_questionnaire(payload["questionnaire_code"])
         await self._validate_diagnosis(db, patient_id, payload.get("diagnosis_id"))
@@ -133,9 +131,9 @@ class AssessmentPlanService:
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
                 raise not_found("Пациент не найден")
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         return self._to_response(row)
 
@@ -150,9 +148,9 @@ class AssessmentPlanService:
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
                 raise not_found("Пациент не найден")
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         payload = dict(data)
         if "questionnaire_code" in payload and payload["questionnaire_code"] is not None:
@@ -181,9 +179,9 @@ class AssessmentPlanService:
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
                 raise not_found("Пациент не найден")
-            p_clinic = await self._practitioner_clinic_id(db, current_user)
+            p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
-            if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+            if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                 raise forbidden()
         old = {"id": str(row.id), "patient_id": str(row.patient_id), "questionnaire_code": row.questionnaire_code}
         await self.repository.delete(db, plan_id)
@@ -201,24 +199,24 @@ class AssessmentPlanService:
             if patient_id and patient_id != own:
                 raise forbidden()
             patient_id = own
-        clinic_id = None
+        clinic_ids = None
         if role not in ("patient", "super_admin"):
             if patient_id:
                 patient_profile = await self._get_patient_profile(db, patient_id)
                 if patient_profile is None:
                     raise not_found("Пациент не найден")
-                p_clinic = await self._practitioner_clinic_id(db, current_user)
+                p_clinics = await self._practitioner_clinic_ids(db, current_user)
                 pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
-                if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+                if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
                     raise forbidden()
             else:
-                clinic_id = await self._practitioner_clinic_id(db, current_user)
-                if clinic_id is None:
+                clinic_ids = await self._practitioner_clinic_ids(db, current_user)
+                if not clinic_ids:
                     return {"items": [], "total": 0}
         if patient_id:
             rows = await self.repository.list_by_patient(db, patient_id)
         else:
-            rows = await self.repository.list_all(db, clinic_id)
+            rows = await self.repository.list_all(db, clinic_ids)
         return {"items": [self._to_response(r) for r in rows], "total": len(rows)}
 
     async def list_patient_plans(self, db: AsyncSession, patient_id: str, current_user) -> dict:
