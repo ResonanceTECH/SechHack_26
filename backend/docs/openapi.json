@@ -6716,6 +6716,59 @@
           }
         }
       }
+    },
+    "/api/v1/home/dashboard": {
+      "get": {
+        "tags": [
+          "home"
+        ],
+        "summary": "Get Home Dashboard",
+        "description": "Aggregirovannoe predstavlenie domashnego ekrana (vrach/pacient).",
+        "operationId": "get_home_dashboard_api_v1_home_dashboard_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ne avtorizovan"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

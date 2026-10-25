@@ -173,9 +173,43 @@ class PatientService:
                 "practitioner_id": str(next_appt.practitioner_id) if getattr(next_appt, "practitioner_id", None) else None,
             }
 
+        from datetime import date
+        today = date.today()
+        today_tasks = []
+        checkin_completed = False
+        if latest_diary is not None and latest_diary.get("recorded_at"):
+            try:
+                recorded = latest_diary["recorded_at"]
+                recorded_date = recorded[:10] if isinstance(recorded, str) else recorded.date().isoformat()
+                checkin_completed = recorded_date == today.isoformat()
+            except Exception:
+                checkin_completed = False
+        today_tasks.append({"type": "checkin", "title": "Отметка настроения", "completed": checkin_completed})
+        try:
+            from sqlalchemy import select
+            from app.models.medication import Prescription, Medication
+            pres_rows = (await db.execute(
+                select(Prescription, Medication).join(Medication, Medication.id == Prescription.medication_id).where(
+                    Prescription.patient_id == UUID(str(patient_id)),
+                    Prescription.is_active.is_(True),
+                )
+            )).all()
+            for pres, med in pres_rows:
+                today_tasks.append({"type": "medication", "title": f"{med.name} {pres.dosage}", "related_id": str(pres.id), "completed": False})
+        except Exception:
+            pass
+        if next_appointment is not None and next_appointment.get("scheduled_at"):
+            try:
+                sched = next_appointment["scheduled_at"]
+                sched_date = sched[:10] if isinstance(sched, str) else sched.date().isoformat()
+                if sched_date == today.isoformat():
+                    today_tasks.append({"type": "appointment", "title": "Приём", "related_id": next_appointment.get("id"), "completed": False, "scheduled_at": next_appointment.get("scheduled_at")})
+            except Exception:
+                pass
         return {
             "patient": patient,
             "alerts": {"active": len(alerts)},
             "latest_diary": latest_diary,
             "next_appointment": next_appointment,
+            "today_tasks": today_tasks,
         }

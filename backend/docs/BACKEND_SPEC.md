@@ -929,10 +929,34 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - `GET /api/v1/patients` now accepts optional `search` (alias `q`) query parameter for filtering by first name, last name, or email (case-insensitive `ILIKE`).
 - Applied across patient/doctor/coordinator RBAC branches in `PatientRepository.get_patients_by_user`.
 - OpenAPI updated (`docs/openapi.json`): `search` and `q` query params on `/api/v1/patients`.
-- Tests: 131 passed (existing suite).
+- Tests: 137 passed (existing suite).
 
 ## Phase 48 Update (2026-10-25) — Aggregated patient home endpoint
 
 - Added `GET /api/v1/patients/{id}/home` aggregating patient card, active alerts count, latest diary entry, and next scheduled appointment.
-- OpenAPI updated: 77 paths.
-- Tests: 131 passed.
+- OpenAPI updated: 79 paths.
+- Tests: 137 passed.
+
+
+## Phase 49 Update (2026-10-25) — Consent persistence and user profile endpoints
+
+- Added POST /api/v1/auth/consent: requires consent_personal_data and consent_medical_data; optional consent_data_sharing_with_doctor; writes consent_data_processing_at; audit logged.
+- Added GET /api/v1/users/{id} and PATCH /api/v1/users/{id}: self/admin access; updates User plus PatientProfile/PractitionerProfile fields.
+- Users router registered under /api/v1/users.
+- OpenAPI updated: 79 paths.
+- Tests: 137 passed.
+
+## Phase 50 Update (2026-10-25) — Home dashboard endpoint
+- Added GET /api/v1/home/dashboard aggregating role-aware home data.
+- Patient: current patient profile + patient home aggregate (alerts, latest diary, next appointment).
+- Doctor/psychologist: practitioner profile, patient/alert/appointment stats, active alert items, today appointments, recent patients.
+- Router registration: app/api/v1/home.py included under /api/v1/home.
+- OpenAPI updated: 80 paths.
+- Tests: 140 passed.
+
+## Phase 51 Update (2026-10-25) — Patient home today_tasks aggregate
+
+- Extended GET /api/v1/patients/{id}/home and GET /api/v1/home/dashboard (patient) with today_tasks[].
+- today_tasks includes check-in status, active medication tasks, and today appointment task.
+- OpenAPI updated: 80 paths.
+- Tests: 140 passed.

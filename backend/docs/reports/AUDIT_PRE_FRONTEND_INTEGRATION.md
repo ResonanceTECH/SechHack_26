@@ -1,6 +1,6 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=131 passed/3 warn; OpenAPI=76 paths/51 schemas; миграции=32 (head 0032); тесты=27 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=137 passed/3 warn; OpenAPI=79 paths/51 schemas; миграции=32 (head 0032); тесты=27 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
 Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; 3 gaps (агрегированный home endpoint, search param patients, N+1 patient card).
 
@@ -21,8 +21,8 @@
 
 | Категория | Статус | Оценка |
 |-----------|--------|--------|
-| Backend API | PARTIAL | 76 путей реализованы, но без тестового покрытия на ключевых сценариях |
-| Backend tests | READY | 131 passed, включая 24 новых Diary CRUD-теста |
+| Backend API | PARTIAL | 79 путей реализованы, но без тестового покрытия на ключевых сценариях |
+| Backend tests | READY | 137 passed, включая 24 новых Diary CRUD-теста |
 | OpenAPI spec | READY | 76 путей, совпадает с runtime |
 | Frontend | BLOCKED | UI ONLY / MOCK ONLY, 0 fetch/axios вызовов, 37 mock-файлов |
 | Mobile | BLOCKED | Только `getHealth()` и `getDbHealth()` в API клиенте |
@@ -112,9 +112,9 @@
 | F.MD | Architecture | 12 миграций | 32 миграции | ✅ Исправлено |
 | F.MD | Executive Summary | OpenAPI: 59 путей | OpenAPI: 76 путей | ✅ Исправлено |
 | F.MD | Executive Summary | head = 0015_screening_registry | head = 0032_versions_trends | ✅ Исправлено |
-| F.MD | Phase 39-41 | Test suite: 104 passed | Test suite: 131 passed + 24 Diary CRUD | ✅ Исправлено |
-| F.MD | Phase 43 | Tests: 107 passed | Tests: 131 passed | ✅ Исправлено |
-| F.MD | Phase 44 | Tests: 107 passed | Tests: 131 passed | ✅ Исправлено |
+| F.MD | Phase 39-41 | Test suite: 104 passed | Test suite: 137 passed + 24 Diary CRUD | ✅ Исправлено |
+| F.MD | Phase 43 | Tests: 107 passed | Tests: 137 passed | ✅ Исправлено |
+| F.MD | Phase 44 | Tests: 107 passed | Tests: 137 passed | ✅ Исправлено |
 
 ### Статистика OpenAPI
 - Committed `docs/openapi.json`: **76 API-путей**, 51 схема, `bearerAuth`
@@ -406,7 +406,7 @@
 
 | Критерий | Статус |
 |----------|--------|
-| Backend tests: green | ✅ 131 passed |
+| Backend tests: green | ✅ 137 passed |
 | Migration head актуален и проверен | ✅ 0032_versions_trends |
 | OpenAPI валиден и отражает изменения | ✅ 76 путей, совпадает с runtime |
 | Frontend/mobile typecheck проходит | ❌ Не проверялось (UI ONLY / MOCK ONLY) |
@@ -435,7 +435,7 @@
 | MedicationScreen | `medications[]` | `MedicationOut[]` | medications.* | ✅ |
 | ChatScreen | `messages[]` | `MessageOut[]` | messages.* | ✅ |
 | ProfileScreen | `name`, `email` | — | **MISSING** | ❌ No user profile endpoint |
-| HomeScreen | `dashboard_stats` | — | **MISSING** | ❌ No home dashboard endpoint |
+| HomeScreen | `dashboard_stats` | `HomeDashboardOut` | home dashboard | ✅ | ✅ | ⚠ | READY |
 | HomeScreen | `recent_alerts` | `AlertOut[]` | alerts.* | ⚠ Partial (no aggregation endpoint) |
 
 ### 15.2 Web App — UI Field → API DTO → Database Source
@@ -500,7 +500,7 @@
 
 | Endpoint | Missing Link | Impact |
 |----------|-------------|--------|
-| `GET /api/v1/home/dashboard` | **Entire chain missing** | Home screen cannot display data |
+| `GET /api/v1/home/dashboard` | HomeService | HomeRepository aggregate | User, Patient, Alert, Appointment | 0001-0032 | ✅ |
 | `PATCH /api/v1/users/{id}` | **Entire chain missing** | Profile editing impossible |
 | `POST /api/v1/auth/consent` | **Entire chain missing** | Consent storage not persisted |
 | `GET /api/v1/qr/invite` | **Entire chain missing** | QR invite not supported |
@@ -746,7 +746,7 @@ server {
 
 | Issue Type | Count | Details |
 |------------|-------|---------|
-| MISSING (field in UI, no API) | 5 | Consent storage, User profile, Home dashboard, QR invite, Invite verification from QR |
+| MISSING (field in UI, no API) | 2 | QR invite, Invite verification from QR |
 | CONTRACT MISMATCH (name differs) | 1 | Diary date filter params (`dateFrom`/`dateTo` vs `from`/`to`) |
 | AGGREGATION GAP (multiple calls needed) | 2 | Mobile home "today" view; Web patient card tabs (N+1) |
 | SEARCH PARAM UNVERIFIED | 0 | Resolved: `GET /api/v1/patients?search=` (alias `q`) implemented (Phase 47) |
@@ -759,4 +759,3 @@ server {
 3. Patient registry search param needs verification in OpenAPI spec.
 
 **Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/patients/{id}/home` for home screen data.
-

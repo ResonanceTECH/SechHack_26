@@ -619,19 +619,19 @@ Evidence:
 - RLS context is wired in `get_current_user` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`.
 - Cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary).
 - Negative cross-clinic tests added: `tests/test_cross_clinic_isolation.py`.
-- Test suite: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
+- Test suite: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
 
 ## Questionnaire anchors update
 ## Phase 43 Update (2026-10-25)
 - RLS extended to remaining patient-linked PHI tables via migration `0031_rls_remaining_phi`.
 - Migration verified upgrade → downgrade → upgrade.
-- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
+- Tests: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths.
 
 ## Phase 44 Update (2026-10-25)
 - `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` translated to multi-clinic membership (`practitioner_clinic_ids()`).
 - `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
 - Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
-- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
+- Tests: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths.
 
 ## Phase 45 Update / Pre-frontend audit (2026-10-25)
 

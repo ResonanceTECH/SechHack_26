@@ -89,6 +89,9 @@
 | Invite verify | `/api/v1/auth/invite/verify` | POST | `InviteVerifyRequest` | binding | doctor/clinic_admin | READY |
 | Patient list | `/api/v1/patients` | GET | `?search`/`?q` | `Patient[]` | doctor/psychologist/coordinator | READY |
 | Patient home | `/api/v1/patients/{id}/home` | GET | — | `PatientHome` | patient/doctor | READY |
+| Home dashboard | `/api/v1/home/dashboard` | GET | — | `HomeDashboard` | patient/doctor | READY |
+
+
 | Patient card | `/api/v1/patients/{id}` | GET | — | `Patient` | patient/doctor | READY |
 | Patient update | `/api/v1/patients/{id}` | PATCH | `PatientUpdate` | `Patient` | patient/doctor | READY |
 | Patient summary | `/api/v1/patients/{id}/summary` | GET | — | `PatientSummary` | all clinical | READY |

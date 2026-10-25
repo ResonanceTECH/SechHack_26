@@ -119,7 +119,7 @@ The backend `PatientSummary` must provide:
 
 ## 5. Summary
 
-- **Backend endpoints:** 76 paths, all documented in OpenAPI
+- **Backend endpoints:** 79 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
 - **Frontend/Mobile API calls:** 0 (all mock data)
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
