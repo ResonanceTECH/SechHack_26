@@ -116,7 +116,7 @@
 
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
-| C-SSRS | BLOCKED | endpoint planned, not implemented |
+| C-SSRS | READY | `/api/v1/questionnaires/cssrs` (GET), `/api/v1/screenings` (POST, questionnaire_code=cssrs) |
 | Medication skip | READY | `/api/v1/adherence` (GET/POST/PATCH), `/api/v1/prescriptions/{id}/adherence-rate` (GET) |
 | Screening trend frontend charts | PARTIAL | endpoint exists, UI wiring pending |
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |

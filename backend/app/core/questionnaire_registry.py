@@ -164,7 +164,7 @@ _register(QuestionnaireDefinition(
     answer_scale=[AnswerOption(0, "Нет"), AnswerOption(1, "Да")],
     scoring="sum",
     max_score=6,
-    severity_bands=[SeverityBand(0, 0, "отсутствует"), SeverityBand(1, 2, "низкий"), SeverityBand(3, 6, "высокий")],
+    severity_bands=[SeverityBand(0, 0, "отсутствует"), SeverityBand(1, 2, "низкий"), SeverityBand(3, 4, "умеренный"), SeverityBand(5, 6, "высокий")],
     critical_rules={"any_yes": True},
 ))
 

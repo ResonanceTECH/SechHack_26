@@ -17,8 +17,9 @@ from app.models.message import Message
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.safety import CrisisSignal, SafetyPlan
 from app.models.schedule import ClinicSettings, PractitionerSchedule, PractitionerScheduleException
+from app.models.trend import TrendSnapshot
 from app.models.user import User
-
+from app.models.versioning import EntityVersion
 __all__ = [
     "Appointment",
     "Alert",
@@ -27,6 +28,7 @@ __all__ = [
     "CarePlan",
     "Clinic",
     "DiaryEntry",
+    "EntityVersion",
     "ExerciseAssignment",
     "ExerciseCompletion",
     "DiagnosisReference",
@@ -47,5 +49,6 @@ __all__ = [
     "PractitionerSchedule",
     "PractitionerScheduleException",
     "SmsCode",
+    "TrendSnapshot",
     "User",
 ]

@@ -729,7 +729,7 @@ Push-уведомления (planned); чат между пациентом и �
 
 Аудит-логи (API) реализованы: `GET /api/v1/audit`; управление сотрудниками: `GET /api/v1/admin/staff`, `PATCH /api/v1/admin/staff/{id}/role`; настройки клиники: `GET/PUT /api/v1/clinics/{clinic_id}/settings`. Push/SLA и полный audit coverage — planned.
 
-### Этап 11. Расписание врачей и доступность чата (Partial)
+### Этап 11. Расписание врачей и доступность чата (Partial — availability calc реализован; WebSocket presence pending)
 
 Реализовано (миграция 0018): `ClinicSettings`, `PractitionerSchedule`, `PractitionerScheduleException`; endpoints:
 - `GET/PUT /api/v1/clinics/{clinic_id}/settings`
@@ -746,7 +746,7 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 
 Реализовано: `updated_at` для diary_entries (миграция 0020); correction endpoint PATCH /api/v1/adherence/{id} с audit logging; adherence correction metadata (миграция 0021). Patient assignment lifecycle (create/list/deactivate, audit events) реализован.## Этап 14. Строгая клиническая история (Partial)
 
-Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) остаётся planned.
+Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) выполнено: RLS расширен до всех patient-linked PHI-таблиц (миграция `0031_rls_remaining_phi`); AuditService wired в `get_current_user` (success-path `clinic_isolation.allowed`); multi-clinic rollout для exercise/medication/message/report/schedule (Phase 44). Остаётся: diary CRUD-тесты.
 
 Отдельная история ФИО, versioning/addendum, retention policy.
 
@@ -861,18 +861,21 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 Clinic isolation enforcement added to assignment, message and medication services via shared helper module.
 
 ## Phase 33 Update
-Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 104 passed.
+Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 107 passed (Phase 44: exercise translated to multi-clinic `practitioner_clinic_ids()`).
 
-Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0030_rls_settings_memberships`.
+Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0031_rls_remaining_phi`.
 
 ## Phase 39-41 Update
 Added `audit_events` table/model and `record_security_event`; RLS preparation for `patient_profiles`; `practitioner_clinic_memberships` table/model; clinic-isolation helpers now support primary + membership clinic ids; `enforce_clinic_match()` accepts list of allowed clinics; membership-aware filtering applied to patient/service queries; negative cross-clinic tests added (`tests/test_cross_clinic_isolation.py`).
-Phase 42 update: RLS context wiring in `get_current_user` via `set_config('app.current_clinic_id', ..., true)` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`; cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary). Tests: 104 passed. Migration head: `0030_rls_settings_memberships`. OpenAPI: 76 paths.
+Phase 42 update: RLS context wiring in `get_current_user` via `set_config('app.current_clinic_id', ..., true)` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`; cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary). Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
 
 Phase 43 update: RLS extended to remaining patient-linked PHI tables (`screening_results`, `diary_entries`, `care_plans`, `exercise_completions`, `alerts`, `prescriptions`, `safety_plans`, `crisis_signals`, `patient_assignments`, `assessment_plans`, `appointments`, `patient_name_history`, `messages`) via migration `0031_rls_remaining_phi`; migration verified upgrade → downgrade → upgrade. Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths.
 
 ## Phase 44 Update (2026-10-25)
 Translated `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` to multi-clinic membership logic using `practitioner_clinic_ids()` (primary + membership clinic ids). `enforce_clinic_match()` now receives a list of allowed clinic ids (`IN (...)` semantics). `report_service.clinic_analytics` filters aggregates by practitioner's clinic list instead of a single clinic. Success-path audit event `clinic_isolation.allowed` wired in `get_current_user` (`app/api/dependencies.py`). Tests: 107 passed. Migration head: `0031_rls_remaining_phi`. OpenAPI: 76 paths (API contracts unchanged).
+
+## Phase 45 Update (2026-10-25)
+Universal entity versioning: new `entity_versions` table (migration `0032_versions_trends`) + `EntityVersion` model for versioning/addendum of any clinical entity (medications, care plans, screenings, ...). Trend storage: new `trend_snapshots` table + `TrendSnapshot` model for materialized time-series aggregates (patient/questionnaire/period/window). C-SSRS severity bands refined (added "умеренный" 3-4; max_score=6 confirmed for 6 binary questions). Availability calculation already implemented (`GET /api/v1/practitioners/{id}/availability`); Этап 11 remaining = WebSocket presence only. Migration verified upgrade → downgrade → upgrade. Tests: 107 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths (API contracts unchanged).
 ## Future: Real-time Presence & Chat (WebSocket) — Planned
 
 ### Goal

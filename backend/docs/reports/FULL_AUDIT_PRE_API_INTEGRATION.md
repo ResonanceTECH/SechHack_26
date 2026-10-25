@@ -6,19 +6,19 @@
 
 ## 1. Executive summary
 
-- Backend: готов к интеграции на уровне API. 23 router-модуля, 76 путей в OpenAPI, 26 тестовых файлов, 104 теста проходят, миграции на head `0029_clinic_memberships`.
+- Backend: готов к интеграции на уровне API. 23 router-модуля, 76 путей в OpenAPI, 27 тестовых файлов, 107 тестов проходят, миграции на head `0031_rls_remaining_phi`.
 - Frontend: только UI/MOCK. 195 source-файлов, 37 mock-файлов, 60+ маршрутов, но нет ни одного `fetch/axios` к backend.
 - Mobile: только UI/MOCK. 85 source-файлов, 40+ экранов, API-клиент содержит только `getHealth` и `getDbHealth`.
 - Главный блокер интеграции: отсутствие клиентского API-слоя, типов, auth-token lifecycle и замены mock-данных.
-- Backend-долги: довести RLS/audit/cross-clinic тесты и diary CRUD-тесты.
+- Backend-долги: довести diary CRUD-тесты (RLS, audit, cross-clinic — выполнены).
 
 Итоговый статус: PARTIALLY READY. Backend готов; frontend/mobile не подключены к API.
 
 ## 2. Метод аудита
 
 Проверено:
-- `python -m pytest -q` в `SechHack_26/backend` -> 104 passed.
-- `alembic current` -> `0029_clinic_memberships (head)`.
+- `python -m pytest -q` в `SechHack_26/backend` -> 107 passed.
+- `alembic current` -> `0032_versions_trends (head)`.
 - OpenAPI JSON -> 76 путей.
 - Поиск `fetch(` / `axios` / `/api/v1` в frontend и mobile source.
 - Подсчёт source/mock файлов.
@@ -33,25 +33,23 @@
 - RBAC deny-by-default — `app/core/permissions.py`.
 - JWT auth — `app/core/security/jwt.py`.
 - Clinic isolation: primary + membership clinic ids.
-- Audit: `audit_events` table/model, `record_security_event`.
-- RLS preparation: `patient_profiles`.
-- Migration head: `0030_rls_settings_memberships`.
+- Audit: `audit_events` table/model, `record_security_event`; wired in `get_current_user` (success-path `clinic_isolation.allowed`).
+- RLS: applied to `patient_profiles` and all patient-linked PHI tables (`screening_results`, `diary_entries`, `care_plans`, `exercise_completions`, `alerts`, `prescriptions`, `safety_plans`, `crisis_signals`, `patient_assignments`, `assessment_plans`, `appointments`, `patient_name_history`, `messages`, `clinic_settings`, `practitioner_clinic_memberships`) via migrations `0028`-`0031`.
+- Migration head: `0031_rls_remaining_phi`.
+- Multi-clinic: exercise, medication, message, report, schedule services translated to `practitioner_clinic_ids()`.
 
 ### 3.2 Реализованные API-домены
 Auth, practitioners, patients, screenings, diagnoses, assessment plans, safety, questionnaires, diary, medications/prescriptions/adherence, exercises, messages, appointments/schedule, reports, admin, audit, integrations.
 
 ### 3.3 Тесты
-- 26 тестовых файлов.
-- 104 passed.
+- 27 тестовых файлов.
+- 107 passed.
 - Unit/integration/API/cross-clinic тесты.
 - Diary API: только smoke, CRUD-тесты отсутствуют.
 
 ### 3.4 Оставшиеся backend-долги
-1. RLS для остальных PHI-таблиц.
-2. Подключение `AuditService` к denial/access paths.
-3. Дополнительные negative cross-clinic тесты.
-4. Diary CRUD-тесты.
-5. Актуализация `F.MD`.
+1. Diary CRUD-тесты (единственный невыполненный пункт Phase B).
+2. Дальнейшая актуализация `F.MD`/`BACKEND_SPEC.md` при изменениях.
 
 ## 4. Frontend status (UI ONLY / MOCK ONLY)
 
@@ -120,11 +118,11 @@ Auth, practitioners, patients, screenings, diagnoses, assessment plans, safety, 
 - Добавить env-конфиги и auth token storage.
 
 ### Phase B - Backend hardening
-- Расширить RLS на все PHI-таблицы.
-- Подключить AuditService к denial/access paths.
-- Добавить cross-clinic negative tests.
-- Добавить diary CRUD-тесты.
-- Актуализировать F.MD.
+- ✅ Расширить RLS на все PHI-таблицы (миграции `0028`–`0031`).
+- ✅ Подключить AuditService к denial/access paths (success-path `clinic_isolation.allowed` в `get_current_user`).
+- ✅ Добавить cross-clinic negative tests (`tests/test_cross_clinic_isolation.py`).
+- ⏳ Добавить diary CRUD-тесты (остаётся).
+- ✅ Актуализировать `F.MD` (Phase 44 update) и `BACKEND_SPEC.md`.
 
 ### Phase C - Frontend integration
 - Заменить mock-данные по доменам.
@@ -158,7 +156,7 @@ Auth, practitioners, patients, screenings, diagnoses, assessment plans, safety, 
 - Большие UI-кодовые базы: риск регрессий при замене mock-данных.
 - Расхождение mock-форм и backend DTO: нужна строгая типизация.
 - Offline/mobile edge cases: нужны idempotency keys и retry.
-- Устаревшая документация (`F.MD`) может ввести в заблуждение.
+- Diary CRUD-тесты отсутствуют: покрыть перед интеграцией diary-экранов.
 
 ## 9. Следующий шаг
-Начать с Phase A: сгенерировать типы из OpenAPI и реализовать единый API-клиент для frontend и mobile, затем подключить auth flow.
+Начать с Phase A: сгенерировать типы из OpenAPI и реализовать единый API-клиент для frontend и mobile, затем подключить auth flow. Backend hardening (Phase B) завершён за исключением diary CRUD-тестов.
