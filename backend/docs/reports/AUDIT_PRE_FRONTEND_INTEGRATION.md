@@ -1,6 +1,6 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=159 passed/3 warn; OpenAPI=87 paths/56 schemas; миграции=35 (head 0035_consent_sharing); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=159 passed/3 warn; OpenAPI=87 paths/56 schemas; миграции=36 (head 0036_rls_multi_clinic); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
 Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; все 3 gaps закрыты (агрегированный home endpoint Phase 48, search param patients Phase 47, N+1 patient card Phase 51/52 card endpoint).
 
@@ -22,11 +22,11 @@
 | Категория | Статус | Оценка |
 |-----------|--------|--------|
 | Backend API | READY | 87 путей реализованы, покрыты тестами на ключевых сценариях |
-| Backend tests | READY | 150 passed, включая 24 новых Diary CRUD-теста |
+| Backend tests | READY | 159 passed (pytest), включая 24 новых Diary CRUD-теста |
 | OpenAPI spec | READY | 87 путей, совпадает с runtime |
 | Frontend | BLOCKED | UI ONLY / MOCK ONLY, 0 fetch/axios вызовов, 37 mock-файлов |
 | Mobile | BLOCKED | Только `getHealth()` и `getDbHealth()` в API клиенте |
-| Документация | PARTIAL | F.MD и CLIENT_MAPPING.md актуализированы, остальные требуют проверки |
+| Документация | READY | F.MD, CLIENT_MAPPING.md, BACKEND_SPEC.md, AUDIT и FIGMA актуализированы (миграция 0036, 159 тестов, 87 путей) |
 
 **Критический блокер:** Фронтенд и мобильное приложение не подключены к API вообще. При отключении mock-данных фронтенд полностью перестанет работать.
 
@@ -729,11 +729,10 @@ server {
 | `GET /api/v1/diary` (with patient info) | DiaryEntry → Patient | Add `joinedload(DiaryEntry.patient)` |
 
 | 1 | No service-level authorization checks (only router-level) | High | IDOR risk if router bypassed |
-| 2 | RLS context not set for multi-clinic queries | High | Cross-clinic data leakage possible |
-| 3 | In-memory rate limiting (not Redis-backed) | Medium | Rate limits reset on restart, no cross-instance |
-| 4 | No request-level tracing/correlation IDs | Medium | Hard to debug distributed issues |
-| 5 | Alert rules hardcoded, not configurable | Medium | Cannot add rules without code change |
-
+| 2 | RLS context not set for multi-clinic queries | High | ✅ Closed: migration `0036_rls_multi_clinic` uses `app.current_clinic_ids` list context; `app/api/dependencies.py` sets list for practitioner/patient | ✅ Closed |
+| 3 | In-memory rate limiting (not Redis-backed) | Medium | ✅ Closed: `RedisRateLimiter` in `app/core/ratelimit.py`, uses Redis when available, degrades to in-memory; redis>=5.0 added to requirements | ✅ Closed |
+| 4 | No request-level tracing/correlation IDs | Medium | ✅ Closed: request middleware logs rid, method, path, status, latency; X-Request-ID propagated | ✅ Closed |
+| 5 | Alert rules hardcoded, not configurable | Medium | ✅ Closed: `app/services/alert_rules/engine.py` loads from `ALERT_RULES_JSON`/`ALERT_RULES_FILE` or env; falls back to `DEFAULT_RULES`. No config file required at startup | ✅ Closed |
 | PatientCardPage | `safety_tab` | `SafetyPlanOut` | safety_plans.* | ✅ |
 | PatientCardPage | `chat_tab` | `MessageOut[]` | messages.* | ✅ |
 | PatientCardPage | `summary_tab` | `PatientSummaryOut` | patients + aggregates | ✅ |
@@ -760,7 +759,8 @@ server {
 
 **Известные ограничения (не блокируют интеграцию):**
 - Symptom tracking: dedicated endpoint не реализован. Симптомы отслеживаются через дневник (`/api/v1/diary`) и алерты `critical_symptom` (`/api/v1/alerts`). Статус: UI-only.
-- Rate limiting: in-memory (не Redis). Планируется к замене вместе с Celery.
+- Rate limiting: Redis-backed with in-memory fallback (`RedisRateLimiter`, `app/core/ratelimit.py`); optional `REDIS_URL`.
+- Alert rules: configurable via `ALERT_RULES_JSON`/`ALERT_RULES_FILE` (optional); default rules used if unset.
 - Нет сервисных проверок авторизации (только роутер-уровеь) — RBI матрица в `app/core/permissions.py`, клиническая изоляция через `app/services/clinic_isolation.py`.
 
 **Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/patients/{id}/home` for home screen data.

@@ -78,19 +78,27 @@ class AlertService:
             ).scalar_one_or_none()
             return {str(profile.id)} if profile else set()
         if current_user.role in ("doctor", "psychologist"):
+            from app.services.clinic_isolation import practitioner_clinic_ids
             prac = (
                 await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == current_user.id))
             ).scalar_one_or_none()
             if not prac:
                 return set()
+            p_clinics = await practitioner_clinic_ids(db, current_user)
             stmt = select(PatientAssignment.patient_id).join(
                 PatientProfile, PatientProfile.id == PatientAssignment.patient_id
             ).where(PatientAssignment.practitioner_id == prac.id)
-            if prac.clinic_id is not None:
-                stmt = stmt.where(PatientProfile.clinic_id == prac.clinic_id)
+            if p_clinics:
+                stmt = stmt.where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics]))
             rows = (await db.execute(stmt)).scalars().all()
             return {str(x) for x in rows}
-        return None
+        if current_user.role in ("coordinator", "clinic_admin"):
+            from app.services.clinic_isolation import practitioner_clinic_ids
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if not p_clinics:
+                return None
+            rows = (await db.execute(select(PatientProfile.id).where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics])))).scalars().all()
+            return {str(x) for x in rows}
 
     async def _ensure_access(self, db, current_user, alert):
         accessible = await self._accessible_patient_ids(db, current_user)

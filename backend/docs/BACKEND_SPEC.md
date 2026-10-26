@@ -1015,3 +1015,22 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false) — согласие на передачу данных лечащему врачу. Миграция верифицирована: upgrade → downgrade → upgrade.
 - Код: исправлены service-сигнатуры (medications.get_prescription принимает current_user), типизация `_to_response` в diary, clinic_ids инициализация до try в dependencies, удалён временный `fix_all.py`.
 - Тесты: 159 passed, 0 failed. Миграция head: `0035_consent_sharing`. OpenAPI: 87 paths.
+## Phase 59 Update (2026-10-26) — Backend risk closure (partial) + Docker rebuild
+
+- Redis-backed rate limiter: `app/core/ratelimit.py` now provides `RedisRateLimiter` (Redis sorted-set sliding window) with automatic in-memory fallback; `redis>=5.0` added to requirements.txt.
+- Request tracing: `app/main.py` request middleware now logs request-id, method, path, status code and latency (ms); X-Request-ID propagated in response header.
+- Docker: backend image rebuilt without cache and restarted; health `/health` → ok; OpenAPI 87 paths.
+- Remaining risks (service-level authorization/IDOR hardening) require larger refactors and are tracked as next phase. Multi-clinic RLS context and configurable alert rule engine are now closed in Phase 60.
+
+## Phase 60 Update (2026-10-26) — Multi-clinic RLS context + configurable alert engine + required DB URL
+
+- Migration `0036_rls_multi_clinic`: RLS policies migrated from single-clinic context (`app.current_clinic_id`) to list-based multi-clinic context (`app.current_clinic_ids`).
+  - Clinic-linked tables (`patient_profiles`, `clinic_settings`, `practitioner_clinic_memberships`) and patient-linked tables (`screening_results`, `diary_entries`, `care_plans`, `exercise_completions`, `alerts`, `prescriptions`, `safety_plans`, `crisis_signals`, `patient_assignments`, `assessment_plans`, `appointments`, `patient_name_history`, `messages`) now use `clinic_id = ANY(string_to_array(...))` / patient-in-clinic subquery.
+  - Downgrade restores previous single-clinic policies.
+- RLS context wiring: `app/api/dependencies.py` sets `app.current_clinic_ids` for doctor/psychologist/coordinator/clinic_admin (from `practitioner_clinic_ids`) and patient (single clinic); keeps `app.current_clinic_id` for single-clinic compatibility.
+- Configurable alert rule engine: `app/services/alert_rules/engine.py` loads rules from `ALERT_RULES_JSON` / `ALERT_RULES_FILE` settings/env; falls back to `DEFAULT_RULES` when unset or invalid JSON. No alert config file is required for startup.
+- Required DB URL: `database_url` is mandatory (`Field(..., min_length=1)`), no hardcoded credentials; `.env.example` documents `DATABASE_URL`.
+- Rate limiting: `RedisRateLimiter` in `app/core/ratelimit.py` (Redis sorted-set sliding window) with in-memory fallback.
+- Request tracing: middleware logs rid/method/path/status/latency and propagates `X-Request-ID`.
+- Tests: 159 passed. Migration head: `0036_rls_multi_clinic`. OpenAPI: 87 paths.
+

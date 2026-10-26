@@ -1,15 +1,11 @@
 ﻿from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
-
-@dataclass(frozen=True)
-class AlertRuleResult:
-    is_alert: bool
-    alert_type: str | None
-    priority: str | None
-    reason: str | None
+from app.services.alert_rules.engine import (
+    AlertRuleResult,
+    evaluate as _evaluate,
+)
 
 
 def screening_alert_rule(
@@ -19,18 +15,11 @@ def screening_alert_rule(
     is_critical: bool,
     critical_reason: str | None = None,
 ) -> AlertRuleResult:
-    """Reusable alert rule derived from MODULES.md screening rules."""
-    code = (questionnaire_code or "").lower()
-    if code == "phq9":
-        if answers and len(answers) >= 9 and answers[8] >= 1:
-            return AlertRuleResult(True, "critical_symptom", "mandatory", "phq9_item_9")
-        if score >= 20:
-            return AlertRuleResult(True, "screening_risk", "mandatory", "phq9_total_ge_20")
-    if code == "gad7" and score >= 15:
-        return AlertRuleResult(True, "screening_risk", "mandatory", "gad7_total_ge_15")
-    if is_critical:
-        return AlertRuleResult(True, "screening_risk", "mandatory", critical_reason or "critical")
-    return AlertRuleResult(False, None, None, None)
+    """Reusable alert rule derived from MODULES.md screening rules.
+
+    Delegates to the configurable rule engine (see ``engine.py``).
+    """
+    return _evaluate(questionnaire_code, score, answers, is_critical, critical_reason)
 
 
 def screening_event_payload(

@@ -73,11 +73,10 @@ class SafetyPlanService:
                 if own is None or str(own.id) != str(patient_id):
                     raise forbidden()
             return
-        prac = await self._practitioner_profile(db, current_user)
-        p_clinic = str(prac.clinic_id) if prac and prac.clinic_id else None
-        patient = await self._patient_profile(db, patient_id)
-        pat_clinic = str(patient.clinic_id) if patient and patient.clinic_id else None
-        if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, patient_id)
+        if pat_clinic is not None and p_clinics and pat_clinic not in p_clinics:
             raise forbidden()
 
 
@@ -130,7 +129,16 @@ class SafetyPlanService:
             await self._clinic_check(db, current_user, patient_id)
             rows = await self.repo.list_by_patient(db, patient_id)
         else:
-            rows = await self.repo.list_all(db, None)
+            if role not in ("patient", "super_admin"):
+                from app.services.clinic_isolation import practitioner_clinic_ids
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if not p_clinics:
+                    return {"items": [], "total": 0}
+                profs = (await db.execute(select(PatientProfile).where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics])))).scalars().all()
+                patient_ids = [str(p.id) for p in profs]
+                rows = await self.repo.list_all(db, patient_ids)
+            else:
+                rows = await self.repo.list_all(db, None)
         return {"items": [self._to_plan(r) for r in rows], "total": len(rows)}
 
     async def update_plan(self, db, plan_id, data, current_user):

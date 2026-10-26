@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     port: int = 3001
 
     # ---- База данных ----
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/sechhack"
+    database_url: str = Field(..., min_length=1)
     db_pool_size: int = 5
     db_max_overflow: int = 10
 
@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     emergency_base_url: str = ""
     emergency_api_token: str = ""
 
+    # ---- Alert rules (configurable engine) ----
+    alert_rules_file: str = ""
+    alert_rules_json: str = ""
     # ---- Тесты ----
     skip_db_tests: bool = False
 
@@ -66,6 +69,8 @@ class Settings(BaseSettings):
     @classmethod
     def _add_asyncpg_driver(cls, value: str) -> str:
         """Node-совместимость: `postgresql://...` → `postgresql+asyncpg://...`."""
+        if not value:
+            raise ValueError("DATABASE_URL is required and must not be empty")
         if value.startswith("postgresql://"):
             return value.replace("postgresql://", "postgresql+asyncpg://", 1)
         return value

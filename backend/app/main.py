@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+import time
 import uuid
 from contextlib import asynccontextmanager
 
@@ -66,6 +67,7 @@ MAX_BODY_BYTES = 1 * 1024 * 1024  # 1 MB — защита от DoS на bulk-syn
 async def request_context(request: Request, call_next):
     """request-id в конверт и заголовок, лимит тела запроса, security-заголовки."""
     request.state.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    started = time.monotonic()
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_BODY_BYTES:
         return JSONResponse(
@@ -76,6 +78,15 @@ async def request_context(request: Request, call_next):
             ),
         )
     response = await call_next(request)
+    elapsed_ms = (time.monotonic() - started) * 1000
+    logger.info(
+        "request rid=%s %s %s -> %s %.1fms",
+        request.state.request_id,
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+    )
     response.headers["X-Request-ID"] = request.state.request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

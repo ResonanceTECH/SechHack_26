@@ -55,11 +55,17 @@ async def get_current_user(
             ).scalar_one_or_none()
             if prof is not None and prof.clinic_id is not None:
                 clinic_ids = [str(prof.clinic_id)]
-        if len(clinic_ids) == 1:
+        if clinic_ids:
             await db.execute(
-                text("SELECT set_config('app.current_clinic_id', :v, true)"),
-                {"v": clinic_ids[0]},
+                text("SELECT set_config('app.current_clinic_ids', :v, true)"),
+                {"v": ",".join(clinic_ids)},
             )
+            if len(clinic_ids) == 1:
+                await db.execute(
+                    text("SELECT set_config('app.current_clinic_id', :v, true)"),
+                    {"v": clinic_ids[0]},
+                )
+
     except Exception:
         # RLS — дополнительный слой; не ломаем запрос при ошибке контекста
         pass
