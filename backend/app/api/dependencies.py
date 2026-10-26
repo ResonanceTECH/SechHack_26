@@ -39,8 +39,8 @@ async def get_current_user(
     # RLS context: ограничиваем SQL-запросы текущей клиникой пользователя.
     # Для multi-clinic practitioner контекст не выставляем (RLS остается пермиссивным,
     # изоляция обеспечивается application-level проверками).
+    clinic_ids: list[str] = []
     try:
-        clinic_ids: list[str] = []
         if user.role in ("doctor", "psychologist", "coordinator", "clinic_admin"):
             from app.services.clinic_isolation import practitioner_clinic_ids
 

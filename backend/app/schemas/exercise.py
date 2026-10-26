@@ -4,7 +4,10 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from typing import Annotated
+from pydantic import BaseModel, Field, BeforeValidator
+
+StrUUID = Annotated[str, BeforeValidator(lambda v: str(v) if v is not None else None)]
 
 
 class CarePlanCreate(BaseModel):
@@ -21,9 +24,9 @@ class CarePlanUpdate(BaseModel):
 
 
 class CarePlanResponse(BaseModel):
-    id: str
-    patient_id: str
-    practitioner_id: str
+    id: StrUUID
+    patient_id: StrUUID
+    practitioner_id: StrUUID
     title: str
     description: Optional[str] = None
     status: str
@@ -55,9 +58,9 @@ class ExerciseAssignmentUpdate(BaseModel):
 
 
 class ExerciseAssignmentResponse(BaseModel):
-    id: str
-    care_plan_id: str
-    patient_id: Optional[str] = None
+    id: StrUUID
+    care_plan_id: StrUUID
+    patient_id: Optional[StrUUID] = None
     exercise_type: str
     payload: Optional[dict] = None
     scheduled_for: Optional[date] = None
@@ -79,9 +82,9 @@ class ExerciseCompletionCreate(BaseModel):
 
 
 class ExerciseCompletionResponse(BaseModel):
-    id: str
-    assignment_id: str
-    patient_id: str
+    id: StrUUID
+    assignment_id: StrUUID
+    patient_id: StrUUID
     result: Optional[dict] = None
     completed: bool
     created_at: Optional[datetime] = None

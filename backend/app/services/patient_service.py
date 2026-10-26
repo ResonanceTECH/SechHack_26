@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import not_found
 from app.models.care import CarePlan, ExerciseAssignment, ExerciseCompletion
+from app.models.user import User
 from app.repositories.assessment_plan_repository import AssessmentPlanRepository
 from app.repositories.diagnosis_repository import DiagnosisRepository
 from app.repositories.patient_repository import PatientRepository
@@ -27,7 +28,7 @@ class PatientService:
     async def list_patients(
         self,
         db: AsyncSession,
-        current_user: object,
+        current_user: User,
         search: str | None = None,
     ) -> dict:
         """List patients based on user RBAC role."""
@@ -38,7 +39,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Get patient detail by ID with RBAC validation."""
         result = await self.repository.get_patient_by_id(db, patient_id, current_user)
@@ -51,7 +52,7 @@ class PatientService:
         db: AsyncSession,
         patient_id: str,
         body: PatientUpdate,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Update patient data with RBAC validation."""
         data = body.model_dump(exclude_unset=True)
@@ -64,7 +65,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Aggregated patient card merging summary and home blocks."""
         summary = await self.get_patient_summary(db, patient_id, current_user)
@@ -77,7 +78,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Get patient summary for MVP endpoint."""
         result = await self.repository.get_patient_summary(db, patient_id, current_user)
@@ -148,7 +149,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Aggregated home view for a patient (mobile/web home screen)."""
         patient = await self.get_patient(db, patient_id, current_user)
@@ -190,10 +191,13 @@ class PatientService:
         today = datetime.now(timezone.utc).date()
         today_tasks = []
         checkin_completed = False
-        if latest_diary is not None and latest_diary.get("recorded_at"):
+        if latest_diary is not None and latest_diary.get("recorded_at") is not None:
             try:
                 recorded = latest_diary["recorded_at"]
-                recorded_date = recorded[:10] if isinstance(recorded, str) else recorded.date().isoformat()
+                if isinstance(recorded, str):
+                    recorded_date = recorded[:10]
+                else:
+                    recorded_date = recorded.date().isoformat() if recorded is not None else ""
                 checkin_completed = recorded_date == today.isoformat()
             except Exception:
                 checkin_completed = False
@@ -226,10 +230,13 @@ class PatientService:
                 today_tasks.append({"type": "medication", "title": f"{med.name} {pres.dosage}", "related_id": str(pres.id), "completed": completed})
         except Exception:
             pass
-        if next_appointment is not None and next_appointment.get("scheduled_at"):
+        if next_appointment is not None and next_appointment.get("scheduled_at") is not None:
             try:
                 sched = next_appointment["scheduled_at"]
-                sched_date = sched[:10] if isinstance(sched, str) else sched.date().isoformat()
+                if isinstance(sched, str):
+                    sched_date = sched[:10]
+                else:
+                    sched_date = sched.date().isoformat() if sched is not None else ""
                 if sched_date == today.isoformat():
                     today_tasks.append({"type": "appointment", "title": "Приём", "related_id": next_appointment.get("id"), "completed": False, "scheduled_at": next_appointment.get("scheduled_at")})
             except Exception:

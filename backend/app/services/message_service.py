@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.message import Message
 from app.models.profile import PatientProfile
 from app.repositories.message_repository import MessageRepository
 from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match

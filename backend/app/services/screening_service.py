@@ -113,12 +113,14 @@ class ScreeningService:
     @staticmethod
     def interpret_phq9(score):
         from app.core.questionnaire_registry import get_definition
-        return get_definition("phq9", "1.0").severity_for(score)
+        defn = get_definition("phq9", "1.0")
+        return defn.severity_for(score) if defn is not None else "unknown"
 
     @staticmethod
     def interpret_gad7(score):
         from app.core.questionnaire_registry import get_definition
-        return get_definition("gad7", "1.0").severity_for(score)
+        defn = get_definition("gad7", "1.0")
+        return defn.severity_for(score) if defn is not None else "unknown"
 
     @staticmethod
     def is_critical_phq9(answers, score):

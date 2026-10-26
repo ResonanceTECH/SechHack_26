@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import forbidden
+from app.models.appointment import Appointment
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.appointment_repository import AppointmentRepository
 from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
@@ -63,7 +64,7 @@ class AppointmentService:
                 data["clinic_id"] = pat_clinic if pat_clinic in p_clinics else p_clinics[0]
         return await self.repo.create_appointment(db, data)
 
-    async def update_appointment(self, db: AsyncSession, appointment_id: str, data: dict, current_user=None) -> "Appointment" | None:
+    async def update_appointment(self, db: AsyncSession, appointment_id: str, data: dict, current_user=None) -> "Appointment | None":
         row = await self.repo.get_appointment(db, appointment_id)
         if row is None:
             return None

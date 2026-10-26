@@ -63,4 +63,3 @@ class EmergencyServiceAdapter(IntegrationAdapter):
             return IntegrationResult(ok=r.is_success, status_code=r.status_code, payload=r.json() if r.content else None, error=None if r.is_success else r.text)
         except Exception as exc:  # noqa: BLE001
             return IntegrationResult(ok=False, error=str(exc))
-"""

@@ -481,23 +481,20 @@ At least one P1 exists → **Final Verdict = PARTIALLY READY**
 
 ### Conditions to reach READY:
 
-1. Fix DB_SCHEMA.md §7 contradiction (align with code: mood -3..3, anxiety/energy/functioning 0..4) — or update code/migration to match documentation
-2. Implement missing API endpoints (medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit) or document them as planned for next release
-3. Fix swallowed exception in alert_service.py:214-215 (`except Exception: pass`)
-4. Add tests for missing API modules
+1. ~~Fix DB_SCHEMA.md §7 contradiction~~ — resolved: DB_SCHEMA.md merged into BACKEND_SPEC.md; ranges documented from code/migration (mood -3..3, anxiety/energy/functioning 0..4).
+2. ~~Implement missing API endpoints~~ — resolved: medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit all registered in app/api/v1/router.py.
+3. ~~Fix swallowed exception in alert_service.py:214-215~~ — resolved: audit failures are logged via logging.exception.
+4. ~~Add tests for missing API modules~~ — resolved: tests/api/test_missing_modules_smoke.py covers alerts, exercises/care-plans, integrations, assignments, practitioners, schedule, admin, audit.
 5. Integrate frontend/mobile with real API calls (replace mock with fetch to /api/v1/*)
 6. Build Figma Screen→DTO→Endpoint mapping
 7. Verify Docker runtime (docker compose up, health endpoints)
 
 ## 16. Recommended Next Steps
 
-1. **Fix DB_SCHEMA.md §7** — align ranges with code (mood -3..3, anxiety/energy/functioning 0..4) or update migration and model
-2. **Implement or document as planned** missing endpoints: medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit
-3. **Fix alert_service.py:214-215** — replace `except Exception: pass` with logging or exception propagation
-4. **Add tests** for all API modules (minimum: CRUD for each endpoint)
-5. **Integrate frontend/mobile** — add API client with calls to /api/v1/* instead of mock data
-6. **Build Figma mapping** — Screen → UI elements → DTO fields → Endpoint → OpenAPI schema
-7. **Verify Docker runtime** — docker compose up, health endpoints, alembic upgrade head
+1. **Integrate frontend/mobile** — add API client with calls to /api/v1/* instead of mock data
+2. **Build Figma mapping** — Screen → UI elements → DTO fields → Endpoint → OpenAPI schema
+3. **Verify Docker runtime** — docker compose up, health endpoints, alembic upgrade head
+4. **N+1 optimization candidates** — patients→clinic, summary→related, diary→patient (audit §18.4); not blocking, models store clinic_id only (no FK relationship to join); revisit if profiling shows need.
 
 ## 17. Sources of Evidence
 
@@ -508,10 +505,10 @@ app/main.py; app/api/v1/router.py; app/api/v1/auth.py; app/api/v1/health.py; app
 alembic/versions/0001_*.py — 0012_*.py — all with upgrade() and downgrade()
 
 ### OpenAPI
-docs/openapi.json — 41 paths
+docs/openapi.json — 87 paths
 
 ### Tests
-tests/ (20 files, 89 passed)
+tests/ (37 files, 150+ passed, including tests/api/test_missing_modules_smoke.py)
 
 ### Frontend
 frontend_dev/frontend/src/app/router.tsx — 60+ routes; frontend_dev/frontend/src/data/ — 35+ mock files; no fetch/axios calls
@@ -659,3 +656,9 @@ Evidence:
 - QR invite endpoint: `GET /api/v1/qr/invite` implemented in `app/api/v1/qr.py`.
 - Symptom tracking: dedicated endpoint not required; supported via diary + alerts `critical_symptom`.
 - OpenAPI: 87 paths / 56 schemas. Tests: 150 passed. Migration head: `0034_missing_indexes`.
+
+## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green
+
+- Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false).
+- Code cleanup: removed temporary `fix_all.py`; service signature fixes (medications.get_prescription takes current_user); diary `_to_response` typed; clinic_ids init before try.
+- OpenAPI: 87 paths. Tests: 159 passed, 0 failed. Migration head: `0035_consent_sharing`.

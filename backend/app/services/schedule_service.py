@@ -21,7 +21,7 @@ class ScheduleService:
             role = getattr(current_user, "role", None)
             if role not in ("super_admin",):
                 p_clinics = await practitioner_clinic_ids(db, current_user)
-                if p_clinics and p_clinic != str(clinic_id):
+                if p_clinics and str(clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.get_clinic_settings(db, uuid.UUID(clinic_id))
@@ -31,7 +31,7 @@ class ScheduleService:
             role = getattr(current_user, "role", None)
             if role not in ("super_admin",):
                 p_clinics = await practitioner_clinic_ids(db, current_user)
-                if p_clinics and p_clinic != str(clinic_id):
+                if p_clinics and str(clinic_id) not in p_clinics:
                     from app.core.errors import forbidden
                     raise forbidden("Clinic isolation violation")
         return await self.repo.upsert_clinic_settings(db, uuid.UUID(clinic_id), timezone)
@@ -103,7 +103,7 @@ class ScheduleService:
                 if ex.date == d:
                     if ex.start_time is None:
                         return bool(ex.is_available)
-                    if ex.start_time <= dt.timetz().replace(tzinfo=None) <= ex.end_time and ex.is_available:
+                    if ex.start_time is not None and ex.end_time is not None and ex.start_time <= dt.timetz().replace(tzinfo=None) <= ex.end_time and ex.is_available:
                         return True
                     if not ex.is_available:
                         return False

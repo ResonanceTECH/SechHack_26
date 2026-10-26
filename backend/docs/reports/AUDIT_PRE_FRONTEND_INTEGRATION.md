@@ -1,6 +1,6 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=150 passed/3 warn; OpenAPI=87 paths/56 schemas; миграции=34 (head 0034_missing_indexes); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=159 passed/3 warn; OpenAPI=87 paths/56 schemas; миграции=35 (head 0035_consent_sharing); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
 Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; все 3 gaps закрыты (агрегированный home endpoint Phase 48, search param patients Phase 47, N+1 patient card Phase 51/52 card endpoint).
 

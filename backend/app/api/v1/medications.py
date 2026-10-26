@@ -145,17 +145,17 @@ async def get_prescription(prescription_id: str, request: Request, current_user:
                           dependencies=[Depends(require_permission("prescription:write"))])
 async def update_prescription(prescription_id: str, body: PrescriptionUpdate, request: Request, current_user: CurrentUser, db: DbSession):
     svc = _svc()
-    old = await svc.get_prescription(db, prescription_id)
+    old = await svc.get_prescription(db, current_user, prescription_id)
     if old is not None:
         from app.services.version_service import EntityVersionService
         await EntityVersionService().record(
             db, entity_type="prescription", entity_id=str(old.id),
             changed_by=str(current_user.id), reason="update", is_addendum=False,
             snapshot={"patient_id": str(old.patient_id), "medication_id": str(old.medication_id),
-                     "dosage": old.dosage, "frequency": old.frequency, "route": old.route,
+                     "dosage": old.dosage, "frequency": old.frequency,
                      "start_date": old.start_date.isoformat() if old.start_date else None,
                      "end_date": old.end_date.isoformat() if old.end_date else None,
-                     "notes": old.notes, "is_active": old.is_active},
+                     "is_active": old.is_active},
         )
     row = await svc.update_prescription(db, current_user, prescription_id, body.model_dump(exclude_unset=True))
     if row is None:

@@ -27,7 +27,7 @@ def _repo() -> DiaryRepository:
     return DiaryRepository()
 
 
-def _to_response(row) -> dict:
+def _to_response(row) -> DiaryEntryResponse:
     return DiaryEntryResponse(
         id=str(row.id),
         patient_id=str(row.patient_id),
@@ -42,7 +42,7 @@ def _to_response(row) -> dict:
         device_id=row.device_id,
         synced_at=row.synced_at.isoformat() if row.synced_at else None,
         created_at=row.created_at.isoformat() if row.created_at else None,
-    ).model_dump()
+    )
 
 
 async def _patient_id_for_user(current_user, db) -> Optional[str]:

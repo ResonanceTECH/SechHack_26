@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.care import CarePlan, ExerciseAssignment
+from app.models.care import CarePlan, ExerciseAssignment, ExerciseCompletion
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.exercise_repository import ExerciseRepository
 from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
@@ -100,14 +100,13 @@ class ExerciseService:
                     pc = await patient_clinic_id(db, str(cp.patient_id))
                     if pc is None or pc in p_clinics:
                         filtered.append(a)
+                items = filtered
         role = getattr(current_user, "role", None)
         if role not in ("patient", "super_admin"):
             p_clinics = await practitioner_clinic_ids(db, current_user)
             if p_clinics:
                 pat_clinic = await patient_clinic_id(db, patient_id)
                 enforce_clinic_match(p_clinics, pat_clinic)
-
-                items = filtered
 
         return items
 
@@ -168,8 +167,8 @@ class ExerciseService:
                 "care_plan_id": str(row.care_plan_id),
                 "exercise_type": row.exercise_type,
                 "payload": row.payload,
-                "scheduled_for": row.scheduled_for.isoformat() if getattr(row, "scheduled_for", None) else None,
-                "due_at": row.due_at.isoformat() if getattr(row, "due_at", None) else None,
+                "scheduled_for": row.scheduled_for.isoformat() if row.scheduled_for is not None else None,
+                "due_at": row.due_at.isoformat() if row.due_at is not None else None,
                 "created_at": row.created_at.isoformat() if getattr(row, "created_at", None) else None,
                 "updated_at": row.updated_at.isoformat() if getattr(row, "updated_at", None) else None,
             },

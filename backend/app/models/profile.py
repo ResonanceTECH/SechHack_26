@@ -40,6 +40,7 @@ class PatientProfile(UUIDPkMixin, TimestampMixin, Base):
     consent_medical_data: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+    consent_data_sharing_with_doctor: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     consent_data_processing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     clinic_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("clinics.id")

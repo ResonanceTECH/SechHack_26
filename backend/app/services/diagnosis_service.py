@@ -84,6 +84,7 @@ class DiagnosisService:
             raise forbidden()
         row = await self.repository.get_by_id(db, diagnosis_id)
         if row is None:
+            from app.core.errors import not_found
             raise not_found("Диагноз не найден")
         # clinic isolation
         if getattr(current_user, "role", None) != "super_admin":
@@ -99,6 +100,9 @@ class DiagnosisService:
             snapshot=self._to_response(row),
         )
         updated = await self.repository.update(db, diagnosis_id, data)
+        if updated is None:
+            from app.core.errors import not_found
+            raise not_found("Diagnosis not found")
         await audit_service.record(db, user_id=current_user.id, action="patient.update", entity_type="PatientDiagnosis", entity_id=updated.id, old_values=old, new_values=data)
         await db.commit()
         return self._to_response(updated)

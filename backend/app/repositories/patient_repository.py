@@ -61,18 +61,20 @@ class PatientRepository:
 
         # Doctor/psychologist: see only patients in their clinic
         if current_user.role in ("doctor", "psychologist"):
-            # Get practitioner profile for current user
-            prac_stmt = select(PractitionerProfile).where(PractitionerProfile.user_id == user_id)
+            # Get practitioner profile for current user (joined with User to avoid N+1)
+            prac_stmt = (
+                select(PractitionerProfile, User)
+                .join(User, PractitionerProfile.user_id == User.id)
+                .where(PractitionerProfile.user_id == user_id)
+            )
             prac_result = await db.execute(prac_stmt)
-            practitioner = prac_result.scalar_one_or_none()
+            prac_row = prac_result.first()
+            practitioner = prac_row[0] if prac_row else None
+            practitioner_user = prac_row[1] if prac_row else None
+            practitioner_email = practitioner_user.email if practitioner_user else None
 
             if not practitioner:
                 return []
-
-            # Get practitioner's email
-            prac_user_result = await db.execute(select(User).where(User.id == practitioner.user_id))
-            practitioner_user = prac_user_result.scalar_one_or_none()
-            practitioner_email = practitioner_user.email if practitioner_user else None
 
             # Query patients assigned to this practitioner via PatientAssignment
             stmt = (
@@ -124,6 +126,7 @@ class PatientRepository:
                 })
             return patients
 
+        return []
 
     async def get_patient_by_id(self, db, patient_id: str, current_user) -> dict | None:
         from uuid import UUID

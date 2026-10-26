@@ -76,7 +76,7 @@
 | `birth_date` | Date | Дата рождения |
 | `gender` | Enum | `male`, `female`, `other`, `prefer_not_to_say` |
 | `phone` | String (nullable) | Телефон |
-| `consent_personal_data` / `consent_medical_data` | Boolean NOT NULL | Согласия (152-ФЗ) |
+| `consent_personal_data` / `consent_medical_data` / `consent_data_sharing_with_doctor` | Boolean NOT NULL | Согласия (152-ФЗ) |
 | `consent_data_processing_at` | DateTime (nullable) | Дата проставления согласий |
 | `clinic_id` | UUID (FK → Clinic.id, nullable) | Привязанная клиника |
 | `created_at` / `updated_at` | DateTime | Метки времени |
@@ -379,7 +379,7 @@
 - `diary_entries.anxiety_score` — CHECK: `anxiety_score BETWEEN 0 AND 4`
 - `diary_entries.energy_score` — CHECK: `energy_score BETWEEN 0 AND 4`
 - `diary_entries.functioning_score` — CHECK: `functioning_score BETWEEN 0 AND 4`
-- `patient_profiles.consent_personal_data` / `consent_medical_data` — NOT NULL
+- `patient_profiles.consent_personal_data` / `consent_medical_data` / `consent_data_sharing_with_doctor` — NOT NULL
 - Частичный UNIQUE-индекс по (`device_id`, `recorded_at`, `patient_id`) в `diary_entries` (дедупликация офлайн-синхронизации)
 - Частичный UNIQUE-индекс по (`patient_id`) где `is_primary = true AND status = 'active'` в `patient_diagnoses`
 - UNIQUE(`coding_system`, `code`) в `diagnosis_references`
@@ -1009,3 +1009,9 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - QR invite endpoint: `GET /api/v1/qr/invite` уже реализован в `app/api/v1/qr.py` — возвращает `{code, qr_text, code_display}` для клиентской генерации QR. Отдельного API для сканирования QR не требуется (мобилка извлекает код клиентом и вызывает `/api/v1/auth/invite/verify`).
 - Symptom tracking: dedicated endpoint не требуется. Симптомы отслеживаются через записи дневника (`POST/GET /api/v1/diary` с полями mood/anxiety/sleep) и алерты типа `critical_symptom` (`/api/v1/alerts`). Статус: UI-only для dedicated symptom экрана, бэкенд поддерживает через существующие сущности.
 - OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: `0034_missing_indexes`.
+
+## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green
+
+- Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false) — согласие на передачу данных лечащему врачу. Миграция верифицирована: upgrade → downgrade → upgrade.
+- Код: исправлены service-сигнатуры (medications.get_prescription принимает current_user), типизация `_to_response` в diary, clinic_ids инициализация до try в dependencies, удалён временный `fix_all.py`.
+- Тесты: 159 passed, 0 failed. Миграция head: `0035_consent_sharing`. OpenAPI: 87 paths.

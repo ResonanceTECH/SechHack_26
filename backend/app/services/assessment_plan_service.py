@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import forbidden, not_found, validation_error
 from app.core.questionnaire_registry import get_definition
+from app.models.assessment_plan import AssessmentPlan
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.diagnosis import PatientDiagnosis
 from app.repositories.assessment_plan_repository import AssessmentPlanRepository
@@ -121,6 +122,7 @@ class AssessmentPlanService:
     async def get_plan(self, db: AsyncSession, plan_id: str, current_user) -> dict:
         row = await self.repository.get_by_id(db, plan_id)
         if row is None:
+            from app.core.errors import not_found
             raise not_found("План оценки не найден")
         role = getattr(current_user, "role", None)
         if role == "patient":
@@ -130,6 +132,7 @@ class AssessmentPlanService:
         elif role != "super_admin":
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
+                from app.core.errors import not_found
                 raise not_found("Пациент не найден")
             p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
@@ -143,10 +146,12 @@ class AssessmentPlanService:
             raise forbidden()
         row = await self.repository.get_by_id(db, plan_id)
         if row is None:
+            from app.core.errors import not_found
             raise not_found("План оценки не найден")
         if role != "super_admin":
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
+                from app.core.errors import not_found
                 raise not_found("Пациент не найден")
             p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
@@ -165,6 +170,9 @@ class AssessmentPlanService:
             snapshot=self._to_response(row),
         )
         updated = await self.repository.update(db, plan_id, payload)
+        if updated is None:
+            from app.core.errors import not_found
+            raise not_found("Assessment plan not found")
         await audit_service.record(
             db, user_id=current_user.id, action="assessment_plan.update",
             entity_type="AssessmentPlan", entity_id=updated.id, old_values=old, new_values=payload, commit=True,

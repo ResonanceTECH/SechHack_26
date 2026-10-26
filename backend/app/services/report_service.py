@@ -148,6 +148,7 @@ class ReportService:
 
     async def clinic_analytics(self, db: AsyncSession, current_user=None) -> dict:
         p_clinic = None
+        p_clinics = None
         if current_user is not None:
             role = getattr(current_user, "role", None)
             if role not in ("super_admin",):

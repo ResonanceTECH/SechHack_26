@@ -109,6 +109,10 @@ class SafetyPlanService:
         return self._to_plan(row)
 
 
+    async def get_plan(self, db, plan_id, current_user):
+        role = getattr(current_user, "role", None)
+        if role not in ("doctor", "psychologist", "coordinator", "clinic_admin", "super_admin"):
+            raise forbidden()
         row = await self.repo.get_by_id(db, plan_id)
         if row is None:
             raise not_found("План безопасности не найден")
@@ -148,7 +152,7 @@ class SafetyPlanService:
         if "review_date" in data:
             update_data["review_date"] = data["review_date"]
         row = await self.repo.update(db, plan_id, update_data)
-        await audit_service.record(db, user_id=current_user.id, action="safety_plan.update", entity_type="SafetyPlan", entity_id=row.id, new_values=update_data, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="safety_plan.update", entity_type="SafetyPlan", entity_id=row.id, new_values=update_data, commit=True)  # type: ignore[union-attr]
         return self._to_plan(row)
 
     async def delete_plan(self, db, plan_id, current_user):
@@ -160,20 +164,8 @@ class SafetyPlanService:
             raise not_found("План безопасности не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         await self.repo.delete(db, plan_id)
-        await audit_service.record(db, user_id=current_user.id, action="safety_plan.delete", entity_type="SafetyPlan", entity_id=row.id, old_values={"id": str(row.id)}, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="safety_plan.delete", entity_type="SafetyPlan", entity_id=row.id, old_values={"id": str(row.id)}, commit=True)  # type: ignore[union-attr]
 
-
-        await self._clinic_check(db, current_user, data["patient_id"])
-        row = await self.crisis_repo.create(db, {
-            "patient_id": uuid.UUID(data["patient_id"]),
-            "type": data["type"],
-            "source": data["source"],
-            "message": data.get("message"),
-            "location": data.get("location"),
-            "triggered_by_screening_id": uuid.UUID(data["triggered_by_screening_id"]) if data.get("triggered_by_screening_id") else None,
-        })
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.create", entity_type="CrisisSignal", entity_id=row.id, new_values={"patient_id": data["patient_id"], "type": row.type}, commit=True)
-        return self._to_signal(row)
 
     async def create_signal(self, db, data, current_user):
         await self._clinic_check(db, current_user, data["patient_id"])
@@ -187,6 +179,7 @@ class SafetyPlanService:
         })
         await audit_service.record(db, user_id=current_user.id, action="crisis_signal.create", entity_type="CrisisSignal", entity_id=row.id, new_values={"patient_id": data["patient_id"], "type": row.type}, commit=True)
         return self._to_signal(row)
+
 
 
         role = getattr(current_user, "role", None)
@@ -225,7 +218,9 @@ class SafetyPlanService:
             raise not_found("Кризисный сигнал не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         row = await self.crisis_repo.update_status(db, signal_id, "acknowledged", acknowledged_by=current_user.id)
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)
+        if row is None:
+            raise not_found("Кризисный сигнал не найден")
+        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)  # type: ignore
         return self._to_signal(row)
 
     async def acknowledge_signal(self, db, signal_id, current_user):
@@ -237,7 +232,7 @@ class SafetyPlanService:
             raise not_found("Кризисный сигнал не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         row = await self.crisis_repo.update_status(db, signal_id, "acknowledged", acknowledged_by=current_user.id)
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)  # type: ignore
         return self._to_signal(row)
 
 

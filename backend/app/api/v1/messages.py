@@ -44,13 +44,6 @@ async def practitioner_sla(practitioner_id: str, request: Request, current_user:
     data = await svc.availability(db, practitioner_id, at, current_user)
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
 
-async def mark_read(message_id: str, request: Request, current_user: CurrentUser, db: DbSession):
-    svc = _svc()
-    row = await svc.mark_read(db, current_user, message_id)
-    if row is None:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Message not found")
-    return {"data": MessageResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
 from fastapi import status, HTTPException
 
 
