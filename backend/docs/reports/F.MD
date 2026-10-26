@@ -607,8 +607,8 @@ Evidence:
 - P1 проблемы: есть (отсутствующие эндпоинты, swallowed exceptions, отсутствие интеграции frontend/mobile с backend)  
 - CONTRADICTED утверждения: есть (DB_SCHEMA.md §7 vs код — диапазоны mood_score/anxiety_score)  
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
-- OpenAPI: committed spec содержит 85 путей, совпадает с runtime  
-- Миграции: 33 миграции, head = 0033_updated_at_coverage, downgrade есть у всех  
+- OpenAPI: committed spec содержит 87 путей, совпадает с runtime  
+- Миграции: 34 миграции, head = 0034_missing_indexes, downgrade есть у всех  
 
 
 ## Phase 39-41 Update (2026-10-25)
@@ -650,7 +650,12 @@ Evidence:
 - Frontend/Mobile остаются UNVERIFIED (UI ONLY / MOCK ONLY): 0 fetch/axios на фронтенде, только `getHealth()`/`getDbHealth()` на mobile; 37 mock-файлов.
 
 Миграции:
-- 33 миграции, head `0033_updated_at_coverage`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
-- 5 недостающих индексов (diary_entries, messages, alerts, audit_logs, screening_results) и 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
+- 34 миграции, head `0034_missing_indexes`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
+- Индексы: добавлены в миграции `0034_missing_indexes` — `messages(recipient_id, created_at)`, `alerts(patient_id, status, created_at)`, `screening_results(patient_id, questionnaire_type)`; `audit_logs(entity_type, entity_id)` и `diary_entries(patient_id, recorded_at)` уже существовали в моделях. 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
 
-См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.
+## Phase 57 Update (2026-10-26) — Backend gap closure + documentation sync
+
+- Migration `0034_missing_indexes`: composite indexes for chat/alert/screening queries.
+- QR invite endpoint: `GET /api/v1/qr/invite` implemented in `app/api/v1/qr.py`.
+- Symptom tracking: dedicated endpoint not required; supported via diary + alerts `critical_symptom`.
+- OpenAPI: 87 paths / 56 schemas. Tests: 150 passed. Migration head: `0034_missing_indexes`.

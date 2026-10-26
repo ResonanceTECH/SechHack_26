@@ -503,7 +503,7 @@
 | `GET /api/v1/home/dashboard` | HomeService | HomeRepository aggregate | User, Patient, Alert, Appointment | 0001-0032 | ✅ |
 | `PATCH /api/v1/users/{id}` | **Entire chain missing** | Profile editing impossible |
 | `POST /api/v1/auth/consent` | **Entire chain missing** | Consent storage not persisted |
-| `GET /api/v1/qr/invite` | **Entire chain missing** | QR invite not supported |
+| `GET /api/v1/qr/invite` | **Implemented** | QR invite payload for client-side QR generation (`{code, qr_text, code_display}`); scan handled client-side + `/api/v1/auth/invite/verify` |
 
 ### 16.3 Chain Completeness: 40/44 verified (91%)
 
