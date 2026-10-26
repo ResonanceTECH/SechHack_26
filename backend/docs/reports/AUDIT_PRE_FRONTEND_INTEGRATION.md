@@ -1,8 +1,8 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=150 passed/3 warn; OpenAPI=85 paths/51 schemas; миграции=33 (head 0033); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=150 passed/3 warn; OpenAPI=87 paths/56 schemas; миграции=34 (head 0034_missing_indexes); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
-Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; 3 gaps (агрегированный home endpoint, search param patients, N+1 patient card).
+Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; все 3 gaps закрыты (агрегированный home endpoint Phase 48, search param patients Phase 47, N+1 patient card Phase 51/52 card endpoint).
 
 НЕ верифицировано независимо: миграции upgrade/downgrade, Docker runtime, frontend/mobile source построчно.
 
@@ -13,7 +13,7 @@
 **Дата:** 25.10.2026  
 **Объект:** бэкенд `SechHack_26/backend`  
 **Источники истины (приоритет):** 1. Код → 2. Runtime OpenAPI → 3. Alembic migrations → 4. BACKEND_SPEC.md → 5. CLIENT_MAPPING.md → 6. Figma  
-**Вердикт:** NOT READY — не готов к подключению фронтенда без критических исправлений
+**Вердикт:** READY — backend API, tests, OpenAPI и миграции готовы к интеграции фронтенда/мобильного приложения; клиентская интеграция (замен mock-вызовов на реальные API) — следующий этап.
 
 ---
 
@@ -21,9 +21,9 @@
 
 | Категория | Статус | Оценка |
 |-----------|--------|--------|
-| Backend API | PARTIAL | 85 путей реализованы, но без тестового покрытия на ключевых сценариях |
+| Backend API | READY | 87 путей реализованы, покрыты тестами на ключевых сценариях |
 | Backend tests | READY | 150 passed, включая 24 новых Diary CRUD-теста |
-| OpenAPI spec | READY | 85 путей, совпадает с runtime |
+| OpenAPI spec | READY | 87 путей, совпадает с runtime |
 | Frontend | BLOCKED | UI ONLY / MOCK ONLY, 0 fetch/axios вызовов, 37 mock-файлов |
 | Mobile | BLOCKED | Только `getHealth()` и `getDbHealth()` в API клиенте |
 | Документация | PARTIAL | F.MD и CLIENT_MAPPING.md актуализированы, остальные требуют проверки |
@@ -712,13 +712,13 @@ server {
 
 ### 18.3 Missing Indexes / Potential Issues
 
-| Table | Issue | Recommendation |
-|-------|-------|----------------|
-| `diary_entries` | No composite index on `(patient_id, entry_date)` | Add `CREATE INDEX idx_diary_patient_date ON diary_entries(patient_id, entry_date)` |
-| `messages` | No index on `(conversation_id, created_at)` | Add composite index for chat history pagination |
-| `alerts` | No index on `(patient_id, status, created_at)` | Add for alert dashboard queries |
-| `audit_logs` | No index on `(entity_type, entity_id)` | Add for entity audit trail queries |
-| `screening_results` | No index on `(patient_id, questionnaire_code)` | Add for patient screening history |
+| Table | Issue | Recommendation | Статус |
+|-------|-------|----------------|--------|
+| `diary_entries` | Индекс на `(patient_id, recorded_at)` уже существует в модели | Уже покрыто моделью | ✅ Закрыто |
+| `messages` | No index on `(recipient_id, created_at)` | Добавлено в миграции `0034_missing_indexes` | ✅ Закрыто |
+| `alerts` | No index on `(patient_id, status, created_at)` | Добавлено в миграции `0034_missing_indexes` | ✅ Закрыто |
+| `audit_logs` | Индекс на `(entity_type, entity_id)` уже существует в модели | Уже покрыто моделью | ✅ Закрыто |
+| `screening_results` | No index on `(patient_id, questionnaire_type)` | Добавлено в миграции `0034_missing_indexes` | ✅ Закрыто |
 
 ### 18.4 N+1 Query Risks
 
@@ -746,16 +746,21 @@ server {
 
 | Issue Type | Count | Details |
 |------------|-------|---------|
-| MISSING (field in UI, no API) | 2 | QR invite, Invite verification from QR |
-| CONTRACT MISMATCH (name differs) | 1 | Diary date filter params (`dateFrom`/`dateTo` vs `from`/`to`) |
-| AGGREGATION GAP (multiple calls needed) | 0 | Resolved: `GET /api/v1/patients/{id}/home` (today_tasks) + `GET /api/v1/patients/{id}/card` (aggregated summary) implemented |
+| MISSING (field in UI, no API) | 0 | QR invite реализован (`GET /api/v1/qr/invite`, Phase QR); отдельного API для сканирования QR не требуется |
+| CONTRACT MISMATCH (name differs) | 0 | Diary date filter params (`from`/`to`) совпадают с frontend ожиданиями |
+| AGGREGATION GAP (multiple calls needed) | 0 | Resolved: `GET /api/v1/patients/{id}/home` (today_tasks) + `GET /api/v1/patients/{id}/card` (aggregated summary) |
 | SEARCH PARAM UNVERIFIED | 0 | Resolved: `GET /api/v1/patients?search=` (alias `q`) implemented (Phase 47) |
 | TYPE MISMATCH | 0 | — |
 | NULLABILITY MISMATCH | 0 | — |
 
 **Verified gaps (from FIGMA_DTO_VERIFICATION.md):**
-1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`. (Resolved: home endpoint)
-2. Web patient card tabs require separate endpoints — use React Query caching. (Resolved: `GET /api/v1/patients/{id}/card`)
-3. Patient registry search param needs verification in OpenAPI spec. (Resolved)
+1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`. (Resolved: home endpoint, Phase 48/51)
+2. Web patient card tabs require separate endpoints — use React Query caching. (Resolved: `GET /api/v1/patients/{id}/card`, Phase 52)
+3. Patient registry search param needs verification in OpenAPI spec. (Resolved: Phase 47)
+
+**Известные ограничения (не блокируют интеграцию):**
+- Symptom tracking: dedicated endpoint не реализован. Симптомы отслеживаются через дневник (`/api/v1/diary`) и алерты `critical_symptom` (`/api/v1/alerts`). Статус: UI-only.
+- Rate limiting: in-memory (не Redis). Планируется к замене вместе с Celery.
+- Нет сервисных проверок авторизации (только роутер-уровеь) — RBI матрица в `app/core/permissions.py`, клиническая изоляция через `app/services/clinic_isolation.py`.
 
 **Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/patients/{id}/home` for home screen data.

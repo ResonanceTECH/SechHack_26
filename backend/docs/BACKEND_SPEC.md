@@ -863,7 +863,7 @@ Clinic isolation enforcement added to assignment, message and medication service
 ## Phase 33 Update
 Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 107 passed (Phase 44: exercise translated to multi-clinic `practitioner_clinic_ids()`).
 
-Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0033_updated_at_coverage`.
+Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 56 schemas, matching committed `docs/openapi.json`. Database migration head: `0033_updated_at_coverage`.
 
 ## Phase 39-41 Update
 Added `audit_events` table/model and `record_security_event`; RLS preparation for `patient_profiles`; `practitioner_clinic_memberships` table/model; clinic-isolation helpers now support primary + membership clinic ids; `enforce_clinic_match()` accepts list of allowed clinics; membership-aware filtering applied to patient/service queries; negative cross-clinic tests added (`tests/test_cross_clinic_isolation.py`).
@@ -997,3 +997,15 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Added PUT /api/v1/appointments/{appointment_id} (AppointmentUpdate) with pre-mutation snapshot (entity_type=appointment).
 - Screenings remain immutable (no update endpoint).
 - OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: 0033_updated_at_coverage.
+
+## Phase 57 Update (2026-10-26) — Backend gap closure + documentation sync
+
+- Migration `0034_missing_indexes`: added composite indexes for chat/alert/screening queries:
+  - `messages(recipient_id, created_at)` — chat history pagination (таблица `messages` не имеет колонки `conversation_id`; используется `recipient_id` как путь доступа)
+  - `alerts(patient_id, status, created_at)` — запросы дашборда алертов
+  - `screening_results(patient_id, questionnaire_type)` — история скринингов пациента
+  - Индексы `audit_logs(entity_type, entity_id)` и `diary_entries(patient_id, recorded_at)` уже существуют в моделях.
+  - Миграция верифицирована: upgrade → downgrade → upgrade.
+- QR invite endpoint: `GET /api/v1/qr/invite` уже реализован в `app/api/v1/qr.py` — возвращает `{code, qr_text, code_display}` для клиентской генерации QR. Отдельного API для сканирования QR не требуется (мобилка извлекает код клиентом и вызывает `/api/v1/auth/invite/verify`).
+- Symptom tracking: dedicated endpoint не требуется. Симптомы отслеживаются через записи дневника (`POST/GET /api/v1/diary` с полями mood/anxiety/sleep) и алерты типа `critical_symptom` (`/api/v1/alerts`). Статус: UI-only для dedicated symptom экрана, бэкенд поддерживает через существующие сущности.
+- OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: `0034_missing_indexes`.

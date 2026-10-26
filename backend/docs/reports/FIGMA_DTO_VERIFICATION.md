@@ -96,11 +96,11 @@ The backend `PatientSummary` must provide:
 
 ## 4. Contract Mismatches Found
 
-### 4.1 Mobile Home — no aggregated "today" endpoint
+### 4.1 Mobile Home — aggregated "today" endpoint — RESOLVED
+
 - **Figma:** Single home screen shows medication dose status + pending questionnaire + appointment + check-in card
-- **Backend:** No single endpoint aggregates all. Client must call 4+ endpoints.
-- **Impact:** Performance (multiple round-trips) and consistency (partial failure handling).
-- **Recommendation:** Consider adding `GET /api/v1/patients/{id}/home` or extending `PatientSummary` with `today_tasks[]`.
+- **Backend:** `GET /api/v1/patients/{id}/home` агрегирует данные домашнего экрана (check-in, лекарства, приём) с `today_tasks[]`. Также доступно `GET /api/v1/home/dashboard` для роль-aware дашборда.
+- **Status:** ✅ IMPLEMENTED (Phase 48/51)
 
 ### 4.2 Web Patient Card — tab data loading
 - **Figma:** Patient card has tabs: Questionnaires, Diary, Program, Medications, Visits/Notes, Access Log, Reports, Summary
@@ -118,14 +118,13 @@ The backend `PatientSummary` must provide:
 
 ## 5. Summary
 
-- **Backend endpoints:** 85 paths, all documented in OpenAPI
+- **Backend endpoints:** 87 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
 - **Frontend/Mobile API calls:** 0 (all mock data)
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
-- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47). Remaining: client integration (replace mock data), QR invite endpoint absent (UI-only), symptoms tracking UI-only.
+- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`. Remaining: client integration (replace mock data), symptoms tracking UI-only.
 
 ### Next steps
-1. Implement frontend/mobile API client layer (replace mock data)
-2. Add `search` param to patients endpoint if missing
-3. Consider aggregated home endpoint for mobile
-4. Run E2E tests against real backend
+
+1. Implement frontend/mobile API client layer (replace mock data) — бэкенд готов, клиенты на моках
+2. Run E2E tests against real backend
