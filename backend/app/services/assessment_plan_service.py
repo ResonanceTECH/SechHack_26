@@ -158,6 +158,12 @@ class AssessmentPlanService:
         if "diagnosis_id" in payload:
             await self._validate_diagnosis(db, str(row.patient_id), payload.get("diagnosis_id"))
         old = {"questionnaire_code": row.questionnaire_code, "interval_days": row.interval_days, "enabled": row.enabled}
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="assessment_plan", entity_id=str(row.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=self._to_response(row),
+        )
         updated = await self.repository.update(db, plan_id, payload)
         await audit_service.record(
             db, user_id=current_user.id, action="assessment_plan.update",

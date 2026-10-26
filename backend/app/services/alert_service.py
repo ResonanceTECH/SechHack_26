@@ -189,6 +189,12 @@ class AlertService:
             return self._to_dict(alert)
         if status == alert.status:
             return self._to_dict(alert)
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="alert", entity_id=str(alert.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=self._to_dict(alert),
+        )
         if status not in self.TRANSITIONS.get(alert.status, set()):
             raise conflict("Недопустимый переход статуса алерта")
         if status == "resolved":

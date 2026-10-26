@@ -14,6 +14,12 @@ class CarePlanCreate(BaseModel):
     status: str = "active"
 
 
+class CarePlanUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    status: Optional[str] = None
+
+
 class CarePlanResponse(BaseModel):
     id: str
     patient_id: str

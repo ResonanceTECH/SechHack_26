@@ -81,7 +81,7 @@
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
-| Appointment scheduling | READY | `/api/v1/appointments` (GET/POST) |
+| Appointment scheduling | READY | `/api/v1/appointments` (GET/POST/PUT) |
 | Reports (pre-visit, clinic analytics) | READY | `/api/v1/reports/pre-visit/{patient_id}` (GET), `/api/v1/reports/clinic-analytics` (GET) |
 | Admin staff management | READY | `/api/v1/admin/staff` (GET), `/api/v1/admin/staff/{id}/role` (PATCH) |
 | Audit logs | READY | `/api/v1/audit/logs` (GET) |
@@ -118,6 +118,7 @@
 | Diary summary | `/api/v1/diary/summary` | GET | `patient_id?`, `date_from?`, `date_to?` | `DiarySummaryResponse` | patient/doctor | READY |
 | Care plans list | `/api/v1/care-plans` | GET | `patient_id?` | `CarePlan[]` | patient/doctor/psychologist | READY |
 | Care plan create | `/api/v1/care-plans` | POST | `CarePlanCreate` | `CarePlan` | doctor/psychologist | READY |
+| Care plan update | `/api/v1/care-plans/{id}` | PUT | `CarePlanUpdate` | `CarePlan` | doctor/psychologist | READY |
 | Exercise list | `/api/v1/exercises` | GET | `patient_id?` | `ExerciseAssignment[]` | patient/doctor/psychologist | READY |
 | Exercise create | `/api/v1/exercises` | POST | `ExerciseAssignmentCreate` | `ExerciseAssignment` | doctor/psychologist | READY |
 | Exercise update | `/api/v1/exercises/{id}` | PUT | `ExerciseAssignmentUpdate` | `ExerciseAssignment` | doctor/psychologist | READY |

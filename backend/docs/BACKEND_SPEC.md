@@ -863,7 +863,7 @@ Clinic isolation enforcement added to assignment, message and medication service
 ## Phase 33 Update
 Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 107 passed (Phase 44: exercise translated to multi-clinic `practitioner_clinic_ids()`).
 
-Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0032_versions_trends`.
+Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0033_updated_at_coverage`.
 
 ## Phase 39-41 Update
 Added `audit_events` table/model and `record_security_event`; RLS preparation for `patient_profiles`; `practitioner_clinic_memberships` table/model; clinic-isolation helpers now support primary + membership clinic ids; `enforce_clinic_match()` accepts list of allowed clinics; membership-aware filtering applied to patient/service queries; negative cross-clinic tests added (`tests/test_cross_clinic_isolation.py`).
@@ -974,6 +974,14 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - today_tasks includes check-in status, active medication tasks, and today appointment task.
 - OpenAPI updated: 80 paths.
 - Tests: 140 passed.
+## Phase 55 Update (2026-10-26) — Versioning snapshots for alerts, exercise assignments, assessment plans
+
+- Alert `PUT/PATCH /api/v1/alerts/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`alert`).
+- Exercise assignment `PUT /api/v1/exercises/{assignment_id}` now records a pre-mutation snapshot (entity_type=`exercise_assignment`).
+- Assessment plan `PUT /api/v1/assessment-plans/{plan_id}` now records a pre-mutation snapshot (entity_type=`assessment_plan`).
+- Care plans have no update endpoint; appointments and screenings have no update endpoints, so no snapshot hook added there.
+- OpenAPI unchanged (85 paths); tests: 150 passed. Migration head: `0033_updated_at_coverage`.
+
 ## Phase 54 Update (2026-10-26) — Versioning snapshots for medications, prescriptions, safety plans, diagnoses
 
 - Medication `PUT /api/v1/medications/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`medication`).
@@ -981,4 +989,11 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Safety plan `PUT /api/v1/safety/plans/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`safety_plan`).
 - Diagnosis `PUT /api/v1/diagnoses/{id}` and `PUT /api/v1/diagnoses/icd10/{id}` now record a pre-mutation snapshot into `entity_versions` (entity_type=`diagnosis`).
 - Added `MedicationService.get_prescription()` helper.
-- OpenAPI unchanged (85 paths); tests: 150 passed.
+- OpenAPI unchanged (85 paths); tests: 150 passed. Migration head: `0033_updated_at_coverage`.
+
+## Phase 56 Update (2026-10-26) Update endpoints for care plans and appointments + versioning
+
+- Added PUT /api/v1/care-plans/{care_plan_id} (CarePlanUpdate) with pre-mutation snapshot (entity_type=care_plan).
+- Added PUT /api/v1/appointments/{appointment_id} (AppointmentUpdate) with pre-mutation snapshot (entity_type=appointment).
+- Screenings remain immutable (no update endpoint).
+- OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: 0033_updated_at_coverage.
