@@ -65,7 +65,7 @@ The backend `PatientSummary` must provide:
 | Home | M08 | `/api/v1/patients/{id}/summary` | READY |
 | Check-in (mood/anxiety/sleep) | M09-M11 | `POST /api/v1/diary` | READY |
 | Medication | M19, M20, M20b-e | `/api/v1/medications/*`, `/api/v1/adherence/*` | READY |
-| Symptoms | M14-M15 | No dedicated endpoint — UI only (symptom tracking via alerts/adverse events) | UI ONLY |
+| Symptoms | M14-M15 | `GET /api/v1/patients/{id}/symptoms` (30-day diary series) + alerts | READY |
 | Emergency help | M16 | `/api/v1/safety-plan`, `/api/v1/alerts` | READY |
 | Chat | M17, M17a-b | `/api/v1/messages/*` | READY |
 | Diary | M18 | `GET /api/v1/diary` | READY |
@@ -118,11 +118,11 @@ The backend `PatientSummary` must provide:
 
 ## 5. Summary
 
-- **Backend endpoints:** 87 paths, all documented in OpenAPI
+- **Backend endpoints:** 90 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
 - **Frontend/Mobile API calls:** 0 (all mock data)
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
-- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`. Remaining: client integration (replace mock data), symptoms tracking UI-only.
+- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`; dedicated symptom endpoint `GET /api/v1/patients/{id}/symptoms` (Phase 61). Remaining: client integration (replace mock data).
 
 ### Next steps
 

@@ -236,7 +236,22 @@ class AssessmentPlanService:
     async def list_patient_plans(self, db: AsyncSession, patient_id: str, current_user) -> dict:
         return await self.list_plans(db, current_user, patient_id)
 
-    async def patient_summary_assessment(self, db: AsyncSession, patient_id: str) -> dict:
+    async def patient_summary_assessment(self, db: AsyncSession, patient_id: str, current_user=None) -> dict:
+        # Service-level IDOR hardening: enforce clinic isolation when caller provided.
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role != "super_admin" and role != "patient":
+                patient_profile = await self._get_patient_profile(db, patient_id)
+                if patient_profile is None:
+                    raise not_found("Пациент не найден")
+                p_clinics = await self._practitioner_clinic_ids(db, current_user)
+                pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
+                if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
+                    raise forbidden()
+            elif role == "patient":
+                own = await self._patient_profile_id(db, current_user)
+                if own is None or own != str(patient_id):
+                    raise forbidden()
         rows = await self.repository.list_by_patient(db, patient_id)
         active = [r for r in rows if r.enabled]
         today = date.today()

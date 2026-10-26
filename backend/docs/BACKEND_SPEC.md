@@ -1007,7 +1007,7 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
   - Индексы `audit_logs(entity_type, entity_id)` и `diary_entries(patient_id, recorded_at)` уже существуют в моделях.
   - Миграция верифицирована: upgrade → downgrade → upgrade.
 - QR invite endpoint: `GET /api/v1/qr/invite` уже реализован в `app/api/v1/qr.py` — возвращает `{code, qr_text, code_display}` для клиентской генерации QR. Отдельного API для сканирования QR не требуется (мобилка извлекает код клиентом и вызывает `/api/v1/auth/invite/verify`).
-- Symptom tracking: dedicated endpoint не требуется. Симптомы отслеживаются через записи дневника (`POST/GET /api/v1/diary` с полями mood/anxiety/sleep) и алерты типа `critical_symptom` (`/api/v1/alerts`). Статус: UI-only для dedicated symptom экрана, бэкенд поддерживает через существующие сущности.
+- Symptom tracking: dedicated endpoint `GET /api/v1/patients/{id}/symptoms` added in Phase 61 (30-day diary-derived series). Symptoms also tracked via diary (`POST/GET /api/v1/diary`) and alerts type `critical_symptom` (`/api/v1/alerts`). Status: READY (no longer UI-only).
 - OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: `0034_missing_indexes`.
 
 ## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green
@@ -1015,6 +1015,7 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false) — согласие на передачу данных лечащему врачу. Миграция верифицирована: upgrade → downgrade → upgrade.
 - Код: исправлены service-сигнатуры (medications.get_prescription принимает current_user), типизация `_to_response` в diary, clinic_ids инициализация до try в dependencies, удалён временный `fix_all.py`.
 - Тесты: 159 passed, 0 failed. Миграция head: `0035_consent_sharing`. OpenAPI: 87 paths.
+
 ## Phase 59 Update (2026-10-26) — Backend risk closure (partial) + Docker rebuild
 
 - Redis-backed rate limiter: `app/core/ratelimit.py` now provides `RedisRateLimiter` (Redis sorted-set sliding window) with automatic in-memory fallback; `redis>=5.0` added to requirements.txt.
@@ -1034,3 +1035,19 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - Request tracing: middleware logs rid/method/path/status/latency and propagates `X-Request-ID`.
 - Tests: 159 passed. Migration head: `0036_rls_multi_clinic`. OpenAPI: 87 paths.
 
+## Phase 61 Update (2026-10-26) — Admin alert-rule endpoints, dedicated symptom-tracking endpoint, service-level IDOR hardening
+
+- Admin alert rules:
+  - `GET /api/v1/admin/alert-rules` — view configured alert rules (gated by `employee:manage`).
+  - `POST /api/v1/admin/alert-rules/reload` — reset rules cache and re-read configuration (gated by `employee:manage`).
+  - Both return the standard envelope `{data: {items, total, ...}, meta, error}`.
+- Dedicated symptom-tracking endpoint:
+  - `GET /api/v1/patients/{patient_id}/symptoms` — 30-day diary-derived series (mood/anxiety/energy/functioning/sleep) for mobile symptom screens.
+  - Reuses `DiaryRepository`; enforces clinic isolation for practitioners (`practitioner_clinic_ids` / `patient_clinic_id` / `enforce_clinic_match`) and own-patient check for patient role.
+- Service-level IDOR hardening:
+  - `AssessmentPlanService.patient_summary_assessment(db, patient_id, current_user=None)` now accepts optional `current_user` and enforces clinic isolation for practitioners and own-profile for patients when provided.
+  - `PatientService.get_patient_card` passes `current_user` through to assessment summary.
+- Tests: 164 passed (added `test_admin_alert_rules_api.py`, `test_patient_symptoms_api.py`).
+- Migration head: unchanged `0036_rls_multi_clinic`.
+- OpenAPI: 90 paths (regenerated).
+- Note: symptom tracking is no longer UI-only; dedicated endpoint above complements diary/alerts flow.

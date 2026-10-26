@@ -186,10 +186,9 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 87 путей (актуальное состояние runtime, совпадает с committed spec)
+- 90 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
-
 
 ## Questionnaire anchors
 

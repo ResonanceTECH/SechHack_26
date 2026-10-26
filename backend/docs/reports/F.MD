@@ -505,7 +505,7 @@ app/main.py; app/api/v1/router.py; app/api/v1/auth.py; app/api/v1/health.py; app
 alembic/versions/0001_*.py — 0012_*.py — all with upgrade() and downgrade()
 
 ### OpenAPI
-docs/openapi.json — 87 paths
+docs/openapi.json — 90 paths
 
 ### Tests
 tests/ (37 files, 150+ passed, including tests/api/test_missing_modules_smoke.py)
@@ -654,7 +654,7 @@ Evidence:
 
 - Migration `0034_missing_indexes`: composite indexes for chat/alert/screening queries.
 - QR invite endpoint: `GET /api/v1/qr/invite` implemented in `app/api/v1/qr.py`.
-- Symptom tracking: dedicated endpoint not required; supported via diary + alerts `critical_symptom`.
+- Symptom tracking: dedicated endpoint `GET /api/v1/patients/{id}/symptoms` implemented (Phase 61); also supported via diary + alerts `critical_symptom`.
 - OpenAPI: 87 paths / 56 schemas. Tests: 150 passed. Migration head: `0034_missing_indexes`.
 
 ## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green

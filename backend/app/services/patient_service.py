@@ -92,7 +92,7 @@ class PatientService:
             "total": len(diagnoses),
         }
 
-        assessment = await AssessmentPlanService(AssessmentPlanRepository()).patient_summary_assessment(db, patient_id)
+        assessment = await AssessmentPlanService(AssessmentPlanRepository()).patient_summary_assessment(db, patient_id, current_user)
         result["assessment"] = assessment
 
         # Adherence block — care plan / exercise completion stats
