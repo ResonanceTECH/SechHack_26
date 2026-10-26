@@ -1,6 +1,6 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=137 passed/3 warn; OpenAPI=79 paths/51 schemas; миграции=32 (head 0032); тесты=27 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=150 passed/3 warn; OpenAPI=85 paths/51 schemas; миграции=33 (head 0033); тесты=36 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
 Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; 3 gaps (агрегированный home endpoint, search param patients, N+1 patient card).
 
@@ -21,9 +21,9 @@
 
 | Категория | Статус | Оценка |
 |-----------|--------|--------|
-| Backend API | PARTIAL | 79 путей реализованы, но без тестового покрытия на ключевых сценариях |
-| Backend tests | READY | 137 passed, включая 24 новых Diary CRUD-теста |
-| OpenAPI spec | READY | 76 путей, совпадает с runtime |
+| Backend API | PARTIAL | 85 путей реализованы, но без тестового покрытия на ключевых сценариях |
+| Backend tests | READY | 150 passed, включая 24 новых Diary CRUD-теста |
+| OpenAPI spec | READY | 85 путей, совпадает с runtime |
 | Frontend | BLOCKED | UI ONLY / MOCK ONLY, 0 fetch/axios вызовов, 37 mock-файлов |
 | Mobile | BLOCKED | Только `getHealth()` и `getDbHealth()` в API клиенте |
 | Документация | PARTIAL | F.MD и CLIENT_MAPPING.md актуализированы, остальные требуют проверки |
@@ -423,7 +423,7 @@
 |--------|----------|-------------------|-----------|--------|
 | RegisterPhoneScreen | `phone` | `phone: str` | users.phone | ✅ |
 | RegisterSmsScreen | `sms_code` | `code: str` | sms_codes.code | ✅ |
-| RegisterConsentScreen | `consent_152fz` | — | **MISSING** | ❌ No API for consent storage |
+| RegisterConsentScreen | `consent_152fz` | — | **MISSING** | ✅ /api/v1/auth/consent |
 | RegisterDoctorConfirmScreen | `invite_code` | `token: str` | invites.token | ✅ |
 | CheckInMoodScreen | `mood` (1-5) | `mood: int` | diary_entries.mood | ✅ |
 | CheckInAnxietyScreen | `anxiety` (1-5) | `anxiety: int` | diary_entries.anxiety | ✅ |
@@ -434,7 +434,7 @@
 | SafetyPlanScreen | `contacts[]` | `SafetyPlanOut.contacts` | safety_plans.contacts (JSONB) | ✅ |
 | MedicationScreen | `medications[]` | `MedicationOut[]` | medications.* | ✅ |
 | ChatScreen | `messages[]` | `MessageOut[]` | messages.* | ✅ |
-| ProfileScreen | `name`, `email` | — | **MISSING** | ❌ No user profile endpoint |
+| ProfileScreen | `name`, `email` | — | **MISSING** | ✅ /api/v1/users/me |
 | HomeScreen | `dashboard_stats` | `HomeDashboardOut` | home dashboard | ✅ | ✅ | ⚠ | READY |
 | HomeScreen | `recent_alerts` | `AlertOut[]` | alerts.* | ⚠ Partial (no aggregation endpoint) |
 
@@ -748,14 +748,14 @@ server {
 |------------|-------|---------|
 | MISSING (field in UI, no API) | 2 | QR invite, Invite verification from QR |
 | CONTRACT MISMATCH (name differs) | 1 | Diary date filter params (`dateFrom`/`dateTo` vs `from`/`to`) |
-| AGGREGATION GAP (multiple calls needed) | 2 | Mobile home "today" view; Web patient card tabs (N+1) |
+| AGGREGATION GAP (multiple calls needed) | 0 | Resolved: `GET /api/v1/patients/{id}/home` (today_tasks) + `GET /api/v1/patients/{id}/card` (aggregated summary) implemented |
 | SEARCH PARAM UNVERIFIED | 0 | Resolved: `GET /api/v1/patients?search=` (alias `q`) implemented (Phase 47) |
 | TYPE MISMATCH | 0 | — |
 | NULLABILITY MISMATCH | 0 | — |
 
 **Verified gaps (from FIGMA_DTO_VERIFICATION.md):**
-1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`.
-2. Web patient card tabs require separate endpoints — use React Query caching.
-3. Patient registry search param needs verification in OpenAPI spec.
+1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`. (Resolved: home endpoint)
+2. Web patient card tabs require separate endpoints — use React Query caching. (Resolved: `GET /api/v1/patients/{id}/card`)
+3. Patient registry search param needs verification in OpenAPI spec. (Resolved)
 
 **Recommendation:** Add `PATCH /api/v1/users/{id}` for profile editing and `GET /api/v1/patients/{id}/home` for home screen data.

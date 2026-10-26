@@ -86,6 +86,9 @@ class MedicationService:
                     raise forbidden("Clinic isolation violation")
         return row
 
+    async def get_prescription(self, db: AsyncSession, prescription_id: str) -> Prescription | None:
+        return await self.repo.get_prescription(db, prescription_id)
+
     async def update_prescription(self, db: AsyncSession, current_user, prescription_id: str, data: dict) -> Prescription | None:
         row = await self.repo.get_prescription(db, prescription_id)
         if row is not None:

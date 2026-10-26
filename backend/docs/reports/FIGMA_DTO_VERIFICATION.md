@@ -108,22 +108,21 @@ The backend `PatientSummary` must provide:
 - **Impact:** N+1 API calls when opening patient card.
 - **Recommendation:** Keep separate endpoints (RESTful), use frontend query caching (React Query).
 
-### 4.3 Search in patient registry — VERIFIED
+### 4.3 Search in patient registry — RESOLVED
 
 - **Figma:** D02 has a search input (300px).
-- **Backend:** `GET /api/v1/patients` — NO `search`/`q` query param supported (confirmed via OpenAPI spec and source code `patients.py`).
-- **Status:** ❌ NOT IMPLEMENTED — search not available.
-- **Action needed:** Add `search` (or `q`) query param to `GET /api/v1/patients` endpoint and repository.
+- **Backend:** `GET /api/v1/patients` supports optional `search` (alias `q`) (Phase 47), case-insensitive `ILIKE` over first/last name/email.
+- **Status:** ✅ IMPLEMENTED — OpenAPI updated.
 
 ---
 
 ## 5. Summary
 
-- **Backend endpoints:** 79 paths, all documented in OpenAPI
+- **Backend endpoints:** 85 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
 - **Frontend/Mobile API calls:** 0 (all mock data)
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
-- **Gaps:** Aggregated "today" view for mobile home, search params for patient registry
+- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47). Remaining: client integration (replace mock data), QR invite endpoint absent (UI-only), symptoms tracking UI-only.
 
 ### Next steps
 1. Implement frontend/mobile API client layer (replace mock data)

@@ -53,6 +53,14 @@ def _serialize(user: User, patient: PatientProfile | None, practitioner: Practit
     ).model_dump()
 
 
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse)
+async def get_me(current_user: CurrentUser, db: DbSession, request: Request) -> dict:
+    uid = current_user.id
+    user, patient, practitioner = await _load(db, uid)
+    return {"data": _serialize(user, patient, practitioner), "request_id": _rid(request)}
+
+
+
 @router.get("/{user_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse)
 async def get_user(user_id: str, current_user: CurrentUser, db: DbSession, request: Request) -> dict:
     try:

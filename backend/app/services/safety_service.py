@@ -137,6 +137,13 @@ class SafetyPlanService:
         if row is None:
             raise not_found("План безопасности не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
+        old_snapshot = self._to_plan(row)
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="safety_plan", entity_id=str(row.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=old_snapshot,
+        )
         update_data = {k: v for k, v in data.items() if v is not None}
         if "review_date" in data:
             update_data["review_date"] = data["review_date"]

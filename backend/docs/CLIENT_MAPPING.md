@@ -58,6 +58,13 @@
 | Check-in anxiety | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
 | Check-in sleep | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
 | Diary list | `/api/v1/diary` | GET | `date_from?`, `date_to?` | `DiaryEntry[]` | patient | READY |
+| Diary today check-in | `/api/v1/diary/today` | GET | `patient_id?` | `{patient_id,date,entry,completed}` | patient | READY |
+| Patient card (aggregated) | `/api/v1/patients/{id}/card` | GET | — | `PatientSummary` + `home` | clinician | READY |
+
+| Current user profile | `/api/v1/users/me` | GET | — | `UserOut` | any | READY |
+| QR invite payload | `/api/v1/qr/invite` | GET | `code` | `{code,qr_text,code_display}` | doctor | READY |
+
+
 | Diary offline sync | `/api/v1/diary/bulk-sync` | POST | `DiaryBulkSyncRequest` | `DiaryBulkSyncResponse` | patient | READY |
 | Questionnaires | `/api/v1/questionnaires` | GET | — | `Questionnaire[]` | patient | READY |
 | Questionnaire detail | `/api/v1/questionnaires/{code}` | GET | `version?` | `Questionnaire` | patient | READY |
@@ -178,7 +185,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 79 путей (актуальное состояние runtime, совпадает с committed spec)
+- 85 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 

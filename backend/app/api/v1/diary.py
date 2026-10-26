@@ -51,12 +51,39 @@ async def _patient_id_for_user(current_user, db) -> Optional[str]:
         prof = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))).scalar_one_or_none()
         return str(prof.id) if prof else None
     return None
+@router.get("/today", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+            dependencies=[Depends(require_permission("diary:read"))])
+async def today_checkin(request: Request, current_user: CurrentUser, db: DbSession,
+                        patient_id: Optional[str] = Query(None)) -> dict:
+    if current_user.role == "patient":
+        pid = await _patient_id_for_user(current_user, db)
+        if pid is None:
+            raise not_found("Профиль пациента не найден")
+    else:
+        if not patient_id:
+            raise validation_error("patient_id обязателен")
+        pid = patient_id
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, pid)
+        enforce_clinic_match(p_clinics, pat_clinic)
+    from datetime import date, datetime, timezone
+    today = datetime.now(timezone.utc).date()
+    start = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
+    end = datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
+    rows = await _repo().list_for_patient(db, pid, start, end, limit=1)
+    entry = _to_response(rows[0]) if rows else None
+    return {"data": {"patient_id": pid, "date": today.isoformat(), "entry": entry, "completed": entry is not None}, "request_id": getattr(request.state, "request_id", "")}
+
 @router.get("", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
             dependencies=[Depends(require_permission("diary:read"))])
 async def list_diary(request: Request, current_user: CurrentUser, db: DbSession,
                      patient_id: Optional[str] = Query(None),
                      date_from: Optional[datetime] = Query(None),
-                     date_to: Optional[datetime] = Query(None)) -> dict:
+                     date_to: Optional[datetime] = Query(None),
+                      limit: Optional[int] = Query(None, ge=1, le=200),
+                      offset: Optional[int] = Query(None, ge=0)) -> dict:
+
     if current_user.role == "patient":
         pid = await _patient_id_for_user(current_user, db)
         if pid is None:
@@ -70,7 +97,7 @@ async def list_diary(request: Request, current_user: CurrentUser, db: DbSession,
         p_clinics = await practitioner_clinic_ids(db, current_user)
         pat_clinic = await patient_clinic_id(db, pid)
         enforce_clinic_match(p_clinics, pat_clinic)
-    rows = await _repo().list_for_patient(db, pid, date_from, date_to)
+    rows = await _repo().list_for_patient(db, pid, date_from, date_to, limit, offset)
     items = [_to_response(r) for r in rows]
     return {"data": {"items": items, "total": len(items)}, "request_id": getattr(request.state, "request_id", "")}
 
@@ -98,6 +125,17 @@ async def update_diary(entry_id: str, body: DiaryUpdateRequest, request: Request
         if pid is None or str(row.patient_id) != pid:
             raise forbidden()
     data = body.model_dump(exclude_unset=True)
+    snapshot = {
+        "mood_score": row.mood_score, "anxiety_score": row.anxiety_score,
+        "energy_score": row.energy_score, "functioning_score": row.functioning_score,
+        "sleep_hours": row.sleep_hours, "sleep_quality": row.sleep_quality,
+        "notes": row.notes, "recorded_at": row.recorded_at.isoformat() if row.recorded_at else None,
+    }
+    from app.services.version_service import EntityVersionService
+    await EntityVersionService().record(
+        db, entity_type="diary_entry", entity_id=str(row.id),
+        changed_by=str(current_user.id), reason="update", is_addendum=False, snapshot=snapshot,
+    )
     row = await _repo().update_entry(db, row, data)
     return {"data": _to_response(row), "request_id": getattr(request.state, "request_id", "")}
 
@@ -143,7 +181,9 @@ async def bulk_sync(body: DiaryBulkSyncRequest, request: Request, current_user: 
 async def diary_summary(request: Request, current_user: CurrentUser, db: DbSession,
                         patient_id: Optional[str] = Query(None),
                         date_from: Optional[datetime] = Query(None),
-                        date_to: Optional[datetime] = Query(None)) -> dict:
+                        date_to: Optional[datetime] = Query(None),
+                      limit: Optional[int] = Query(None, ge=1, le=200),
+                      offset: Optional[int] = Query(None, ge=0)) -> dict:
     if current_user.role == "patient":
         pid = await _patient_id_for_user(current_user, db)
         if pid is None:

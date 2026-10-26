@@ -100,3 +100,18 @@ async def get_patient_summary(
         "data": result,
         "request_id": getattr(request.state, "request_id", ""),
     }
+@router.get("/{patient_id}/card", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
+async def get_patient_card(
+    patient_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> dict:
+    """Агрегированная карточка пациента (tabs) для снижения N+1."""
+    service = _get_patient_service(db)
+    result = await service.get_patient_card(db, patient_id, current_user)
+    return {
+        "data": result,
+        "request_id": getattr(request.state, "request_id", ""),
+    }
+

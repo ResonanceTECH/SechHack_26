@@ -115,6 +115,9 @@ class Alert(UUIDPkMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
+    )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True

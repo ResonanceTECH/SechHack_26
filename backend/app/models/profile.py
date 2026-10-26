@@ -50,7 +50,7 @@ class PatientProfile(UUIDPkMixin, TimestampMixin, Base):
 
 
 class PractitionerProfile(UUIDPkMixin, Base):
-    """Без updated_at — DDL не содержит updated_at для этой таблицы."""
+    """Профиль специалиста."""
 
     __tablename__ = "practitioner_profiles"
     __table_args__ = (
@@ -75,6 +75,9 @@ class PractitionerProfile(UUIDPkMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
     )
 
 

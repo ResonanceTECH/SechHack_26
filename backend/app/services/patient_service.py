@@ -60,6 +60,19 @@ class PatientService:
             raise not_found("Пациент не найден")
         return result
 
+    async def get_patient_card(
+        self,
+        db: AsyncSession,
+        patient_id: str,
+        current_user: object,
+    ) -> dict:
+        """Aggregated patient card merging summary and home blocks."""
+        summary = await self.get_patient_summary(db, patient_id, current_user)
+        home = await self.get_patient_home(db, patient_id, current_user)
+        result = dict(summary or {})
+        result["home"] = home
+        return result
+
     async def get_patient_summary(
         self,
         db: AsyncSession,
@@ -173,8 +186,8 @@ class PatientService:
                 "practitioner_id": str(next_appt.practitioner_id) if getattr(next_appt, "practitioner_id", None) else None,
             }
 
-        from datetime import date
-        today = date.today()
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
         today_tasks = []
         checkin_completed = False
         if latest_diary is not None and latest_diary.get("recorded_at"):
@@ -194,8 +207,23 @@ class PatientService:
                     Prescription.is_active.is_(True),
                 )
             )).all()
+            from datetime import datetime, timezone
+            from app.models.medication import MedicationAdherence
             for pres, med in pres_rows:
-                today_tasks.append({"type": "medication", "title": f"{med.name} {pres.dosage}", "related_id": str(pres.id), "completed": False})
+                completed = False
+                try:
+                    adh = (await db.execute(
+                        select(MedicationAdherence).where(
+                            MedicationAdherence.prescription_id == pres.id,
+                            MedicationAdherence.taken_at >= datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc),
+                            MedicationAdherence.taken_at < datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc),
+                        )
+                    )).scalars().first()
+                    if adh is not None:
+                        completed = bool(adh.is_taken)
+                except Exception:
+                    completed = False
+                today_tasks.append({"type": "medication", "title": f"{med.name} {pres.dosage}", "related_id": str(pres.id), "completed": completed})
         except Exception:
             pass
         if next_appointment is not None and next_appointment.get("scheduled_at"):

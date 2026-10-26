@@ -408,7 +408,7 @@
 | `patient-service` | `patients.py`, `patient_service.py`, `patient_repository.py` | ✅ Реализован | GET/POST patients, GET/PATCH patient/{id}, summary, diagnoses, screenings |
 | `screening-service` | `screenings.py`, `screening_service.py`, `screening_repository.py` | ✅ Реализован | screenings, patient screenings, questionnaires |
 | `alert-service` | `alerts.py`, `alert_service.py`, `alert_repository.py` | ✅ Реализован | alerts (GET, PUT, PATCH, safety-plan) |
-| `diary-service` | `diary.py`, `diary_repository.py`, `clinical.py` (DiaryEntry) | ✅ Реализован | diary (CRUD), bulk-sync, summary |
+| `diary-service` | `diary.py`, `diary_repository.py`, `clinical.py` (DiaryEntry) | ✅ Реализован | diary (CRUD), bulk-sync, summary, today; users (/me); qr (/invite) |
 | `diagnosis-service` | `diagnoses.py`, `diagnosis.py` | ✅ Реализован | diagnoses, icd10 (deprecated alias), patient diagnoses |
 | `assessment-plan` | `assessment_plans.py`, `care.py` (CarePlan) | ✅ Реализован | assessment-plans (CRUD) |
 | `safety-service` | `safety.py` | ✅ Реализован | safety/plans, safety/crisis-signals |
@@ -746,7 +746,7 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 
 Реализовано: `updated_at` для diary_entries (миграция 0020); correction endpoint PATCH /api/v1/adherence/{id} с audit logging; adherence correction metadata (миграция 0021). Patient assignment lifecycle (create/list/deactivate, audit events) реализован.## Этап 14. Строгая клиническая история (Partial)
 
-Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) выполнено: RLS расширен до всех patient-linked PHI-таблиц (миграция `0031_rls_remaining_phi`); AuditService wired в `get_current_user` (success-path `clinic_isolation.allowed`); multi-clinic rollout для exercise/medication/message/report/schedule (Phase 44). Остаётся: diary CRUD-тесты.
+Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) выполнено: RLS расширен до всех patient-linked PHI-таблиц (миграция `0031_rls_remaining_phi`); AuditService wired в `get_current_user` (success-path `clinic_isolation.allowed`); multi-clinic rollout для exercise/medication/message/report/schedule (Phase 44). Diary CRUD-тесты реализованы (`tests/api/test_diary_crud.py`). Следующий этап (Phase 52): универсальное versioning/addendum для клинических сущностей + retention policy (миграция 0032 `entity_versions`/`trend_snapshots` пока без API).
 
 Отдельная история ФИО, versioning/addendum, retention policy.
 
@@ -954,9 +954,31 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - OpenAPI updated: 80 paths.
 - Tests: 140 passed.
 
+## Phase 53 Update (2026-10-26) — Full updated_at coverage
+
+- Added `updated_at` to mutable entities: `patient_assignments`, `alerts`, `practitioner_profiles`, `practitioner_schedules`, `practitioner_schedule_exceptions` (migration 0033).
+- Migration verified: upgrade → downgrade → upgrade.
+- Tests: 150 passed.
+
+## Phase 52 Update (2026-10-26) — Entity versioning / addendum + retention
+
+- Added `GET/POST /api/v1/versions` for universal entity version snapshots (`entity_versions`, migration 0032).
+- `POST /api/v1/versions` records a version snapshot with optional `is_addendum` flag and reason.
+- Diary `PATCH /api/v1/diary/{id}` now records a pre-mutation snapshot into `entity_versions`.
+- OpenAPI updated: 85 paths.
+- Tests: 148 passed.
+
 ## Phase 51 Update (2026-10-25) — Patient home today_tasks aggregate
 
 - Extended GET /api/v1/patients/{id}/home and GET /api/v1/home/dashboard (patient) with today_tasks[].
 - today_tasks includes check-in status, active medication tasks, and today appointment task.
 - OpenAPI updated: 80 paths.
 - Tests: 140 passed.
+## Phase 54 Update (2026-10-26) — Versioning snapshots for medications, prescriptions, safety plans, diagnoses
+
+- Medication `PUT /api/v1/medications/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`medication`).
+- Prescription `PUT /api/v1/prescriptions/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`prescription`).
+- Safety plan `PUT /api/v1/safety/plans/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`safety_plan`).
+- Diagnosis `PUT /api/v1/diagnoses/{id}` and `PUT /api/v1/diagnoses/icd10/{id}` now record a pre-mutation snapshot into `entity_versions` (entity_type=`diagnosis`).
+- Added `MedicationService.get_prescription()` helper.
+- OpenAPI unchanged (85 paths); tests: 150 passed.

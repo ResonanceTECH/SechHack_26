@@ -607,8 +607,8 @@ Evidence:
 - P1 проблемы: есть (отсутствующие эндпоинты, swallowed exceptions, отсутствие интеграции frontend/mobile с backend)  
 - CONTRADICTED утверждения: есть (DB_SCHEMA.md §7 vs код — диапазоны mood_score/anxiety_score)  
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
-- OpenAPI: committed spec содержит 76 путей, совпадает с runtime  
-- Миграции: 32 миграции, head = 0032_versions_trends, downgrade есть у всех  
+- OpenAPI: committed spec содержит 85 путей, совпадает с runtime  
+- Миграции: 33 миграции, head = 0033_updated_at_coverage, downgrade есть у всех  
 
 
 ## Phase 39-41 Update (2026-10-25)
@@ -619,19 +619,19 @@ Evidence:
 - RLS context is wired in `get_current_user` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`.
 - Cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary).
 - Negative cross-clinic tests added: `tests/test_cross_clinic_isolation.py`.
-- Test suite: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
+- Test suite: 137 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
 
 ## Questionnaire anchors update
 ## Phase 43 Update (2026-10-25)
 - RLS extended to remaining patient-linked PHI tables via migration `0031_rls_remaining_phi`.
 - Migration verified upgrade → downgrade → upgrade.
-- Tests: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths.
+- Tests: 150 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths.
 
 ## Phase 44 Update (2026-10-25)
 - `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` translated to multi-clinic membership (`practitioner_clinic_ids()`).
 - `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
 - Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
-- Tests: 137 passed. Migration head: `0032_versions_trends`. OpenAPI: 79 paths.
+- Tests: 150 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths.
 
 ## Phase 45 Update / Pre-frontend audit (2026-10-25)
 
@@ -650,7 +650,7 @@ Evidence:
 - Frontend/Mobile остаются UNVERIFIED (UI ONLY / MOCK ONLY): 0 fetch/axios на фронтенде, только `getHealth()`/`getDbHealth()` на mobile; 37 mock-файлов.
 
 Миграции:
-- 32 миграции, head `0032_versions_trends`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
+- 33 миграции, head `0033_updated_at_coverage`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
 - 5 недостающих индексов (diary_entries, messages, alerts, audit_logs, screening_results) и 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
 
 См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.

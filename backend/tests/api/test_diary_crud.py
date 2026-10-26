@@ -405,3 +405,15 @@ class TestDiaryAuditAndVersioning:
             data = resp.json()["data"]
             assert data["id"] == entry_id
 
+
+
+class TestDiaryToday:
+    @pytest.mark.db
+    async def test_patient_today_completed_after_create(self) -> None:
+        async with await _async_client() as client:
+            await client.post(BASE, json=_entry_payload(), headers=_auth_header(PATIENT_TOKEN))
+            resp = await client.get(f"{BASE}/today", headers=_auth_header(PATIENT_TOKEN))
+            assert resp.status_code == 200
+            data = resp.json()["data"]
+            assert data["completed"] is True
+            assert data["entry"] is not None

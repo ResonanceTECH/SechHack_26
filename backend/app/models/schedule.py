@@ -32,6 +32,7 @@ class PractitionerSchedule(UUIDPkMixin, Base):
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
     is_available: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=None, server_default=func.now())
+    updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now())
 
 
 class PractitionerScheduleException(UUIDPkMixin, Base):
@@ -46,3 +47,4 @@ class PractitionerScheduleException(UUIDPkMixin, Base):
     is_available: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     reason: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=None, server_default=func.now())
+    updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now())
