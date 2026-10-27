@@ -221,6 +221,17 @@ docker compose down
 docker compose down -v
 ```
 
+## Развернутая версия
+
+Система развернута на сервере и доступна по следующим адресам:
+
+| Сервис | URL |
+|--------|-----|
+| UI (Frontend) | http://161.104.50.100 |
+| Backend API | http://161.104.50.100/api/v1 |
+| Swagger Docs | http://161.104.50.100/docs |
+| Health check | http://161.104.50.100/api/v1/health |
+
 ## 5. Локальная разработка
 
 ### 5.1 Инфраструктура
