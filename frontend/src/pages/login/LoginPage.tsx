@@ -1,12 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/layouts/AuthLayout'
-import {
-  DEMO_LOGIN_EMAIL,
-  DEMO_LOGIN_PASSWORD,
-  isDoctorAuthed,
-  setDoctorAuthed,
-} from '@/lib/doctorAuth'
+import { login, isAuthenticated } from '@/lib/auth'
 import styles from './LoginPage.module.css'
 
 export function LoginPage() {
@@ -14,26 +9,29 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  if (isDoctorAuthed()) {
+  if (isAuthenticated()) {
     return <Navigate to="/" replace />
   }
 
-  function loginAsDoctor() {
-    const emailOk = email.trim().toLowerCase() === DEMO_LOGIN_EMAIL
-    const passwordOk = password === DEMO_LOGIN_PASSWORD
-    if (!emailOk || !passwordOk) {
-      setError('Неверный e-mail или пароль')
-      return
-    }
-    setDoctorAuthed(true)
-    navigate('/', { replace: true })
-  }
-
-  function onDoctorSubmit(e: FormEvent) {
+  async function onDoctorSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    loginAsDoctor()
+    setSubmitting(true)
+    try {
+      await login(email.trim(), password)
+      navigate('/', { replace: true })
+    } catch (err) {
+      setSubmitting(false)
+      if (err instanceof Error) {
+        setError(err.message || 'Неверный e-mail или пароль')
+      } else {
+        setError('Неверный e-mail или пароль')
+      }
+    } finally {
+      if (!error) setSubmitting(false)
+    }
   }
 
   return (
@@ -80,8 +78,8 @@ export function LoginPage() {
           {error ? <p className={styles.error}>{error}</p> : null}
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.primaryBtn}>
-              Войти
+            <button type="submit" className={styles.primaryBtn} disabled={submitting}>
+              {submitting ? "Вход…" : "Войти"}
             </button>
             <button
               type="button"

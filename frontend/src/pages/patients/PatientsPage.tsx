@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { InvitePatientButton } from '@/components/InvitePatientButton/InvitePatientButton'
 import {
@@ -8,11 +8,8 @@ import {
   IconTrendSame,
   IconTrendUp,
 } from '@/components/icons/NavIcons'
-import {
-  patientFilterCounts,
-  patients,
-  patientsMeta,
-} from '@/data/mockPatients'
+import { get } from '@/lib/api'
+import type { PatientListItem } from '@/types/api'
 import type {
   PatientRow,
   PatientStatus,
@@ -21,6 +18,44 @@ import type {
   ScoreTrend,
 } from '@/types/doctor'
 import styles from './PatientsPage.module.css'
+
+const AVATAR_TONES: PatientRow['avatarTone'][] = [
+  'rose', 'amber', 'blue', 'green', 'violet', 'teal',
+]
+
+function avatarToneFor(id: string): PatientRow['avatarTone'] {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % AVATAR_TONES.length
+  return AVATAR_TONES[h]
+}
+
+function initialsFor(firstName: string | null, lastName: string | null): string {
+  const f = (firstName ?? '').trim()
+  const l = (lastName ?? '').trim()
+  if (f && l) return `${f[0]}${l[0]}`.toUpperCase()
+  if (f) return f[0].toUpperCase()
+  if (l) return l[0].toUpperCase()
+  return '??'
+}
+
+function toPatientRow(item: PatientListItem): PatientRow {
+  const name = [item.last_name, item.first_name].filter(Boolean).join(' ') || item.email || item.id
+  return {
+    id: item.id,
+    name,
+    initials: initialsFor(item.first_name, item.last_name),
+    avatarTone: avatarToneFor(item.id),
+    age: 0,
+    diagnosis: '',
+    status: 'stable',
+    phq9: { value: 0, previous: 0, trend: 'same' },
+    gad7: { value: 0, previous: 0, trend: 'same' },
+    diaryPercent: 0,
+    aviandrPercent: null,
+    nextVisit: '',
+  }
+}
+
 
 const statusLabel: Record<PatientStatus, string> = {
   critical: 'Критично',
@@ -159,12 +194,66 @@ export function PatientsPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [filter, setFilter] = useState<PatientsFilter>('all')
+  const [patients, setPatients] = useState<PatientRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await get<PatientListItem[]>('/api/v1/patients')
+      setPatients((data ?? []).map(toPatientRow))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось загрузить пациентов')
+      setPatients([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const forceEmpty = searchParams.get('empty') === '1'
   const rows = useMemo(
     () => patients.filter((p) => matchesFilter(p, filter)),
-    [filter],
+    [patients, filter],
   )
+
+  const patientFilterCounts = useMemo(() => {
+    const counts: Record<PatientsFilter, number> = {
+      all: patients.length,
+      critical: 0,
+      attention: 0,
+      stable: 0,
+      aviandr: 0,
+    }
+    for (const p of patients) {
+      if (p.status === 'critical') counts.critical++
+      if (p.status === 'attention') counts.attention++
+      if (p.status === 'stable') counts.stable++
+      if (p.aviandrPercent != null) counts.aviandr++
+    }
+    return counts
+  }, [patients])
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.subtitle}>Загрузка пациентов…</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.error}>{error}</p>
+      </div>
+    )
+  }
 
   if (forceEmpty || patients.length === 0) {
     return <PatientsEmptyState />
@@ -176,8 +265,7 @@ export function PatientsPage() {
         <div>
           <h2 className={styles.title}>Мои пациенты</h2>
           <p className={styles.subtitle}>
-            {patientsMeta.activeCount} активных · данные обновлены{' '}
-            {patientsMeta.updatedAgo}
+            {patients.length} пациентов · данные загружены с сервера
           </p>
         </div>
         <InvitePatientButton />
