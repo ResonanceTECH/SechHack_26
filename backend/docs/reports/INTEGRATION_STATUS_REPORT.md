@@ -4,12 +4,12 @@
 
 | Показатель | Значение | Обоснование |
 |------------|----------|-------------|
-| **Frontend readiness** | 25% | 3/12 основных экранов на REAL API (Login, Patients, Dashboard); API-слой реализован; 34 mock-файла осталось |
-| **Mobile readiness** | 40% | API-модули полностью реализованы (auth, client, screenings, diary, patientMeds, storage); экраны регистрации/авторизации подключены; 8 экранов на моках |
+| **Frontend readiness** | 30% | 5/12 основных экранов на REAL API (Login, Admin Login, Patients, Dashboard, Patient Card); API-слой реализован; 32 mock-файла осталось |
+| **Mobile readiness** | 45% | API-модули полностью реализованы; HomeScreen подключён к реальному API (name/initials); 8 экранов на моках |
 | **Backend readiness** | 100% | 164 тестов зелёные; 92 OpenAPI пути; миграции на head 0037; RLS, rate limiting, аудит — готово |
-| **API coverage** | 9.8% | 9 из 92 backend путей используются клиентами (3 фронтендом + 10 мобильной регистрацией/авторизацией) |
-| **Mock removal progress** | 8.1% | 3 из ~37 frontend mock-файлов заменены; 8 мобильных экранов на моках |
-| **Overall readiness** | 34% | Взвешенная оценка: backend готов, клиенты на 1/3 пути |
+| **API coverage** | 9.8% | 9 из 92 backend путей используются клиентами |
+| **Mock removal progress** | 13.5% | 5 из ~37 frontend mock-файлов заменены; 8 мобильных экранов на моках |
+| **Overall readiness** | 40% | Взвешенная оценка: backend готов, клиенты на 1/2 пути |
 
 ## User Journey Status Summary
 

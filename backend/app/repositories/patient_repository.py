@@ -52,6 +52,7 @@ class PatientRepository:
             profile, user = row
             return [{
                 "id": str(profile.id),
+                "user_id": str(profile.user_id),
                 "email": user.email,
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,
@@ -161,6 +162,7 @@ class PatientRepository:
                 raise forbidden()
         return {
             "id": str(profile.id),
+            "user_id": str(user.id),
             "email": user.email,
             "first_name": profile.first_name,
             "last_name": profile.last_name,
@@ -234,6 +236,7 @@ class PatientRepository:
         active_count = len(alerts)
         return {
             "id": data["id"],
+            "user_id": data.get("user_id"),
             "first_name": data["first_name"],
             "last_name": data["last_name"],
             "clinic_id": data["clinic_id"],

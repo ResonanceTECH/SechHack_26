@@ -130,8 +130,10 @@
 | Screen | File | API Call | Endpoint | Method | Status |
 |--------|------|----------|----------|--------|--------|
 | Login | `frontend_dev/frontend/src/pages/login/LoginPage.tsx` | `login()` → `request()` | `/api/v1/auth/login` | POST | REAL API |
+| Admin Login | `frontend_dev/frontend/src/pages/login/AdminLogin2faPage.tsx` | `login()` → `request()` | `/api/v1/auth/login` | POST | REAL API (was hardcoded DEMO_APP_CODE) |
 | Patients list | `frontend_dev/frontend/src/pages/patients/PatientsPage.tsx` | `get<PatientListItem[]>()` | `/api/v1/patients` | GET | REAL API |
 | Dashboard | `frontend_dev/frontend/src/pages/dashboard/DashboardPage.tsx` | `get<DashboardResponse>()` | `/api/v1/home/dashboard` | GET | REAL API |
+| Patient Card | `frontend_dev/frontend/src/pages/patient-card/PatientCardPage.tsx` | `get<PatientCardApiResponse>()` | `/api/v1/patients/{id}/card` | GET | REAL API (was 7 mock imports) |
 | Profile | `frontend_dev/frontend/src/pages/profile/ProfilePage.tsx` | mock (`@/data/mockDoctor`) | — | — | MOCK ONLY |
 | Patient Card | `frontend_dev/frontend/src/pages/patient-card/PatientCardPage.tsx` | mock | — | — | MOCK ONLY |
 | Pre-visit Report | `frontend_dev/frontend/src/pages/pre-visit-report/PreVisitReportPage.tsx` | mock | — | — | MOCK ONLY |
@@ -208,7 +210,7 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 90 путей (актуальное состояние runtime, совпадает с committed spec)
+- 92 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
 
