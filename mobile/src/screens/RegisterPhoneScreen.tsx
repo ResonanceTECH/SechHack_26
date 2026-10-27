@@ -20,9 +20,9 @@ import { formatRuPhone, isRuPhoneComplete } from "../utils/phone";
 type Props = {
   onBack?: () => void;
   onContinue?: (phone: string) => void;
-  /** Incomplete number submitted — open recovery screen or show inline */
   onIncomplete?: (phone: string) => void;
   showInlineError?: boolean;
+  title?: string;
 };
 
 export function RegisterPhoneScreen({
@@ -30,6 +30,7 @@ export function RegisterPhoneScreen({
   onContinue,
   onIncomplete,
   showInlineError = false,
+  title = "Регистрация",
 }: Props) {
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState("+7 916 123-45-67");
@@ -37,14 +38,21 @@ export function RegisterPhoneScreen({
   const [error, setError] = useState(showInlineError);
   const canSubmit = isRuPhoneComplete(phone);
 
-  const submit = () => {
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
     if (!canSubmit) {
       setError(true);
       onIncomplete?.(phone);
       return;
     }
     setError(false);
-    onContinue?.(phone);
+    setLoading(true);
+    try {
+      await onContinue?.(phone);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,7 +93,7 @@ export function RegisterPhoneScreen({
                   />
                 </Svg>
               </Pressable>
-              <Text style={styles.headerTitle}>Регистрация</Text>
+              <Text style={styles.headerTitle}>{title}</Text>
               <View style={styles.headerSpacer} />
             </View>
 
@@ -160,14 +168,15 @@ export function RegisterPhoneScreen({
           <View style={styles.footer}>
             <Pressable
               onPress={submit}
+              disabled={loading}
               style={({ pressed }) => [
                 styles.btnPrimary,
-                !canSubmit && !error && styles.btnDisabled,
+                (!canSubmit && !error) || loading ? styles.btnDisabled : null,
                 pressed && styles.pressed,
               ]}
             >
               <Text style={styles.btnPrimaryText}>
-                {error ? "Исправить номер" : "Получить код"}
+                {loading ? "Отправка..." : error ? "Исправить номер" : "Получить код"}
               </Text>
             </Pressable>
             {!error ? (

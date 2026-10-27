@@ -26,12 +26,14 @@ type SmsError = "wrong" | "expired" | "rate" | null;
 
 type Props = {
   phone: string;
+  initialCode?: string;
   onBack?: () => void;
   onChangePhone?: () => void;
   onConfirm?: (code: string) => void;
   onWrongCode?: () => void;
   onCodeExpired?: () => void;
   onRateLimited?: () => void;
+  title?: string;
 };
 
 function formatTimer(sec: number) {
@@ -42,15 +44,20 @@ function formatTimer(sec: number) {
 
 export function RegisterSmsScreen({
   phone,
+  initialCode,
   onBack,
   onChangePhone,
   onConfirm,
   onWrongCode,
   onCodeExpired,
   onRateLimited,
+  title = "Подтверждение",
 }: Props) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState("");
+  useEffect(() => {
+    if (initialCode) setCode(initialCode);
+  }, [initialCode]);
   const [secondsLeft, setSecondsLeft] = useState(42);
   const [error, setError] = useState<SmsError>(null);
   const [attemptsLeft, setAttemptsLeft] = useState(2);
@@ -62,33 +69,17 @@ export function RegisterSmsScreen({
     return () => clearInterval(id);
   }, [secondsLeft]);
 
-  const submit = () => {
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
     if (!canSubmit) return;
-
-    if (code === DEMO_RATE) {
-      setError("rate");
-      onRateLimited?.();
-      return;
-    }
-    if (code === DEMO_EXPIRED) {
-      setError("expired");
-      onCodeExpired?.();
-      return;
-    }
-    if (code !== DEMO_OK) {
-      const next = Math.max(0, attemptsLeft - 1);
-      setAttemptsLeft(next);
-      setError("wrong");
-      if (next <= 0) {
-        onRateLimited?.();
-        return;
-      }
-      onWrongCode?.();
-      return;
-    }
-
     setError(null);
-    onConfirm?.(code);
+    setLoading(true);
+    try {
+      await onConfirm?.(code);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const primaryLabel =
@@ -151,7 +142,7 @@ export function RegisterSmsScreen({
                   />
                 </Svg>
               </Pressable>
-              <Text style={styles.headerTitle}>Регистрация</Text>
+              <Text style={styles.headerTitle}>{title}</Text>
               <View style={styles.headerSpacer} />
             </View>
 
@@ -215,18 +206,17 @@ export function RegisterSmsScreen({
           </View>
 
           <Pressable
-            disabled={!canSubmit && error !== "expired" && error !== "wrong"}
+            disabled={loading}
             onPress={onPrimary}
             style={({ pressed }) => [
               styles.btnPrimary,
-              !canSubmit &&
-                error !== "expired" &&
-                error !== "wrong" &&
-                styles.btnDisabled,
+              (!canSubmit && error !== "expired" && error !== "wrong") || loading ? styles.btnDisabled : null,
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.btnPrimaryText}>{primaryLabel}</Text>
+            <Text style={styles.btnPrimaryText}>
+              {loading ? "Проверка..." : primaryLabel}
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

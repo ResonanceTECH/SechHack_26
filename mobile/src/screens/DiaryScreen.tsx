@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
@@ -10,6 +10,7 @@ import {
 import { MainTabBar, type MainTabId } from "../components/MainTabBar";
 import { ScreenGradient } from "../components/ScreenGradient";
 import { colors } from "../theme/colors";
+import { listDiary } from "../api/diary";
 
 type RangeId = "week" | "month";
 
@@ -113,9 +114,11 @@ function linePath(pts: { x: number; y: number }[]) {
     .join(" ");
 }
 
-function MoodAnxietyChart() {
-  const moodPts = useMemo(() => toPoints(MOOD), []);
-  const anxPts = useMemo(() => toPoints(ANXIETY), []);
+function MoodAnxietyChart({ mood, anxiety }: { mood?: number[]; anxiety?: number[] }) {
+  const m = mood && mood.length ? mood : MOOD;
+  const a = anxiety && anxiety.length ? anxiety : ANXIETY;
+  const moodPts = useMemo(() => toPoints(m), [m]);
+  const anxPts = useMemo(() => toPoints(a), [a]);
   const moodD = useMemo(() => linePath(moodPts), [moodPts]);
   const anxD = useMemo(() => linePath(anxPts), [anxPts]);
   const hi = moodPts[HIGHLIGHT_DAY];
@@ -172,6 +175,17 @@ export function DiaryScreen({ onTab, onAddAction, onQuestionnaires }: Props) {
   const insets = useSafeAreaInsets();
   const [range, setRange] = useState<RangeId>("week");
   const [addOpen, setAddOpen] = useState(false);
+  const [mood, setMood] = useState<number[] | null>(null);
+  const [anxiety, setAnxiety] = useState<number[] | null>(null);
+  useEffect(() => {
+    listDiary({ limit: 7 }).then((res) => {
+      const entries = res.items ?? [];
+      const m = entries.map((e) => (e.mood_score ?? 0) / 2.5).slice(0, 7).reverse();
+      const a = entries.map((e) => (e.anxiety_score ?? 0) / 2.5).slice(0, 7).reverse();
+      if (m.length) setMood(m);
+      if (a.length) setAnxiety(a);
+    }).catch(() => {});
+  }, []);
 
   return (
     <ScreenGradient soft>
@@ -235,7 +249,7 @@ export function DiaryScreen({ onTab, onAddAction, onQuestionnaires }: Props) {
                 {range === "week" ? "12–18 окт" : "Октябрь"}
               </Text>
             </View>
-            <MoodAnxietyChart />
+            <MoodAnxietyChart mood={mood ?? undefined} anxiety={anxiety ?? undefined} />
             <View style={styles.legend}>
               <View style={styles.legendItem}>
                 <View style={[styles.dot, { backgroundColor: colors.brand }]} />

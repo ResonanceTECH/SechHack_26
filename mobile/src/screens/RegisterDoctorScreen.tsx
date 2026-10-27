@@ -151,6 +151,7 @@ export function RegisterDoctorScreen({
               placeholderTextColor={colors.footer}
               style={[styles.input, focused && styles.inputFocused]}
             />
+            <Text style={styles.demoHint}>Демо-код: RAV27400</Text>
           </View>
 
           <View style={styles.footer}>
@@ -326,6 +327,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: colors.brand,
+  },
+  demoHint: {
+    marginTop: 8,
+    fontSize: 13,
+    color: colors.footer,
   },
   pressed: { opacity: 0.88 },
 });

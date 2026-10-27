@@ -1,12 +1,21 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Alert } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
+import { LoginChoiceScreen } from "./src/screens/LoginChoiceScreen";
+import { LoginScreen } from "./src/screens/LoginScreen";
 import {
   ErrorsCatalogScreen,
   ErrorFlowScreen,
   type ErrorDemoId,
 } from "./src/screens/errors";
 import { useNetworkStatus } from "./src/hooks/useNetworkStatus";
+import { requestSms, verifySms, verifyInvite, storeConsent, getMe, loginEmail, lookupPhone } from "./src/api/auth";
+import { submitScreening } from "./src/api/screenings";
+import { updateMyMedications } from "./src/api/patientMeds";
+import { ApiError } from "./src/api/client";
+import { clearTokens } from "./src/api/storage";
+import { getHomeDashboard, buildNameAndInitials } from "./src/api/patient";
 import { RegisterPhoneScreen } from "./src/screens/RegisterPhoneScreen";
 import { RegisterSmsScreen } from "./src/screens/RegisterSmsScreen";
 import { RegisterConsentScreen } from "./src/screens/RegisterConsentScreen";
@@ -67,7 +76,8 @@ import {
   CheckInAnxietyScreen,
   type AnxietyId,
 } from "./src/screens/CheckInAnxietyScreen";
-import { CheckInSleepScreen } from "./src/screens/CheckInSleepScreen";
+import { CheckInSleepScreen, type SleepCheckIn } from "./src/screens/CheckInSleepScreen";
+import { submitDiaryEntry } from "./src/api/diary";
 import { CheckInSavedScreen } from "./src/screens/CheckInSavedScreen";
 import { AppointmentScreen } from "./src/screens/AppointmentScreen";
 import { RescheduleAppointmentScreen } from "./src/screens/RescheduleAppointmentScreen";
@@ -80,6 +90,8 @@ import { QrScanScreen } from "./src/screens/QrScanScreen";
 
 type Screen =
   | "welcome"
+  | "login"
+  | "loginChoice"
   | "registerPhone"
   | "registerSms"
   | "registerConsent"
@@ -191,7 +203,9 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [errorBack, setErrorBack] = useState<Screen>("errorsCatalog");
   const [phone, setPhone] = useState("+7 916 123-45-67");
-  const [inviteCode, setInviteCode] = useState("RAV-2741");
+  const [phoneFlow, setPhoneFlow] = useState<"register" | "login">("register");
+  const [smsDevCode, setSmsDevCode] = useState<string | undefined>(undefined);
+  const [inviteCode, setInviteCode] = useState("RAV27400");
   const [surveyBack, setSurveyBack] = useState<Screen>("registerDoctor");
   const [ownWords, setOwnWords] = useState(
     "Последние месяцы постоянно тревожно, долго не могу уснуть, срываюсь на близких."
@@ -212,6 +226,8 @@ export default function App() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<SymptomId[]>([]);
   const [emergencyBack, setEmergencyBack] = useState<Screen>("home");
   const [symptomBack, setSymptomBack] = useState<Screen>("home");
+  const [patientName, setPatientName] = useState("Анна");
+  const [patientInitials, setPatientInitials] = useState("АМ");
   const [consentBack, setConsentBack] = useState<Screen>("registerConsent");
   const [callBack, setCallBack] = useState<Screen>("safetyPlan");
   const [safetyPlanBack, setSafetyPlanBack] = useState<Screen>("profile");
@@ -223,6 +239,40 @@ export default function App() {
   const [questionnairesBack, setQuestionnairesBack] =
     useState<Screen>("diary");
   const { online, refresh: refreshNetwork } = useNetworkStatus();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await getMe();
+        if (!cancelled && me?.user) {
+          // Fetch patient name/initials from home dashboard
+          try {
+            const dashboard = await getHomeDashboard();
+            const patient = dashboard?.patient_home?.patient;
+            if (patient) {
+              const { name, initials } = buildNameAndInitials(
+                patient.first_name,
+                patient.last_name,
+              );
+              if (!cancelled) {
+                setPatientName(name);
+                setPatientInitials(initials);
+              }
+            }
+          } catch {
+            // keep defaults
+          }
+          setScreen("home");
+        }
+      } catch {
+        // no valid session -> stay on welcome
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openError = (id: ErrorDemoId, back: Screen = "errorsCatalog") => {
     setErrorBack(back);
@@ -338,8 +388,8 @@ export default function App() {
     <SafeAreaProvider>
       {screen === "welcome" && (
         <WelcomeScreen
-          onStart={() => setScreen("registerPhone")}
-          onLogin={() => openError("reloginPhone", "welcome")}
+          onStart={() => { setPhoneFlow("register"); setScreen("registerPhone"); }}
+          onLogin={() => setScreen("loginChoice")}
           onErrorsDemo={() => openErrorsCatalog("welcome")}
         />
       )}
@@ -355,22 +405,120 @@ export default function App() {
         <ErrorFlowScreen id={screen} actions={errorActions} />
       )}
 
+      {screen === "loginChoice" && (
+        <LoginChoiceScreen
+          onBack={() => setScreen("welcome")}
+          onPhone={() => { setPhoneFlow("login"); setScreen("registerPhone"); }}
+          onEmail={() => setScreen("login")}
+        />
+      )}
+
+
+      {screen === "login" && (
+        <LoginScreen
+          onBack={() => setScreen("welcome")}
+          onLogin={async (email, password) => {
+            await loginEmail(email, password);
+            const me = await getMe();
+            if (me.user.role !== "patient") {
+              throw new Error("Для врачей и психологов используйте веб-кабинет");
+            }
+            const consentsDone =
+              me.consent_personal_data &&
+              me.consent_medical_data &&
+              me.consent_data_sharing_with_doctor;
+            // Fetch patient name/initials from home dashboard
+            try {
+              const dashboard = await getHomeDashboard();
+              const patient = dashboard?.patient_home?.patient;
+              if (patient) {
+                const { name, initials } = buildNameAndInitials(
+                  patient.first_name,
+                  patient.last_name,
+                );
+                setPatientName(name);
+                setPatientInitials(initials);
+              }
+            } catch {
+              // keep defaults
+            }
+            if (me.user.role === "patient" && me.has_patient_profile && consentsDone) {
+              setScreen("home");
+            } else if (me.user.role === "patient") {
+              setScreen("registerConsent");
+            } else {
+              setScreen("home");
+            }
+          }}
+        />
+      )}
+
+
       {screen === "registerPhone" && (
         <RegisterPhoneScreen
-          onBack={() => setScreen("welcome")}
-          onContinue={(nextPhone) => {
-            setPhone(nextPhone);
-            setScreen("registerSms");
+          title={phoneFlow === "login" ? "Вход" : "Регистрация"}
+          onBack={() => setScreen(phoneFlow === "login" ? "loginChoice" : "welcome")}
+          onContinue={async (nextPhone) => {
+            try {
+              const info = await lookupPhone(nextPhone);
+              setPhoneFlow(info.exists ? "login" : "register");
+              const res = await requestSms(nextPhone);
+              setPhone(nextPhone);
+              setSmsDevCode(res.dev_code);
+              setScreen("registerSms");
+            } catch (e: any) {
+              Alert.alert("SMS", e?.message ?? "Не удалось отправить код");
+            }
           }}
         />
       )}
 
       {screen === "registerSms" && (
         <RegisterSmsScreen
+          title={phoneFlow === "login" ? "Вход" : "Подтверждение"}
           phone={phone}
+          initialCode={smsDevCode}
           onBack={() => setScreen("registerPhone")}
           onChangePhone={() => setScreen("registerPhone")}
-          onConfirm={() => setScreen("registerConsent")}
+          onConfirm={async (code) => {
+            try {
+              await verifySms(phone, code);
+              const me = await getMe();
+              const consentsDone =
+                me.consent_personal_data &&
+                me.consent_medical_data &&
+                me.consent_data_sharing_with_doctor;
+              // Fetch patient name/initials from home dashboard
+              try {
+                const dashboard = await getHomeDashboard();
+                const patient = dashboard?.patient_home?.patient;
+                if (patient) {
+                  const { name, initials } = buildNameAndInitials(
+                    patient.first_name,
+                    patient.last_name,
+                  );
+                  setPatientName(name);
+                  setPatientInitials(initials);
+                }
+              } catch {
+                // keep defaults
+              }
+              if (me.has_patient_profile && !consentsDone) {
+                setScreen("registerConsent");
+              } else {
+                setScreen("home");
+              }
+            } catch (e) {
+              const code = e instanceof ApiError ? e.code : undefined;
+              if (code === "sms_code_expired") {
+                openError("smsExpired", "registerSms");
+              } else if (code === "rate_limited") {
+                openError("rateLimit", "registerSms");
+              } else {
+                openError("smsWrong", "registerSms");
+              }
+            }
+          }}
           onRateLimited={() => openError("rateLimit", "registerSms")}
         />
       )}
@@ -382,7 +530,10 @@ export default function App() {
             setConsentBack("registerConsent");
             setScreen("consentDocument");
           }}
-          onContinue={() => setScreen("registerDoctor")}
+          onContinue={async () => {
+            await storeConsent(true, true, false);
+            setScreen("registerDoctor");
+          }}
         />
       )}
 
@@ -398,18 +549,15 @@ export default function App() {
           initialCode={inviteCode}
           onBack={() => setScreen("registerConsent")}
           onScanQr={() => setScreen("qrScan")}
-          onFindDoctor={(code) => {
-            const normalized = code.trim().toUpperCase();
+          onFindDoctor={async (code) => {
+            const normalized = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
             setInviteCode(normalized);
-            if (
-              normalized.startsWith("BAD") ||
-              normalized.startsWith("EXP") ||
-              normalized === "INVALID"
-            ) {
+            try {
+              await verifyInvite(normalized);
+              setScreen("registerDoctorConfirm");
+            } catch {
               openError("inviteInvalid", "registerDoctor");
-              return;
             }
-            setScreen("registerDoctorConfirm");
           }}
           onSkip={() => {
             setSurveyBack("registerDoctor");
@@ -470,7 +618,14 @@ export default function App() {
           }}
           onBack={() => setScreen("registerSurvey")}
           onAddMedication={() => setScreen("registerAddMed")}
-          onContinue={() => setScreen("registerQuestionnaire")}
+          onContinue={() => {
+            void updateMyMedications({
+              current_medications: takingNothing ? [] : medications.map((m) => m.name),
+              allergy_status: allergy,
+              taking_no_medications: takingNothing,
+            }).catch(() => undefined);
+            setScreen("registerQuestionnaire");
+          }}
         />
       )}
 
@@ -519,6 +674,22 @@ export default function App() {
           onComplete={(answers) => {
             setQuestionnaireProgress({ index: 0, answers: {} });
             setResults(scoreQuestionnaires(answers));
+            const phqAnswers = Object.entries(answers)
+              .filter(([id]) => id.startsWith("phq9-"))
+              .map(([id, value]) => ({
+                question_id: `q${id.split("-")[1]}`,
+                value: value ?? 0,
+              }));
+            const gadAnswers = Object.entries(answers)
+              .filter(([id]) => id.startsWith("gad7-"))
+              .map(([id, value]) => ({
+                question_id: `q${id.split("-")[1]}`,
+                value: value ?? 0,
+              }));
+            void Promise.all([
+              submitScreening("phq9", phqAnswers),
+              submitScreening("gad7", gadAnswers),
+            ]).catch(() => undefined);
             setScreen("registerQuestionnaireResults");
           }}
         />
@@ -608,6 +779,8 @@ export default function App() {
 
       {screen === "home" && (
         <HomeScreen
+          name={patientName}
+          initials={patientInitials}
           onProfile={() => setScreen("profile")}
           onSos={() => {
             setEmergencyBack("home");
@@ -894,9 +1067,20 @@ export default function App() {
             setScreen(sleepFrom === "anxiety" ? "checkInAnxiety" : "home")
           }
           onClose={() => setScreen("home")}
-          onSave={async () => {
+          onSave={async (sleep: SleepCheckIn) => {
             const ok = online ? true : await refreshNetwork();
             if (!ok) {
+              openError("checkInSaveFailed", "checkInSleep");
+              return;
+            }
+            try {
+              await submitDiaryEntry({
+                mood: checkInMood,
+                anxiety: checkInAnxiety,
+                sleepMinutes: sleep.minutes,
+                recordedAt: new Date(),
+              });
+            } catch {
               openError("checkInSaveFailed", "checkInSleep");
               return;
             }
@@ -921,9 +1105,17 @@ export default function App() {
           onCameraDenied={() =>
             openError("cameraUnavailable", "registerDoctor")
           }
-          onScanned={(data) => {
-            setInviteCode(extractInviteCode(data));
-            setScreen("registerDoctorConfirm");
+          onScanned={async (data) => {
+            const normalized = extractInviteCode(data)
+              .toUpperCase()
+              .replace(/[^A-Z0-9]/g, "");
+            setInviteCode(normalized);
+            try {
+              await verifyInvite(normalized);
+              setScreen("registerDoctorConfirm");
+            } catch {
+              openError("inviteInvalid", "registerDoctor");
+            }
           }}
         />
       )}
