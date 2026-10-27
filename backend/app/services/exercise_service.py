@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.care import CarePlan, ExerciseAssignment
+from app.models.care import CarePlan, ExerciseAssignment, ExerciseCompletion
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.repositories.exercise_repository import ExerciseRepository
 from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
@@ -59,6 +59,26 @@ class ExerciseService:
                 items = filtered
         return items
 
+    async def update_care_plan(self, db: AsyncSession, care_plan_id: str, data: dict, current_user=None) -> CarePlan | None:
+        row = await self.repo.get_care_plan(db, care_plan_id)
+        if row is None:
+            return None
+        if current_user is not None and getattr(current_user, "role", None) not in ("patient", "super_admin"):
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if p_clinics:
+                pc = await patient_clinic_id(db, str(row.patient_id))
+                if pc is not None and pc not in p_clinics:
+                    from app.core.errors import forbidden
+                    raise forbidden()
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="care_plan", entity_id=str(row.id),
+            changed_by=str(current_user.id) if current_user is not None else None,
+            reason="update", is_addendum=False,
+            snapshot={"id": str(row.id), "patient_id": str(row.patient_id), "practitioner_id": str(row.practitioner_id), "title": row.title, "description": row.description, "status": row.status},
+        )
+        return await self.repo.update_care_plan(db, care_plan_id, data)
+
     # Exercises (assignments)
     async def list_exercises(self, db: AsyncSession, current_user, patient_id: str | None = None) -> list[ExerciseAssignment]:
         if getattr(current_user, "role", "") == "patient":
@@ -80,14 +100,13 @@ class ExerciseService:
                     pc = await patient_clinic_id(db, str(cp.patient_id))
                     if pc is None or pc in p_clinics:
                         filtered.append(a)
+                items = filtered
         role = getattr(current_user, "role", None)
         if role not in ("patient", "super_admin"):
             p_clinics = await practitioner_clinic_ids(db, current_user)
             if p_clinics:
                 pat_clinic = await patient_clinic_id(db, patient_id)
                 enforce_clinic_match(p_clinics, pat_clinic)
-
-                items = filtered
 
         return items
 
@@ -138,6 +157,22 @@ class ExerciseService:
                 if p_clinics and patient_id is not None:
                     pat_clinic = await patient_clinic_id(db, patient_id)
                     enforce_clinic_match(p_clinics, pat_clinic)
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="exercise_assignment", entity_id=str(row.id),
+            changed_by=str(getattr(current_user, "id", "")) if current_user is not None else "",
+            reason="update", is_addendum=False,
+            snapshot={
+                "id": str(row.id),
+                "care_plan_id": str(row.care_plan_id),
+                "exercise_type": row.exercise_type,
+                "payload": row.payload,
+                "scheduled_for": row.scheduled_for.isoformat() if row.scheduled_for is not None else None,
+                "due_at": row.due_at.isoformat() if row.due_at is not None else None,
+                "created_at": row.created_at.isoformat() if getattr(row, "created_at", None) else None,
+                "updated_at": row.updated_at.isoformat() if getattr(row, "updated_at", None) else None,
+            },
+        )
         return await self.repo.update_assignment(db, assignment_id, data)
 
     async def complete_exercise(self, db: AsyncSession, current_user, assignment_id: str, data: dict) -> ExerciseCompletion:

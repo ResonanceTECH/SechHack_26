@@ -8,7 +8,12 @@ from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.auth import InviteCode
 from datetime import datetime, timedelta
 
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/sechhack"
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    print("DATABASE_URL is not set. Copy .env.example → .env and fill values.")
+    sys.exit(1)
+# seed uses sync engine; normalize driver
+DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -76,7 +81,7 @@ session.commit()
 print(f"Created patient profile: {patient_profile.last_name} {patient_profile.first_name} (id={patient_profile.id})")
 
 # 10. Create Invite Code
-invite_code = InviteCode(code="RAV27400", practitioner_id=doctor_profile.id, clinic_id=clinic.id, expires_at=datetime.utcnow() + timedelta(days=30), is_multi_use=False, max_uses=1)
+invite_code = InviteCode(code="RAV27400", practitioner_id=doctor_profile.id, clinic_id=clinic.id, expires_at=datetime.utcnow() + timedelta(days=30), is_multi_use=True, max_uses=1000)
 session.add(invite_code)
 session.commit()
 print(f"Created invite code: {invite_code.code} (id={invite_code.id})")

@@ -42,7 +42,10 @@ async def list_questionnaires(request: Request) -> dict:
 async def create_screening(body: ScreeningCreateRequest, current_user: CurrentUser, db: DbSession, request: Request) -> dict:
     service = _get_service()
     data = body.model_dump()
-    result = await service.create_screening(db, current_user, data)
+    try:
+        result = await service.create_screening(db, current_user, data)
+    except ValueError as e:
+        raise validation_error(str(e))
     return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 
 
@@ -104,11 +107,12 @@ async def get_patient_screenings(patient_id: str, current_user: CurrentUser, db:
             raise not_found("Пациент не найден")
         prac = (await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == current_user.id))).scalar_one_or_none()
         if prac is not None and pat_profile.clinic_id is not None and prac.clinic_id != pat_profile.clinic_id:
+            from app.core.errors import forbidden
             raise forbidden()
     repo = ScreeningRepository()
     rows = await repo.get_patient_screenings(db, patient_id)
     items = [ScreeningListItem(id=str(r.id), questionnaire_type=r.questionnaire_type, score=r.score,
-                               is_critical=r.is_critical, created_at=r.created_at.isoformat() if r.created_at else None).model_dump() for r in rows]
+                               is_critical=r.is_critical, created_at=r.created_at.isoformat() if r.created_at else None) for r in rows]
     result = ScreeningHistoryResponse(items=items, total=len(items)).model_dump()
     return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 @patient_screenings_router.get("/{patient_id}/screening-trend", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,

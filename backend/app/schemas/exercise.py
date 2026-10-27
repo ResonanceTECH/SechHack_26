@@ -4,7 +4,10 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from typing import Annotated
+from pydantic import BaseModel, Field, BeforeValidator
+
+StrUUID = Annotated[str, BeforeValidator(lambda v: str(v) if v is not None else None)]
 
 
 class CarePlanCreate(BaseModel):
@@ -12,15 +15,24 @@ class CarePlanCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
     status: str = "active"
+    plan_payload: Optional[dict] = None
+
+
+class CarePlanUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    status: Optional[str] = None
+    plan_payload: Optional[dict] = None
 
 
 class CarePlanResponse(BaseModel):
-    id: str
-    patient_id: str
-    practitioner_id: str
+    id: StrUUID
+    patient_id: StrUUID
+    practitioner_id: StrUUID
     title: str
     description: Optional[str] = None
     status: str
+    plan_payload: Optional[dict] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -49,9 +61,9 @@ class ExerciseAssignmentUpdate(BaseModel):
 
 
 class ExerciseAssignmentResponse(BaseModel):
-    id: str
-    care_plan_id: str
-    patient_id: Optional[str] = None
+    id: StrUUID
+    care_plan_id: StrUUID
+    patient_id: Optional[StrUUID] = None
     exercise_type: str
     payload: Optional[dict] = None
     scheduled_for: Optional[date] = None
@@ -73,9 +85,9 @@ class ExerciseCompletionCreate(BaseModel):
 
 
 class ExerciseCompletionResponse(BaseModel):
-    id: str
-    assignment_id: str
-    patient_id: str
+    id: StrUUID
+    assignment_id: StrUUID
+    patient_id: StrUUID
     result: Optional[dict] = None
     completed: bool
     created_at: Optional[datetime] = None

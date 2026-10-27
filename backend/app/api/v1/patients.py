@@ -6,6 +6,8 @@ from app.api.dependencies import CurrentUser, DbSession
 from app.schemas.common import EnvelopeResponse
 from app.schemas.patient import PatientListItem, PatientDetail, PatientUpdate
 
+from app.models.profile import PatientProfile
+from sqlalchemy import select
 from app.services.patient_service import PatientService
 
 
@@ -51,6 +53,23 @@ async def get_patient_home(
         "data": result,
         "request_id": getattr(request.state, "request_id", ""),
     }
+
+
+@router.patch("/me/medications", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
+async def update_my_medications(
+    body: PatientUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> dict:
+    """Обновление самоотчёта пациента: текущие лекарства и аллергии."""
+    profile = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))).scalar_one_or_none()
+    if profile is None:
+        from app.core.errors import not_found
+        raise not_found("Пациент не найден")
+    service = _get_patient_service(db)
+    result = await service.update_patient(db, str(profile.id), body, current_user)
+    return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 
 
 @router.get("/{patient_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
@@ -100,3 +119,62 @@ async def get_patient_summary(
         "data": result,
         "request_id": getattr(request.state, "request_id", ""),
     }
+@router.get("/{patient_id}/card", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
+async def get_patient_card(
+    patient_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> dict:
+    """Агрегированная карточка пациента (tabs) для снижения N+1."""
+    service = _get_patient_service(db)
+    result = await service.get_patient_card(db, patient_id, current_user)
+    return {
+        "data": result,
+        "request_id": getattr(request.state, "request_id", ""),
+    }
+
+
+@router.get("/{patient_id}/symptoms", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
+async def get_patient_symptoms(
+    patient_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> dict:
+    """Серия симптомов пациента за 30 дней (из дневника)."""
+    from sqlalchemy import select
+    from app.models.profile import PatientProfile
+    from app.repositories.diary_repository import DiaryRepository
+    from datetime import datetime, timezone, timedelta
+    prof = await db.get(PatientProfile, __import__("uuid").UUID(patient_id))
+    if prof is None:
+        from app.core.errors import not_found
+        raise not_found("Пациент не найден")
+    # clinic isolation for practitioners
+    if current_user.role != "patient":
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id, enforce_clinic_match
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, patient_id)
+        enforce_clinic_match(p_clinics, pat_clinic)
+    else:
+        own = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))).scalar_one_or_none()
+        if own is None or str(own.id) != str(patient_id):
+            from app.core.errors import forbidden
+            raise forbidden()
+    repo = DiaryRepository()
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=30)
+    rows = await repo.list_for_patient(db, patient_id, start, end)
+    items = []
+    for r in rows:
+        items.append({
+            "recorded_at": r.recorded_at.isoformat() if r.recorded_at else None,
+            "mood_score": r.mood_score,
+            "anxiety_score": r.anxiety_score,
+            "energy_score": r.energy_score,
+            "functioning_score": r.functioning_score,
+            "sleep_hours": r.sleep_hours,
+            "sleep_quality": r.sleep_quality,
+        })
+    return {"data": {"patient_id": patient_id, "items": items, "total": len(items)}, "request_id": getattr(request.state, "request_id", "")}

@@ -127,6 +127,10 @@ class UserBrief(BaseModel):
 
 class MeResponse(BaseModel):
     user: UserBrief
+    consent_personal_data: bool = False
+    consent_medical_data: bool = False
+    consent_data_sharing_with_doctor: bool = False
+    has_patient_profile: bool = False
 
 
 class InviteCodeCreateRequest(BaseModel):

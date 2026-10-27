@@ -17,6 +17,12 @@ class AppointmentCreate(BaseModel):
     clinic_id: Optional[str] = None
 
 
+class AppointmentUpdate(BaseModel):
+    scheduled_at: Optional[datetime] = None
+    reason: Optional[str] = None
+    status: Optional[str] = None
+
+
 class AppointmentResponse(BaseModel):
     id: str
     patient_id: str

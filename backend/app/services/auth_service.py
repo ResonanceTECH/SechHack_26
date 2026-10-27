@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import ApiError, conflict, invalid_credentials, unauthorized
+from app.core.errors import not_found
 from app.core.security import jwt as jwt_service
 from app.core.security.passwords import hash_password, verify_password
 from app.db.base import utcnow
@@ -141,6 +142,20 @@ async def login_by_phone(
         raise unauthorized("Учётная запись заблокирована")
     else:
         user.phone_verified = True
+        profile = (
+            await session.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))
+        ).scalar_one_or_none()
+        if profile is None:
+            session.add(
+                PatientProfile(
+                    user_id=user.id,
+                    first_name="Пациент",
+                    last_name="Не указано",
+                    phone=phone,
+                    consent_personal_data=False,
+                    consent_medical_data=False,
+                )
+            )
     await audit_service.record(
         session,
         user_id=user.id,
@@ -292,11 +307,12 @@ async def store_consent(
     )
     await session.commit()
     await session.refresh(profile)
+    _consent_at = profile.consent_data_processing_at
     return {
         "consent_personal_data": profile.consent_personal_data,
         "consent_medical_data": profile.consent_medical_data,
         "consent_data_sharing_with_doctor": profile.consent_data_sharing_with_doctor,
-        "consent_data_processing_at": profile.consent_data_processing_at.isoformat() if profile.consent_data_processing_at else None,
+        "consent_data_processing_at": (_consent_at.isoformat() if _consent_at is not None else None),
     }
 
 async def change_password(

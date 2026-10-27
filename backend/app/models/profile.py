@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, JSON, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -40,17 +40,21 @@ class PatientProfile(UUIDPkMixin, TimestampMixin, Base):
     consent_medical_data: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+    consent_data_sharing_with_doctor: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     consent_data_processing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     clinic_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("clinics.id")
     )
+    current_medications: Mapped[list | None] = mapped_column(JSON, default=None)
+    allergy_status: Mapped[str | None] = mapped_column(String(20), default=None)
+    taking_no_medications: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     def __repr__(self) -> str:
         return f"<PatientProfile {self.id} {self.last_name} {self.first_name}>"
 
 
 class PractitionerProfile(UUIDPkMixin, Base):
-    """Без updated_at — DDL не содержит updated_at для этой таблицы."""
+    """Профиль специалиста."""
 
     __tablename__ = "practitioner_profiles"
     __table_args__ = (
@@ -75,6 +79,9 @@ class PractitionerProfile(UUIDPkMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=None, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=None, server_default=func.now(), onupdate=func.now()
     )
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import not_found
 from app.models.care import CarePlan, ExerciseAssignment, ExerciseCompletion
+from app.models.user import User
 from app.repositories.assessment_plan_repository import AssessmentPlanRepository
 from app.repositories.diagnosis_repository import DiagnosisRepository
 from app.repositories.patient_repository import PatientRepository
@@ -27,7 +28,7 @@ class PatientService:
     async def list_patients(
         self,
         db: AsyncSession,
-        current_user: object,
+        current_user: User,
         search: str | None = None,
     ) -> dict:
         """List patients based on user RBAC role."""
@@ -38,7 +39,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Get patient detail by ID with RBAC validation."""
         result = await self.repository.get_patient_by_id(db, patient_id, current_user)
@@ -51,7 +52,7 @@ class PatientService:
         db: AsyncSession,
         patient_id: str,
         body: PatientUpdate,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Update patient data with RBAC validation."""
         data = body.model_dump(exclude_unset=True)
@@ -60,11 +61,24 @@ class PatientService:
             raise not_found("Пациент не найден")
         return result
 
+    async def get_patient_card(
+        self,
+        db: AsyncSession,
+        patient_id: str,
+        current_user: User,
+    ) -> dict:
+        """Aggregated patient card merging summary and home blocks."""
+        summary = await self.get_patient_summary(db, patient_id, current_user)
+        home = await self.get_patient_home(db, patient_id, current_user)
+        result = dict(summary or {})
+        result["home"] = home
+        return result
+
     async def get_patient_summary(
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Get patient summary for MVP endpoint."""
         result = await self.repository.get_patient_summary(db, patient_id, current_user)
@@ -78,7 +92,7 @@ class PatientService:
             "total": len(diagnoses),
         }
 
-        assessment = await AssessmentPlanService(AssessmentPlanRepository()).patient_summary_assessment(db, patient_id)
+        assessment = await AssessmentPlanService(AssessmentPlanRepository()).patient_summary_assessment(db, patient_id, current_user)
         result["assessment"] = assessment
 
         # Adherence block — care plan / exercise completion stats
@@ -135,7 +149,7 @@ class PatientService:
         self,
         db: AsyncSession,
         patient_id: str,
-        current_user: object,
+        current_user: User,
     ) -> dict:
         """Aggregated home view for a patient (mobile/web home screen)."""
         patient = await self.get_patient(db, patient_id, current_user)
@@ -173,9 +187,83 @@ class PatientService:
                 "practitioner_id": str(next_appt.practitioner_id) if getattr(next_appt, "practitioner_id", None) else None,
             }
 
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
+        today_tasks = []
+        checkin_completed = False
+        if latest_diary is not None and latest_diary.get("recorded_at") is not None:
+            try:
+                recorded = latest_diary["recorded_at"]
+                if isinstance(recorded, str):
+                    recorded_date = recorded[:10]
+                else:
+                    recorded_date = recorded.date().isoformat() if recorded is not None else ""
+                checkin_completed = recorded_date == today.isoformat()
+            except Exception:
+                checkin_completed = False
+        today_tasks.append({"type": "checkin", "title": "Отметка настроения", "completed": checkin_completed})
+        try:
+            from sqlalchemy import select
+            from app.models.medication import Prescription, Medication
+            pres_rows = (await db.execute(
+                select(Prescription, Medication).join(Medication, Medication.id == Prescription.medication_id).where(
+                    Prescription.patient_id == UUID(str(patient_id)),
+                    Prescription.is_active.is_(True),
+                )
+            )).all()
+            from datetime import datetime, timezone
+            from app.models.medication import MedicationAdherence
+            for pres, med in pres_rows:
+                completed = False
+                try:
+                    adh = (await db.execute(
+                        select(MedicationAdherence).where(
+                            MedicationAdherence.prescription_id == pres.id,
+                            MedicationAdherence.taken_at >= datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc),
+                            MedicationAdherence.taken_at < datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc),
+                        )
+                    )).scalars().first()
+                    if adh is not None:
+                        completed = bool(adh.is_taken)
+                except Exception:
+                    completed = False
+                today_tasks.append({"type": "medication", "title": f"{med.name} {pres.dosage}", "related_id": str(pres.id), "completed": completed})
+        except Exception:
+            pass
+        if next_appointment is not None and next_appointment.get("scheduled_at") is not None:
+            try:
+                sched = next_appointment["scheduled_at"]
+                if isinstance(sched, str):
+                    sched_date = sched[:10]
+                else:
+                    sched_date = sched.date().isoformat() if sched is not None else ""
+                if sched_date == today.isoformat():
+                    today_tasks.append({"type": "appointment", "title": "Приём", "related_id": next_appointment.get("id"), "completed": False, "scheduled_at": next_appointment.get("scheduled_at")})
+            except Exception:
+                pass
+        # practitioner (assigned doctor) user id for messaging
+        practitioner_user_id = None
+        try:
+            from sqlalchemy import select
+            from app.models.assignment import PatientAssignment
+            from app.models.profile import PractitionerProfile
+            assign = (await db.execute(
+                select(PatientAssignment).where(PatientAssignment.patient_id == UUID(str(patient_id)))
+            )).scalar_one_or_none()
+            if assign is not None:
+                prac = (await db.execute(
+                    select(PractitionerProfile).where(PractitionerProfile.id == assign.practitioner_id)
+                )).scalar_one_or_none()
+                if prac is not None:
+                    practitioner_user_id = str(prac.user_id)
+        except Exception:
+            practitioner_user_id = None
+
         return {
             "patient": patient,
+            "practitioner_user_id": practitioner_user_id,
             "alerts": {"active": len(alerts)},
             "latest_diary": latest_diary,
             "next_appointment": next_appointment,
+            "today_tasks": today_tasks,
         }

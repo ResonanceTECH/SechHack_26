@@ -29,9 +29,9 @@ The backend `PatientSummary` must provide:
 - `last_name` → avatar initials
 - Today's tasks: medication dose status, pending questionnaires, upcoming appointment
 
-**Gap:** The Figma home screen shows a "today's check-in" card that requires mood/anxiety/sleep status. The backend `DiaryEntry` schema supports `mood`, `anxiety`, `sleep` fields. However, there is no single "today's summary" endpoint that aggregates all three check-in statuses in one call.
+**Update:** Aggregated patient home/summary endpoint is now available (Phase 48) via `GET /api/v1/patients/{id}/summary`; today's check-in status can be derived from `DiaryEntry` + summary. Individual endpoints remain as fallback.
 
-**Verdict:** PARTIAL — backend has individual endpoints but no aggregated "today" view.
+**Verdict:** RESOLVED — aggregated "today" view is available via patient summary endpoint.
 
 ---
 
@@ -52,7 +52,7 @@ The backend `PatientSummary` must provide:
 - Patient list: `GET /api/v1/patients` (with clinic filter)
 - Alerts count: `GET /api/v1/alerts` (filtered by status=new)
 
-**Verdict:** READY — all endpoints exist. Frontend uses mock data.
+**Verdict:** READY — all endpoints exist. Frontend `DashboardPage.tsx` now wired to `GET /api/v1/home/dashboard` (REAL API).
 
 ---
 
@@ -65,7 +65,7 @@ The backend `PatientSummary` must provide:
 | Home | M08 | `/api/v1/patients/{id}/summary` | READY |
 | Check-in (mood/anxiety/sleep) | M09-M11 | `POST /api/v1/diary` | READY |
 | Medication | M19, M20, M20b-e | `/api/v1/medications/*`, `/api/v1/adherence/*` | READY |
-| Symptoms | M14-M15 | No dedicated endpoint — UI only (symptom tracking via alerts/adverse events) | UI ONLY |
+| Symptoms | M14-M15 | `GET /api/v1/patients/{id}/symptoms` (30-day diary series) + alerts | READY |
 | Emergency help | M16 | `/api/v1/safety-plan`, `/api/v1/alerts` | READY |
 | Chat | M17, M17a-b | `/api/v1/messages/*` | READY |
 | Diary | M18 | `GET /api/v1/diary` | READY |
@@ -96,11 +96,11 @@ The backend `PatientSummary` must provide:
 
 ## 4. Contract Mismatches Found
 
-### 4.1 Mobile Home — no aggregated "today" endpoint
+### 4.1 Mobile Home — aggregated "today" endpoint — RESOLVED
+
 - **Figma:** Single home screen shows medication dose status + pending questionnaire + appointment + check-in card
-- **Backend:** No single endpoint aggregates all. Client must call 4+ endpoints.
-- **Impact:** Performance (multiple round-trips) and consistency (partial failure handling).
-- **Recommendation:** Consider adding `GET /api/v1/patients/{id}/home` or extending `PatientSummary` with `today_tasks[]`.
+- **Backend:** `GET /api/v1/patients/{id}/home` агрегирует данные домашнего экрана (check-in, лекарства, приём) с `today_tasks[]`. Также доступно `GET /api/v1/home/dashboard` для роль-aware дашборда.
+- **Status:** ✅ IMPLEMENTED (Phase 48/51)
 
 ### 4.2 Web Patient Card — tab data loading
 - **Figma:** Patient card has tabs: Questionnaires, Diary, Program, Medications, Visits/Notes, Access Log, Reports, Summary
@@ -108,25 +108,23 @@ The backend `PatientSummary` must provide:
 - **Impact:** N+1 API calls when opening patient card.
 - **Recommendation:** Keep separate endpoints (RESTful), use frontend query caching (React Query).
 
-### 4.3 Search in patient registry — VERIFIED
+### 4.3 Search in patient registry — RESOLVED
 
 - **Figma:** D02 has a search input (300px).
-- **Backend:** `GET /api/v1/patients` — NO `search`/`q` query param supported (confirmed via OpenAPI spec and source code `patients.py`).
-- **Status:** ❌ NOT IMPLEMENTED — search not available.
-- **Action needed:** Add `search` (or `q`) query param to `GET /api/v1/patients` endpoint and repository.
+- **Backend:** `GET /api/v1/patients` supports optional `search` (alias `q`) (Phase 47), case-insensitive `ILIKE` over first/last name/email.
+- **Status:** ✅ IMPLEMENTED — OpenAPI updated.
 
 ---
 
 ## 5. Summary
 
-- **Backend endpoints:** 76 paths, all documented in OpenAPI
+- **Backend endpoints:** 90 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
-- **Frontend/Mobile API calls:** 0 (all mock data)
+- **Frontend API calls:** 3 (Login→POST /api/v1/auth/login, Patients→GET /api/v1/patients, Dashboard→GET /api/v1/home/dashboard). Mobile API calls: 0 (all mock data on screens).
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
-- **Gaps:** Aggregated "today" view for mobile home, search params for patient registry
+- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`; dedicated symptom endpoint `GET /api/v1/patients/{id}/symptoms` (Phase 61). Remaining: client integration (replace mock data on 34 remaining frontend screens).
 
 ### Next steps
-1. Implement frontend/mobile API client layer (replace mock data)
-2. Add `search` param to patients endpoint if missing
-3. Consider aggregated home endpoint for mobile
-4. Run E2E tests against real backend
+
+1. Implement frontend/mobile API client layer (replace mock data) — бэкенд готов, клиенты на моках
+2. Run E2E tests against real backend

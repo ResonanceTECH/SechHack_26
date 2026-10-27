@@ -18,6 +18,7 @@ class ExerciseRepository:
             practitioner_id=uuid.UUID(str(data["practitioner_id"])),
             title=data["title"],
             description=data.get("description"),
+            plan_payload=data.get("plan_payload"),
             status=data.get("status", "active"),
         )
         db.add(row)
@@ -31,6 +32,19 @@ class ExerciseRepository:
         except ValueError:
             return None
         return (await db.execute(select(CarePlan).where(CarePlan.id == cid))).scalar_one_or_none()
+
+    async def update_care_plan(self, db: AsyncSession, care_plan_id: str, data: dict) -> CarePlan | None:
+        row = await self.get_care_plan(db, care_plan_id)
+        if row is None:
+            return None
+        for key, value in data.items():
+            if value is None:
+                continue
+            if hasattr(row, key):
+                setattr(row, key, value)
+        await db.commit()
+        await db.refresh(row)
+        return row
 
     async def list_care_plans(self, db: AsyncSession, patient_id: str | None = None) -> list[CarePlan]:
         q = select(CarePlan)

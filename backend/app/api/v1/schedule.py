@@ -83,7 +83,7 @@ async def add_exception(practitioner_id: str, body: PractitionerScheduleExceptio
     await db.commit()
     import uuid as _uuid
     await audit_svc.record(db, user_id=current_user.id, action="schedule.exception_create", entity_type="practitioner_schedule_exception", entity_id=row.id, new_values=body.model_dump(), commit=True)
-    data = PractitionerScheduleExceptionResponse(id=str(row.id), practitioner_id=str(row.practitioner_id), date=row.date, start_time=row.start_time, end_time=row.end_time, is_available=row.is_available, reason=row.reason).model_dump()
+    data = PractitionerScheduleExceptionResponse(id=str(row.id), practitioner_id=str(row.practitioner_id), date=row.date, start_time=row.start_time, end_time=row.end_time, is_available=row.is_available, reason=row.reason).model_dump()  # type: ignore[arg-type]
     return {"data": data, "request_id": getattr(request.state, "request_id", "")}
 
 

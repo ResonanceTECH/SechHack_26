@@ -34,7 +34,7 @@ def generate_code() -> str:
     return f"{secrets.randbelow(10000):04d}"
 
 
-async def request_code(session: AsyncSession, phone: str) -> None:
+async def request_code(session: AsyncSession, phone: str) -> str:
     """Создать и «отправить» SMS-код. Бросает 429 при rate limit."""
     settings = get_settings()
     now = datetime.now(UTC)
@@ -79,10 +79,12 @@ async def request_code(session: AsyncSession, phone: str) -> None:
         logger.warning("SMS provider not configured; code suppressed in production")
     else:
         logger.info("SMS-код для %s: %s (dev-заглушка, в лог)", masked, code)
+    return code
 
 
-async def verify_code(session: AsyncSession, phone: str, code: str) -> bool:
-    """Проверить код: TTL, попытки, одноразовость. Успех → is_used=True."""
+async def verify_code(session: AsyncSession, phone: str, code: str) -> str:
+    """Проверить код: TTL, попытки, одноразовость. Возвращает статус:
+    'ok', 'expired', 'locked', 'invalid'."""
     settings = get_settings()
     now = datetime.now(UTC)
 
@@ -96,19 +98,19 @@ async def verify_code(session: AsyncSession, phone: str, code: str) -> bool:
     ).scalar_one_or_none()
 
     if sms is None or sms.expires_at < now:
-        return False
+        return "expired"
 
     # Фиксируем попытку до сравнения — защита от перебора 4-значного кода
     sms.attempts += 1
-    if sms.attempts > settings.sms_max_attempts:
+    if sms.attempts >= settings.sms_max_attempts:
         sms.is_used = True  # инвалидируем код при исчерпании попыток
         await session.commit()
-        return False
+        return "locked"
 
     if sms.code_hash != _code_hash(phone, code):
         await session.commit()
-        return False
+        return "invalid"
 
     sms.is_used = True
     await session.commit()
-    return True
+    return "ok"

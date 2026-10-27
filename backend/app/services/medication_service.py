@@ -110,7 +110,7 @@ class MedicationService:
                     if pat_clinic is not None and pat_clinic not in p_clinics:
                         from app.core.errors import forbidden
                         raise forbidden("Clinic isolation violation")
-        return await self.repo.deactivate_prescription(db, prescription_id)
+        return await self.repo.update_prescription(db, prescription_id, {"is_active": False})
 
     # Adherence
     async def create_adherence(self, db: AsyncSession, current_user, data: dict) -> MedicationAdherence:

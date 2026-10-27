@@ -14,6 +14,8 @@ async def list_questionnaires(request: Request) -> dict:
     items = []
     for code in list_codes():
         defn = get_definition(code)
+        if defn is None:
+            continue
         items.append({"code": code, "title": defn.title, "version": defn.version, "max_score": defn.max_score})
     return {"data": {"questionnaires": items}, "request_id": getattr(request.state, "request_id", "")}
 

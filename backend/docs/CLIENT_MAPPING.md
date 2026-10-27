@@ -18,7 +18,7 @@
 ### SMS Flow
 
 1. `POST /api/v1/auth/sms/request` с телефоном.
-2. `POST /api/v1/auth/sms/verify` с телефоном + кодом.
+2. `POST /api/v1/auth/sms/verify` с телефоном + кодом. Ошибки: `sms_code_invalid`, `sms_code_expired` (401), `rate_limited` (429).
 3. Получаем JWT токены.
 
 ### Invite Flow
@@ -58,6 +58,13 @@
 | Check-in anxiety | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
 | Check-in sleep | `/api/v1/diary` | POST | `DiaryCreateRequest` | `DiaryEntry` | patient | READY |
 | Diary list | `/api/v1/diary` | GET | `date_from?`, `date_to?` | `DiaryEntry[]` | patient | READY |
+| Diary today check-in | `/api/v1/diary/today` | GET | `patient_id?` | `{patient_id,date,entry,completed}` | patient | READY |
+| Patient card (aggregated) | `/api/v1/patients/{id}/card` | GET | — | `PatientSummary` + `home` | clinician | READY |
+
+| Current user profile | `/api/v1/users/me` | GET | — | `UserOut` | any | READY |
+| QR invite payload | `/api/v1/qr/invite` | GET | `code` | `{code,qr_text,code_display}` | doctor | READY |
+
+
 | Diary offline sync | `/api/v1/diary/bulk-sync` | POST | `DiaryBulkSyncRequest` | `DiaryBulkSyncResponse` | patient | READY |
 | Questionnaires | `/api/v1/questionnaires` | GET | — | `Questionnaire[]` | patient | READY |
 | Questionnaire detail | `/api/v1/questionnaires/{code}` | GET | `version?` | `Questionnaire` | patient | READY |
@@ -74,7 +81,7 @@
 | Screen/Feature | Status | Reason |
 |----------------|--------|--------|
 | Medication tracking | READY | `/api/v1/medications` (GET), `/api/v1/medications/{id}` (GET) |
-| Appointment scheduling | READY | `/api/v1/appointments` (GET/POST) |
+| Appointment scheduling | READY | `/api/v1/appointments` (GET/POST/PUT) |
 | Reports (pre-visit, clinic analytics) | READY | `/api/v1/reports/pre-visit/{patient_id}` (GET), `/api/v1/reports/clinic-analytics` (GET) |
 | Admin staff management | READY | `/api/v1/admin/staff` (GET), `/api/v1/admin/staff/{id}/role` (PATCH) |
 | Audit logs | READY | `/api/v1/audit/logs` (GET) |
@@ -89,6 +96,9 @@
 | Invite verify | `/api/v1/auth/invite/verify` | POST | `InviteVerifyRequest` | binding | doctor/clinic_admin | READY |
 | Patient list | `/api/v1/patients` | GET | `?search`/`?q` | `Patient[]` | doctor/psychologist/coordinator | READY |
 | Patient home | `/api/v1/patients/{id}/home` | GET | — | `PatientHome` | patient/doctor | READY |
+| Home dashboard | `/api/v1/home/dashboard` | GET | — | `HomeDashboard` | patient/doctor | READY |
+
+
 | Patient card | `/api/v1/patients/{id}` | GET | — | `Patient` | patient/doctor | READY |
 | Patient update | `/api/v1/patients/{id}` | PATCH | `PatientUpdate` | `Patient` | patient/doctor | READY |
 | Patient summary | `/api/v1/patients/{id}/summary` | GET | — | `PatientSummary` | all clinical | READY |
@@ -108,11 +118,35 @@
 | Diary summary | `/api/v1/diary/summary` | GET | `patient_id?`, `date_from?`, `date_to?` | `DiarySummaryResponse` | patient/doctor | READY |
 | Care plans list | `/api/v1/care-plans` | GET | `patient_id?` | `CarePlan[]` | patient/doctor/psychologist | READY |
 | Care plan create | `/api/v1/care-plans` | POST | `CarePlanCreate` | `CarePlan` | doctor/psychologist | READY |
+| Care plan update | `/api/v1/care-plans/{id}` | PUT | `CarePlanUpdate` | `CarePlan` | doctor/psychologist | READY |
 | Exercise list | `/api/v1/exercises` | GET | `patient_id?` | `ExerciseAssignment[]` | patient/doctor/psychologist | READY |
 | Exercise create | `/api/v1/exercises` | POST | `ExerciseAssignmentCreate` | `ExerciseAssignment` | doctor/psychologist | READY |
 | Exercise update | `/api/v1/exercises/{id}` | PUT | `ExerciseAssignmentUpdate` | `ExerciseAssignment` | doctor/psychologist | READY |
 | Exercise complete | `/api/v1/exercises/{id}/complete` | POST | `ExerciseCompletionCreate` | `ExerciseCompletion` | patient | READY |
 | Exercise compliance | `/api/v1/exercises/{id}/compliance` | GET | — | `ComplianceResponse` | doctor/psychologist | READY |
+
+### Frontend Connection Status (Web — React+Vite)
+
+| Screen | File | API Call | Endpoint | Method | Status |
+|--------|------|----------|----------|--------|--------|
+| Login | `frontend_dev/frontend/src/pages/login/LoginPage.tsx` | `login()` → `request()` | `/api/v1/auth/login` | POST | REAL API |
+| Admin Login | `frontend_dev/frontend/src/pages/login/AdminLogin2faPage.tsx` | `login()` → `request()` | `/api/v1/auth/login` | POST | REAL API (was hardcoded DEMO_APP_CODE) |
+| Patients list | `frontend_dev/frontend/src/pages/patients/PatientsPage.tsx` | `get<PatientListItem[]>()` | `/api/v1/patients` | GET | REAL API |
+| Dashboard | `frontend_dev/frontend/src/pages/dashboard/DashboardPage.tsx` | `get<DashboardResponse>()` | `/api/v1/home/dashboard` | GET | REAL API |
+| Patient Card | `frontend_dev/frontend/src/pages/patient-card/PatientCardPage.tsx` | `get<PatientCardApiResponse>()` | `/api/v1/patients/{id}/card` | GET | REAL API (was 7 mock imports) |
+| Profile | `frontend_dev/frontend/src/pages/profile/ProfilePage.tsx` | mock (`@/data/mockDoctor`) | — | — | MOCK ONLY |
+| Patient Card | `frontend_dev/frontend/src/pages/patient-card/PatientCardPage.tsx` | mock | — | — | MOCK ONLY |
+| Pre-visit Report | `frontend_dev/frontend/src/pages/pre-visit-report/PreVisitReportPage.tsx` | mock | — | — | MOCK ONLY |
+| Alerts | `frontend_dev/frontend/src/pages/alerts/` | mock | — | — | MOCK ONLY |
+| Medications | `frontend_dev/frontend/src/pages/medications/` | mock | — | — | MOCK ONLY |
+| Messages | `frontend_dev/frontend/src/pages/messages/` | mock | — | — | MOCK ONLY |
+| Exercises | `frontend_dev/frontend/src/pages/exercises/` | mock | — | — | MOCK ONLY |
+| Register | `frontend_dev/frontend/src/pages/register/` | mock | — | — | MOCK ONLY |
+| Invite | `frontend_dev/frontend/src/pages/invite/` | mock | — | — | MOCK ONLY |
+| Admin (all) | `frontend_dev/frontend/src/pages/admin/` | mock | — | — | MOCK ONLY |
+| Connect Clinic | `frontend_dev/frontend/src/pages/connect-clinic/` | mock | — | — | MOCK ONLY |
+| Treatment Plan | `frontend_dev/frontend/src/pages/treatment-plan/` | mock | — | — | MOCK ONLY |
+| Scenarios | `frontend_dev/frontend/src/pages/scenarios/` | mock | — | — | MOCK ONLY |
 
 ### Partial / Blocked (Frontend)
 
@@ -124,6 +158,7 @@
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |
 | Chat / messaging | PARTIAL | `/api/v1/messages` (list/create/read-state), SLA availability `/api/v1/messages/sla/{practitioner_id}` (GET) |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
+| Frontend mock removal | IN PROGRESS | 3 of ~37 screens connected to real API; 34 mock files remain |
 
 ## 4.5 Schedule / Availability
 
@@ -175,11 +210,15 @@
 
 - `docs/openapi.json`
 - Источник: FastAPI `/openapi.json`
-- 79 путей (актуальное состояние runtime, совпадает с committed spec)
+- 92 путей (актуальное состояние runtime, совпадает с committed spec)
 
 Токены можно сгенерировать с помощью `app.core.security.jwt.create_access_token`.
-
 
 ## Questionnaire anchors
 
 См. [questionnaire_sources](./questionnaire_sources.md) (раздел «Формулировки ответов»): `anchors` присутствуют для PDSS/ISI; YMRS использует только числовые метки.
+
+## Clinical semantic caveat — Screening skip handling (IMPLEMENTED)
+
+`POST /api/v1/screenings` accepts `answers[].value: int | null` and `answers[].skipped: bool`. A skipped/`null` answer is not scored as `0`; incomplete screening payloads are rejected with `validation_error` (422). Clients must not equate skipped/missing answers with `0`. `0` remains a valid answer. PHQ-9 item 9 criticality is evaluated only on actual numeric answers. Mobile registration UX must submit either a real answer for every question or handle the backend rejection of incomplete payloads.
+

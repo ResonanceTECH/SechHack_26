@@ -23,6 +23,9 @@ class PatientUpdate(BaseModel):
     middle_name: str | None = Field(default=None, max_length=100)
     birth_date: str | None = Field(default=None)  # ISO date string
     gender: str | None = Field(default=None)  # male/female/other/prefer_not_to_say
+    current_medications: list[str] | None = Field(default=None)
+    allergy_status: str | None = Field(default=None)  # no/yes/unknown
+    taking_no_medications: bool | None = Field(default=None)
 
     model_config = {"from_attributes": True}
 

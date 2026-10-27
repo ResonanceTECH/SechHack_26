@@ -89,3 +89,18 @@ async def change_role(
     )
     await db.commit()
     return {"data": {"id": str(prof.id), "role": user.role}, "request_id": getattr(request.state, "request_id", "")}
+
+from app.services.alert_rules.engine import get_rules, reset_rules_cache
+
+
+@admin_router.get('/alert-rules', status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, dependencies=[Depends(require_permission('employee:manage'))])
+async def list_alert_rules(request: Request, current_user: CurrentUser) -> dict:
+    rules = [r.__dict__ for r in get_rules()]
+    return {'data': {'items': rules, 'total': len(rules)}, 'request_id': getattr(request.state, 'request_id', '')}
+
+
+@admin_router.post('/alert-rules/reload', status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, dependencies=[Depends(require_permission('employee:manage'))])
+async def reload_alert_rules(request: Request, current_user: CurrentUser) -> dict:
+    reset_rules_cache()
+    rules = [r.__dict__ for r in get_rules()]
+    return {'data': {'items': rules, 'total': len(rules), 'reloaded': True}, 'request_id': getattr(request.state, 'request_id', '')}

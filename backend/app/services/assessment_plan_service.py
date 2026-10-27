@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import forbidden, not_found, validation_error
 from app.core.questionnaire_registry import get_definition
+from app.models.assessment_plan import AssessmentPlan
 from app.models.profile import PatientProfile, PractitionerProfile
 from app.models.diagnosis import PatientDiagnosis
 from app.repositories.assessment_plan_repository import AssessmentPlanRepository
@@ -121,6 +122,7 @@ class AssessmentPlanService:
     async def get_plan(self, db: AsyncSession, plan_id: str, current_user) -> dict:
         row = await self.repository.get_by_id(db, plan_id)
         if row is None:
+            from app.core.errors import not_found
             raise not_found("План оценки не найден")
         role = getattr(current_user, "role", None)
         if role == "patient":
@@ -130,6 +132,7 @@ class AssessmentPlanService:
         elif role != "super_admin":
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
+                from app.core.errors import not_found
                 raise not_found("Пациент не найден")
             p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
@@ -143,10 +146,12 @@ class AssessmentPlanService:
             raise forbidden()
         row = await self.repository.get_by_id(db, plan_id)
         if row is None:
+            from app.core.errors import not_found
             raise not_found("План оценки не найден")
         if role != "super_admin":
             patient_profile = await self._get_patient_profile(db, row.patient_id)
             if patient_profile is None:
+                from app.core.errors import not_found
                 raise not_found("Пациент не найден")
             p_clinics = await self._practitioner_clinic_ids(db, current_user)
             pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
@@ -158,7 +163,16 @@ class AssessmentPlanService:
         if "diagnosis_id" in payload:
             await self._validate_diagnosis(db, str(row.patient_id), payload.get("diagnosis_id"))
         old = {"questionnaire_code": row.questionnaire_code, "interval_days": row.interval_days, "enabled": row.enabled}
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="assessment_plan", entity_id=str(row.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=self._to_response(row),
+        )
         updated = await self.repository.update(db, plan_id, payload)
+        if updated is None:
+            from app.core.errors import not_found
+            raise not_found("Assessment plan not found")
         await audit_service.record(
             db, user_id=current_user.id, action="assessment_plan.update",
             entity_type="AssessmentPlan", entity_id=updated.id, old_values=old, new_values=payload, commit=True,
@@ -222,7 +236,22 @@ class AssessmentPlanService:
     async def list_patient_plans(self, db: AsyncSession, patient_id: str, current_user) -> dict:
         return await self.list_plans(db, current_user, patient_id)
 
-    async def patient_summary_assessment(self, db: AsyncSession, patient_id: str) -> dict:
+    async def patient_summary_assessment(self, db: AsyncSession, patient_id: str, current_user=None) -> dict:
+        # Service-level IDOR hardening: enforce clinic isolation when caller provided.
+        if current_user is not None:
+            role = getattr(current_user, "role", None)
+            if role != "super_admin" and role != "patient":
+                patient_profile = await self._get_patient_profile(db, patient_id)
+                if patient_profile is None:
+                    raise not_found("Пациент не найден")
+                p_clinics = await self._practitioner_clinic_ids(db, current_user)
+                pat_clinic = str(patient_profile.clinic_id) if patient_profile.clinic_id else None
+                if p_clinics and pat_clinic is not None and pat_clinic not in p_clinics:
+                    raise forbidden()
+            elif role == "patient":
+                own = await self._patient_profile_id(db, current_user)
+                if own is None or own != str(patient_id):
+                    raise forbidden()
         rows = await self.repository.list_by_patient(db, patient_id)
         active = [r for r in rows if r.enabled]
         today = date.today()

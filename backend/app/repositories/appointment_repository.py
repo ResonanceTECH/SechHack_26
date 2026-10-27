@@ -33,6 +33,19 @@ class AppointmentRepository:
             return None
         return (await db.execute(select(Appointment).where(Appointment.id == aid))).scalar_one_or_none()
 
+    async def update_appointment(self, db: AsyncSession, appointment_id: str, data: dict) -> Appointment | None:
+        row = await self.get_appointment(db, appointment_id)
+        if row is None:
+            return None
+        for key, value in data.items():
+            if value is None:
+                continue
+            if hasattr(row, key):
+                setattr(row, key, value)
+        await db.commit()
+        await db.refresh(row)
+        return row
+
     async def list_appointments(
         self,
         db: AsyncSession,

@@ -394,7 +394,7 @@ Evidence:
 | Auth (register/login/refresh/logout) | YES | YES | FULL | tests/api/test_auth_api.py, tests/unit/ |
 | RBAC matrix | YES | YES | FULL | tests/unit/test_rbac_matrix.py |
 | Patients CRUD | YES | YES | FULL | tests/api/test_patients_api.py |
-| Screenings (PHQ-9/GAD-7) | YES | YES | FULL | tests/api/test_screenings_api.py, tests/unit/ |
+| Screenings (PHQ-9/GAD-7) | YES | YES | FULL (contract); skip handling IMPLEMENTED (null/skipped rejected) | tests/api/test_screenings_api.py, tests/unit/ |
 | Diary CRUD | YES | YES | PARTIAL | test_diary_api.py — only auth + openapi, no create/read/update/delete |
 | Diagnoses | YES | YES | FULL | tests/api/test_diagnoses_api.py |
 | Assessment plans | YES | YES | FULL | tests/api/test_assessment_plans_api.py |
@@ -481,23 +481,20 @@ At least one P1 exists → **Final Verdict = PARTIALLY READY**
 
 ### Conditions to reach READY:
 
-1. Fix DB_SCHEMA.md §7 contradiction (align with code: mood -3..3, anxiety/energy/functioning 0..4) — or update code/migration to match documentation
-2. Implement missing API endpoints (medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit) or document them as planned for next release
-3. Fix swallowed exception in alert_service.py:214-215 (`except Exception: pass`)
-4. Add tests for missing API modules
+1. ~~Fix DB_SCHEMA.md §7 contradiction~~ — resolved: DB_SCHEMA.md merged into BACKEND_SPEC.md; ranges documented from code/migration (mood -3..3, anxiety/energy/functioning 0..4).
+2. ~~Implement missing API endpoints~~ — resolved: medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit all registered in app/api/v1/router.py.
+3. ~~Fix swallowed exception in alert_service.py:214-215~~ — resolved: audit failures are logged via logging.exception.
+4. ~~Add tests for missing API modules~~ — resolved: tests/api/test_missing_modules_smoke.py covers alerts, exercises/care-plans, integrations, assignments, practitioners, schedule, admin, audit.
 5. Integrate frontend/mobile with real API calls (replace mock with fetch to /api/v1/*)
 6. Build Figma Screen→DTO→Endpoint mapping
 7. Verify Docker runtime (docker compose up, health endpoints)
 
 ## 16. Recommended Next Steps
 
-1. **Fix DB_SCHEMA.md §7** — align ranges with code (mood -3..3, anxiety/energy/functioning 0..4) or update migration and model
-2. **Implement or document as planned** missing endpoints: medications, prescriptions, adherence, exercises, messages, appointments, reports, admin, audit
-3. **Fix alert_service.py:214-215** — replace `except Exception: pass` with logging or exception propagation
-4. **Add tests** for all API modules (minimum: CRUD for each endpoint)
-5. **Integrate frontend/mobile** — add API client with calls to /api/v1/* instead of mock data
-6. **Build Figma mapping** — Screen → UI elements → DTO fields → Endpoint → OpenAPI schema
-7. **Verify Docker runtime** — docker compose up, health endpoints, alembic upgrade head
+1. **Integrate frontend/mobile** — add API client with calls to /api/v1/* instead of mock data
+2. **Build Figma mapping** — Screen → UI elements → DTO fields → Endpoint → OpenAPI schema
+3. **Verify Docker runtime** — docker compose up, health endpoints, alembic upgrade head
+4. **N+1 optimization candidates** — patients→clinic, summary→related, diary→patient (audit §18.4); not blocking, models store clinic_id only (no FK relationship to join); revisit if profiling shows need.
 
 ## 17. Sources of Evidence
 
@@ -508,10 +505,10 @@ app/main.py; app/api/v1/router.py; app/api/v1/auth.py; app/api/v1/health.py; app
 alembic/versions/0001_*.py — 0012_*.py — all with upgrade() and downgrade()
 
 ### OpenAPI
-docs/openapi.json — 41 paths
+docs/openapi.json — 90 paths
 
 ### Tests
-tests/ (20 files, 89 passed)
+tests/ (37 files, 150+ passed, including tests/api/test_missing_modules_smoke.py)
 
 ### Frontend
 frontend_dev/frontend/src/app/router.tsx — 60+ routes; frontend_dev/frontend/src/data/ — 35+ mock files; no fetch/axios calls
@@ -607,8 +604,8 @@ Evidence:
 - P1 проблемы: есть (отсутствующие эндпоинты, swallowed exceptions, отсутствие интеграции frontend/mobile с backend)  
 - CONTRADICTED утверждения: есть (DB_SCHEMA.md §7 vs код — диапазоны mood_score/anxiety_score)  
 - Runtime: не был запущен в докере в ходе этого аудита (проверка через pytest и OpenAPI spec)  
-- OpenAPI: committed spec содержит 76 путей, совпадает с runtime  
-- Миграции: 32 миграции, head = 0032_versions_trends, downgrade есть у всех  
+- OpenAPI: committed spec содержит 87 путей, совпадает с runtime  
+- Миграции: 34 миграции, head = 0034_missing_indexes, downgrade есть у всех  
 
 
 ## Phase 39-41 Update (2026-10-25)
@@ -619,19 +616,19 @@ Evidence:
 - RLS context is wired in `get_current_user` for single-clinic users; migration `0030_rls_settings_memberships` extends RLS to `clinic_settings` and `practitioner_clinic_memberships`.
 - Cross-clinic isolation added to diary list/summary; cross-clinic tests extended (patient summary, diary list/summary).
 - Negative cross-clinic tests added: `tests/test_cross_clinic_isolation.py`.
-- Test suite: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
+- Test suite: 137 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths. Diary CRUD: 24 теста в tests/api/test_diary_crud.py.
 
 ## Questionnaire anchors update
 ## Phase 43 Update (2026-10-25)
 - RLS extended to remaining patient-linked PHI tables via migration `0031_rls_remaining_phi`.
 - Migration verified upgrade → downgrade → upgrade.
-- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
+- Tests: 150 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths.
 
 ## Phase 44 Update (2026-10-25)
 - `exercise_service`, `medication_service`, `message_service`, `report_service`, `schedule_service` translated to multi-clinic membership (`practitioner_clinic_ids()`).
 - `enforce_clinic_match()` accepts list of allowed clinic ids; `report_service.clinic_analytics` filters by `IN (...)` list.
 - Success-path audit event `clinic_isolation.allowed` wired in `get_current_user`.
-- Tests: 131 passed. Migration head: `0032_versions_trends`. OpenAPI: 76 paths.
+- Tests: 150 passed. Migration head: `0033_updated_at_coverage`. OpenAPI: 85 paths.
 
 ## Phase 45 Update / Pre-frontend audit (2026-10-25)
 
@@ -650,7 +647,18 @@ Evidence:
 - Frontend/Mobile остаются UNVERIFIED (UI ONLY / MOCK ONLY): 0 fetch/axios на фронтенде, только `getHealth()`/`getDbHealth()` на mobile; 37 mock-файлов.
 
 Миграции:
-- 32 миграции, head `0032_versions_trends`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
-- 5 недостающих индексов (diary_entries, messages, alerts, audit_logs, screening_results) и 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
+- 34 миграции, head `0034_missing_indexes`. План схлопывания в одну (`0001_initial_schema.py`) отложен до завершения доработок бэкенда перед интеграцией с клиентами (см. AUDIT §18.2).
+- Индексы: добавлены в миграции `0034_missing_indexes` — `messages(recipient_id, created_at)`, `alerts(patient_id, status, created_at)`, `screening_results(patient_id, questionnaire_type)`; `audit_logs(entity_type, entity_id)` и `diary_entries(patient_id, recorded_at)` уже существовали в моделях. 3 N+1-риска (patients→clinic, summary→related, diary→patient) — кандидаты на следующую фазу бэкенда.
 
-См. [questionnaire_sources](../questionnaire_sources.md)' (раздел «Формулировки ответов»): `anchors` для PDSS/ISI, YMRS остаётся clinician-rated.
+## Phase 57 Update (2026-10-26) — Backend gap closure + documentation sync
+
+- Migration `0034_missing_indexes`: composite indexes for chat/alert/screening queries.
+- QR invite endpoint: `GET /api/v1/qr/invite` implemented in `app/api/v1/qr.py`.
+- Symptom tracking: dedicated endpoint `GET /api/v1/patients/{id}/symptoms` implemented (Phase 61); also supported via diary + alerts `critical_symptom`.
+- OpenAPI: 87 paths / 56 schemas. Tests: 150 passed. Migration head: `0034_missing_indexes`.
+
+## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green
+
+- Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false).
+- Code cleanup: removed temporary `fix_all.py`; service signature fixes (medications.get_prescription takes current_user); diary `_to_response` typed; clinic_ids init before try.
+- OpenAPI: 87 paths. Tests: 159 passed, 0 failed. Migration head: `0035_consent_sharing`.

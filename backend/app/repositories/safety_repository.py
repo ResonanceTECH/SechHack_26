@@ -9,7 +9,7 @@ from app.models.safety import SafetyPlan, CrisisSignal
 
 
 class SafetyPlanRepository:
-    async def get_by_id(self, db: AsyncSession, plan_id: str):
+    async def get_by_id(self, db: AsyncSession, plan_id: str) -> "SafetyPlan | None":
         try:
             pid = uuid.UUID(str(plan_id))
         except ValueError:
@@ -75,7 +75,7 @@ class CrisisSignalRepository:
         await db.refresh(row)
         return row
 
-    async def get_by_id(self, db: AsyncSession, signal_id: str):
+    async def get_by_id(self, db: AsyncSession, signal_id: str) -> "CrisisSignal | None":
         try:
             sid = uuid.UUID(str(signal_id))
         except ValueError:

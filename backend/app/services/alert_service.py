@@ -53,9 +53,16 @@ class AlertService:
         answers = []
         if isinstance(answers_raw, list):
             if answers_raw and isinstance(answers_raw[0], dict):
-                answers = [int(x.get("value", 0)) for x in answers_raw]
+                for x in answers_raw:
+                    value = x.get("value", None)
+                    if value is None or x.get("skipped"):
+                        return []
+                    answers.append(int(value))
             else:
-                answers = [int(x) for x in answers_raw]
+                for x in answers_raw:
+                    if x is None:
+                        return []
+                    answers.append(int(x))
         score = int(screening.get("score", 0))
         is_critical = bool(screening.get("is_critical", False))
         critical_reason = screening.get("critical_reason")
@@ -78,19 +85,27 @@ class AlertService:
             ).scalar_one_or_none()
             return {str(profile.id)} if profile else set()
         if current_user.role in ("doctor", "psychologist"):
+            from app.services.clinic_isolation import practitioner_clinic_ids
             prac = (
                 await db.execute(select(PractitionerProfile).where(PractitionerProfile.user_id == current_user.id))
             ).scalar_one_or_none()
             if not prac:
                 return set()
+            p_clinics = await practitioner_clinic_ids(db, current_user)
             stmt = select(PatientAssignment.patient_id).join(
                 PatientProfile, PatientProfile.id == PatientAssignment.patient_id
             ).where(PatientAssignment.practitioner_id == prac.id)
-            if prac.clinic_id is not None:
-                stmt = stmt.where(PatientProfile.clinic_id == prac.clinic_id)
+            if p_clinics:
+                stmt = stmt.where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics]))
             rows = (await db.execute(stmt)).scalars().all()
             return {str(x) for x in rows}
-        return None
+        if current_user.role in ("coordinator", "clinic_admin"):
+            from app.services.clinic_isolation import practitioner_clinic_ids
+            p_clinics = await practitioner_clinic_ids(db, current_user)
+            if not p_clinics:
+                return None
+            rows = (await db.execute(select(PatientProfile.id).where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics])))).scalars().all()
+            return {str(x) for x in rows}
 
     async def _ensure_access(self, db, current_user, alert):
         accessible = await self._accessible_patient_ids(db, current_user)
@@ -189,6 +204,12 @@ class AlertService:
             return self._to_dict(alert)
         if status == alert.status:
             return self._to_dict(alert)
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="alert", entity_id=str(alert.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=self._to_dict(alert),
+        )
         if status not in self.TRANSITIONS.get(alert.status, set()):
             raise conflict("Недопустимый переход статуса алерта")
         if status == "resolved":

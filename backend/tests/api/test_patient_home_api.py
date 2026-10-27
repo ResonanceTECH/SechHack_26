@@ -33,3 +33,10 @@ async def test_patient_home_returns_aggregate(client: AsyncClient) -> None:
 async def test_patient_home_requires_auth(client: AsyncClient) -> None:
     resp = await client.get(f"/api/v1/patients/{PATIENT_PROFILE_ID}/home")
     assert resp.status_code in (401, 403)
+@pytest.mark.db
+async def test_patient_card_returns_aggregate(client: AsyncClient) -> None:
+    headers = {"Authorization": f"Bearer {PATIENT_TOKEN}"}
+    resp = await client.get(f"/api/v1/patients/{PATIENT_PROFILE_ID}/card", headers=headers)
+    assert resp.status_code == 200, resp.text
+    data = resp.json()["data"]
+    assert "id" in data

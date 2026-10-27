@@ -34,7 +34,7 @@
 |-------|------|----------|-------------|
 | POST | `/api/v1/integrations/events` | Создать исходящее событие интеграции (с проверкой идемпотентности по `idempotency_key`) | Bearer JWT |
 | GET | `/api/v1/integrations/events/{event_id}` | Получить событие по ID | Bearer JWT |
-| POST | `/api/v1/integrations/webhooks/{source}` | Принять входящее веб-хук от внешней системы (источник из пути) | Bearer JWT |
+| POST | `/api/v1/integrations/webhooks/{source}` | Принять входящее веб-хук от внешней системы (источник из пути) | нет (только Bearer JWT для остальных) |
 | POST | `/api/v1/integrations/events/{event_id}/deliver` | Доставить событие (через `IntegrationDeliveryService`) | Bearer JWT |
 | POST | `/api/v1/integrations/process-pending` | Обработать все pending-события | Bearer JWT |
 | GET | `/api/v1/integrations/health` | Health-check адаптеров (MIS + Emergency) | нет |

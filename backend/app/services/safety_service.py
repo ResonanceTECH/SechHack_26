@@ -73,11 +73,10 @@ class SafetyPlanService:
                 if own is None or str(own.id) != str(patient_id):
                     raise forbidden()
             return
-        prac = await self._practitioner_profile(db, current_user)
-        p_clinic = str(prac.clinic_id) if prac and prac.clinic_id else None
-        patient = await self._patient_profile(db, patient_id)
-        pat_clinic = str(patient.clinic_id) if patient and patient.clinic_id else None
-        if p_clinic is not None and pat_clinic is not None and p_clinic != pat_clinic:
+        from app.services.clinic_isolation import practitioner_clinic_ids, patient_clinic_id
+        p_clinics = await practitioner_clinic_ids(db, current_user)
+        pat_clinic = await patient_clinic_id(db, patient_id)
+        if pat_clinic is not None and p_clinics and pat_clinic not in p_clinics:
             raise forbidden()
 
 
@@ -109,6 +108,10 @@ class SafetyPlanService:
         return self._to_plan(row)
 
 
+    async def get_plan(self, db, plan_id, current_user):
+        role = getattr(current_user, "role", None)
+        if role not in ("doctor", "psychologist", "coordinator", "clinic_admin", "super_admin"):
+            raise forbidden()
         row = await self.repo.get_by_id(db, plan_id)
         if row is None:
             raise not_found("План безопасности не найден")
@@ -126,7 +129,16 @@ class SafetyPlanService:
             await self._clinic_check(db, current_user, patient_id)
             rows = await self.repo.list_by_patient(db, patient_id)
         else:
-            rows = await self.repo.list_all(db, None)
+            if role not in ("patient", "super_admin"):
+                from app.services.clinic_isolation import practitioner_clinic_ids
+                p_clinics = await practitioner_clinic_ids(db, current_user)
+                if not p_clinics:
+                    return {"items": [], "total": 0}
+                profs = (await db.execute(select(PatientProfile).where(PatientProfile.clinic_id.in_([uuid.UUID(c) for c in p_clinics])))).scalars().all()
+                patient_ids = [str(p.id) for p in profs]
+                rows = await self.repo.list_all(db, patient_ids)
+            else:
+                rows = await self.repo.list_all(db, None)
         return {"items": [self._to_plan(r) for r in rows], "total": len(rows)}
 
     async def update_plan(self, db, plan_id, data, current_user):
@@ -137,11 +149,18 @@ class SafetyPlanService:
         if row is None:
             raise not_found("План безопасности не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
+        old_snapshot = self._to_plan(row)
+        from app.services.version_service import EntityVersionService
+        await EntityVersionService().record(
+            db, entity_type="safety_plan", entity_id=str(row.id),
+            changed_by=str(current_user.id), reason="update", is_addendum=False,
+            snapshot=old_snapshot,
+        )
         update_data = {k: v for k, v in data.items() if v is not None}
         if "review_date" in data:
             update_data["review_date"] = data["review_date"]
         row = await self.repo.update(db, plan_id, update_data)
-        await audit_service.record(db, user_id=current_user.id, action="safety_plan.update", entity_type="SafetyPlan", entity_id=row.id, new_values=update_data, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="safety_plan.update", entity_type="SafetyPlan", entity_id=row.id, new_values=update_data, commit=True)  # type: ignore[union-attr]
         return self._to_plan(row)
 
     async def delete_plan(self, db, plan_id, current_user):
@@ -153,20 +172,8 @@ class SafetyPlanService:
             raise not_found("План безопасности не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         await self.repo.delete(db, plan_id)
-        await audit_service.record(db, user_id=current_user.id, action="safety_plan.delete", entity_type="SafetyPlan", entity_id=row.id, old_values={"id": str(row.id)}, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="safety_plan.delete", entity_type="SafetyPlan", entity_id=row.id, old_values={"id": str(row.id)}, commit=True)  # type: ignore[union-attr]
 
-
-        await self._clinic_check(db, current_user, data["patient_id"])
-        row = await self.crisis_repo.create(db, {
-            "patient_id": uuid.UUID(data["patient_id"]),
-            "type": data["type"],
-            "source": data["source"],
-            "message": data.get("message"),
-            "location": data.get("location"),
-            "triggered_by_screening_id": uuid.UUID(data["triggered_by_screening_id"]) if data.get("triggered_by_screening_id") else None,
-        })
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.create", entity_type="CrisisSignal", entity_id=row.id, new_values={"patient_id": data["patient_id"], "type": row.type}, commit=True)
-        return self._to_signal(row)
 
     async def create_signal(self, db, data, current_user):
         await self._clinic_check(db, current_user, data["patient_id"])
@@ -180,6 +187,7 @@ class SafetyPlanService:
         })
         await audit_service.record(db, user_id=current_user.id, action="crisis_signal.create", entity_type="CrisisSignal", entity_id=row.id, new_values={"patient_id": data["patient_id"], "type": row.type}, commit=True)
         return self._to_signal(row)
+
 
 
         role = getattr(current_user, "role", None)
@@ -218,7 +226,9 @@ class SafetyPlanService:
             raise not_found("Кризисный сигнал не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         row = await self.crisis_repo.update_status(db, signal_id, "acknowledged", acknowledged_by=current_user.id)
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)
+        if row is None:
+            raise not_found("Кризисный сигнал не найден")
+        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)  # type: ignore
         return self._to_signal(row)
 
     async def acknowledge_signal(self, db, signal_id, current_user):
@@ -230,7 +240,7 @@ class SafetyPlanService:
             raise not_found("Кризисный сигнал не найден")
         await self._clinic_check(db, current_user, str(row.patient_id))
         row = await self.crisis_repo.update_status(db, signal_id, "acknowledged", acknowledged_by=current_user.id)
-        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)
+        await audit_service.record(db, user_id=current_user.id, action="crisis_signal.acknowledge", entity_type="CrisisSignal", entity_id=row.id, commit=True)  # type: ignore
         return self._to_signal(row)
 
 

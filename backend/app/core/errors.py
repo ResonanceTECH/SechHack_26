@@ -40,8 +40,18 @@ def rate_limited(message: str = "Слишком много запросов, п�
     return ApiError(429, "rate_limited", message)
 
 
+def sms_code_invalid(message: str = "Некорректный SMS-код") -> ApiError:
+    return ApiError(401, "sms_code_invalid", message)
+
+
+
+
 def conflict(message: str = "Конфликт состояния ресурса") -> ApiError:
     return ApiError(409, "conflict", message)
+
+
+def sms_code_expired(message: str = "SMS-код истёк") -> ApiError:
+    return ApiError(401, "sms_code_expired", message)
 
 
 def internal_error(message: str = "Внутренняя ошибка сервера") -> ApiError:

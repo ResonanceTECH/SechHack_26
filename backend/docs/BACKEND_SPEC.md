@@ -76,7 +76,7 @@
 | `birth_date` | Date | Дата рождения |
 | `gender` | Enum | `male`, `female`, `other`, `prefer_not_to_say` |
 | `phone` | String (nullable) | Телефон |
-| `consent_personal_data` / `consent_medical_data` | Boolean NOT NULL | Согласия (152-ФЗ) |
+| `consent_personal_data` / `consent_medical_data` / `consent_data_sharing_with_doctor` | Boolean NOT NULL | Согласия (152-ФЗ) |
 | `consent_data_processing_at` | DateTime (nullable) | Дата проставления согласий |
 | `clinic_id` | UUID (FK → Clinic.id, nullable) | Привязанная клиника |
 | `created_at` / `updated_at` | DateTime | Метки времени |
@@ -379,7 +379,7 @@
 - `diary_entries.anxiety_score` — CHECK: `anxiety_score BETWEEN 0 AND 4`
 - `diary_entries.energy_score` — CHECK: `energy_score BETWEEN 0 AND 4`
 - `diary_entries.functioning_score` — CHECK: `functioning_score BETWEEN 0 AND 4`
-- `patient_profiles.consent_personal_data` / `consent_medical_data` — NOT NULL
+- `patient_profiles.consent_personal_data` / `consent_medical_data` / `consent_data_sharing_with_doctor` — NOT NULL
 - Частичный UNIQUE-индекс по (`device_id`, `recorded_at`, `patient_id`) в `diary_entries` (дедупликация офлайн-синхронизации)
 - Частичный UNIQUE-индекс по (`patient_id`) где `is_primary = true AND status = 'active'` в `patient_diagnoses`
 - UNIQUE(`coding_system`, `code`) в `diagnosis_references`
@@ -408,7 +408,7 @@
 | `patient-service` | `patients.py`, `patient_service.py`, `patient_repository.py` | ✅ Реализован | GET/POST patients, GET/PATCH patient/{id}, summary, diagnoses, screenings |
 | `screening-service` | `screenings.py`, `screening_service.py`, `screening_repository.py` | ✅ Реализован | screenings, patient screenings, questionnaires |
 | `alert-service` | `alerts.py`, `alert_service.py`, `alert_repository.py` | ✅ Реализован | alerts (GET, PUT, PATCH, safety-plan) |
-| `diary-service` | `diary.py`, `diary_repository.py`, `clinical.py` (DiaryEntry) | ✅ Реализован | diary (CRUD), bulk-sync, summary |
+| `diary-service` | `diary.py`, `diary_repository.py`, `clinical.py` (DiaryEntry) | ✅ Реализован | diary (CRUD), bulk-sync, summary, today; users (/me); qr (/invite) |
 | `diagnosis-service` | `diagnoses.py`, `diagnosis.py` | ✅ Реализован | diagnoses, icd10 (deprecated alias), patient diagnoses |
 | `assessment-plan` | `assessment_plans.py`, `care.py` (CarePlan) | ✅ Реализован | assessment-plans (CRUD) |
 | `safety-service` | `safety.py` | ✅ Реализован | safety/plans, safety/crisis-signals |
@@ -746,7 +746,7 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 
 Реализовано: `updated_at` для diary_entries (миграция 0020); correction endpoint PATCH /api/v1/adherence/{id} с audit logging; adherence correction metadata (миграция 0021). Patient assignment lifecycle (create/list/deactivate, audit events) реализован.## Этап 14. Строгая клиническая история (Partial)
 
-Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) выполнено: RLS расширен до всех patient-linked PHI-таблиц (миграция `0031_rls_remaining_phi`); AuditService wired в `get_current_user` (success-path `clinic_isolation.allowed`); multi-clinic rollout для exercise/medication/message/report/schedule (Phase 44). Остаётся: diary CRUD-тесты.
+Реализовано: таблицы `practitioner_name_history` (0022) и `patient_name_history` (0023) для истории смены ФИО; метаданные корректировки для `diary_entries` (0024); таблица `diary_entry_versions` (0025) для versioning/addendum; soft delete для `messages` (0026, retention policy); аудит-события безопасности (0027, `audit_events`); RLS-подготовка для `patient_profiles` (0028); multi-clinic membership для practitioners (0029, `practitioner_clinic_memberships`); clinic isolation усилен для alert/patient/summary/screening путей и patient/service queries; негативные cross-clinic тесты добавлены. Остальное (полный RLS rollout для остальных PHI-таблиц, wiring `AuditService` в denial/access paths) выполнено: RLS расширен до всех patient-linked PHI-таблиц (миграция `0031_rls_remaining_phi`); AuditService wired в `get_current_user` (success-path `clinic_isolation.allowed`); multi-clinic rollout для exercise/medication/message/report/schedule (Phase 44). Diary CRUD-тесты реализованы (`tests/api/test_diary_crud.py`). Следующий этап (Phase 52): универсальное versioning/addendum для клинических сущностей + retention policy (миграция 0032 `entity_versions`/`trend_snapshots` пока без API).
 
 Отдельная история ФИО, versioning/addendum, retention policy.
 
@@ -767,6 +767,18 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 | P1 — вовлечение | 8 | Уведомления и сообщения удерживают пациента |
 | P2 — для клиники | 9, 10 | Аналитика, аудит, ИБ-контур |
 | P2 — интеграция | 11, 12 | Подключение фронтенда и выпуск |
+
+### Clinical Semantic Caveat — Screening Skip Handling (IMPLEMENTED)
+
+**Status:** implemented (contract closed).  
+`ScreeningAnswer` now represents absence explicitly: `value: int | None` and `skipped: bool` (default `false`). A `null`/skipped answer is **not** scored as `0`; incomplete screening payloads are rejected with `validation_error` (422). `0` remains a valid PHQ-9/GAD-7 answer and is not equivalent to absence. PHQ-9 item 9 criticality is evaluated only on actual numeric answers; skipped item 9 requires a complete resubmission rather than silent `0`. Alert service no longer converts missing values with `int(value, default=0)`; incomplete screenings do not generate alerts.
+
+Invariants:
+- All questions are required for a completed PHQ-9/GAD-7 screening; skipped/`null` answers are rejected.
+- `0` is valid and can legitimately lower or keep total score low.
+- Absence/skip is representable in `ScreeningAnswer`, but is not accepted for scoring.
+- Scoring sums only submitted numeric values after validation; no skipped-item normalization exists because skipped items are rejected.
+- Alert service returns no alert for incomplete/skipped screenings.
 
 ### Clinical Architecture Update — Phase 11.0+ (2026-10-23)
 
@@ -863,7 +875,7 @@ Clinic isolation enforcement added to assignment, message and medication service
 ## Phase 33 Update
 Clinic isolation enforcement added to exercise service (create/update/compliance) and exercise router now passes current_user into service calls. Tests: 107 passed (Phase 44: exercise translated to multi-clinic `practitioner_clinic_ids()`).
 
-Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 51 schemas, matching committed `docs/openapi.json`. Database migration head: `0032_versions_trends`.
+Runtime verification: Docker backend rebuilt and restarted; `/health` returns 200; runtime OpenAPI has 76 paths and 56 schemas, matching committed `docs/openapi.json`. Database migration head: `0033_updated_at_coverage`.
 
 ## Phase 39-41 Update
 Added `audit_events` table/model and `record_security_event`; RLS preparation for `patient_profiles`; `practitioner_clinic_memberships` table/model; clinic-isolation helpers now support primary + membership clinic ids; `enforce_clinic_match()` accepts list of allowed clinics; membership-aware filtering applied to patient/service queries; negative cross-clinic tests added (`tests/test_cross_clinic_isolation.py`).
@@ -929,10 +941,125 @@ Provide real-time messaging, delivery acknowledgements, read receipts, and pract
 - `GET /api/v1/patients` now accepts optional `search` (alias `q`) query parameter for filtering by first name, last name, or email (case-insensitive `ILIKE`).
 - Applied across patient/doctor/coordinator RBAC branches in `PatientRepository.get_patients_by_user`.
 - OpenAPI updated (`docs/openapi.json`): `search` and `q` query params on `/api/v1/patients`.
-- Tests: 131 passed (existing suite).
+- Tests: 137 passed (existing suite).
 
 ## Phase 48 Update (2026-10-25) — Aggregated patient home endpoint
 
 - Added `GET /api/v1/patients/{id}/home` aggregating patient card, active alerts count, latest diary entry, and next scheduled appointment.
-- OpenAPI updated: 77 paths.
-- Tests: 131 passed.
+- OpenAPI updated: 79 paths.
+- Tests: 137 passed.
+
+
+## Phase 49 Update (2026-10-25) — Consent persistence and user profile endpoints
+
+- Added POST /api/v1/auth/consent: requires consent_personal_data and consent_medical_data; optional consent_data_sharing_with_doctor; writes consent_data_processing_at; audit logged.
+- Added GET /api/v1/users/{id} and PATCH /api/v1/users/{id}: self/admin access; updates User plus PatientProfile/PractitionerProfile fields.
+- Users router registered under /api/v1/users.
+- OpenAPI updated: 79 paths.
+- Tests: 137 passed.
+
+## Phase 50 Update (2026-10-25) — Home dashboard endpoint
+- Added GET /api/v1/home/dashboard aggregating role-aware home data.
+- Patient: current patient profile + patient home aggregate (alerts, latest diary, next appointment).
+- Doctor/psychologist: practitioner profile, patient/alert/appointment stats, active alert items, today appointments, recent patients.
+- Router registration: app/api/v1/home.py included under /api/v1/home.
+- OpenAPI updated: 80 paths.
+- Tests: 140 passed.
+
+## Phase 53 Update (2026-10-26) — Full updated_at coverage
+
+- Added `updated_at` to mutable entities: `patient_assignments`, `alerts`, `practitioner_profiles`, `practitioner_schedules`, `practitioner_schedule_exceptions` (migration 0033).
+- Migration verified: upgrade → downgrade → upgrade.
+- Tests: 150 passed.
+
+## Phase 52 Update (2026-10-26) — Entity versioning / addendum + retention
+
+- Added `GET/POST /api/v1/versions` for universal entity version snapshots (`entity_versions`, migration 0032).
+- `POST /api/v1/versions` records a version snapshot with optional `is_addendum` flag and reason.
+- Diary `PATCH /api/v1/diary/{id}` now records a pre-mutation snapshot into `entity_versions`.
+- OpenAPI updated: 85 paths.
+- Tests: 148 passed.
+
+## Phase 51 Update (2026-10-25) — Patient home today_tasks aggregate
+
+- Extended GET /api/v1/patients/{id}/home and GET /api/v1/home/dashboard (patient) with today_tasks[].
+- today_tasks includes check-in status, active medication tasks, and today appointment task.
+- OpenAPI updated: 80 paths.
+- Tests: 140 passed.
+## Phase 55 Update (2026-10-26) — Versioning snapshots for alerts, exercise assignments, assessment plans
+
+- Alert `PUT/PATCH /api/v1/alerts/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`alert`).
+- Exercise assignment `PUT /api/v1/exercises/{assignment_id}` now records a pre-mutation snapshot (entity_type=`exercise_assignment`).
+- Assessment plan `PUT /api/v1/assessment-plans/{plan_id}` now records a pre-mutation snapshot (entity_type=`assessment_plan`).
+- Care plans have no update endpoint; appointments and screenings have no update endpoints, so no snapshot hook added there.
+- OpenAPI unchanged (85 paths); tests: 150 passed. Migration head: `0033_updated_at_coverage`.
+
+## Phase 54 Update (2026-10-26) — Versioning snapshots for medications, prescriptions, safety plans, diagnoses
+
+- Medication `PUT /api/v1/medications/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`medication`).
+- Prescription `PUT /api/v1/prescriptions/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`prescription`).
+- Safety plan `PUT /api/v1/safety/plans/{id}` now records a pre-mutation snapshot into `entity_versions` (entity_type=`safety_plan`).
+- Diagnosis `PUT /api/v1/diagnoses/{id}` and `PUT /api/v1/diagnoses/icd10/{id}` now record a pre-mutation snapshot into `entity_versions` (entity_type=`diagnosis`).
+- Added `MedicationService.get_prescription()` helper.
+- OpenAPI unchanged (85 paths); tests: 150 passed. Migration head: `0033_updated_at_coverage`.
+
+## Phase 56 Update (2026-10-26) Update endpoints for care plans and appointments + versioning
+
+- Added PUT /api/v1/care-plans/{care_plan_id} (CarePlanUpdate) with pre-mutation snapshot (entity_type=care_plan).
+- Added PUT /api/v1/appointments/{appointment_id} (AppointmentUpdate) with pre-mutation snapshot (entity_type=appointment).
+- Screenings remain immutable (no update endpoint).
+- OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: 0033_updated_at_coverage.
+
+## Phase 57 Update (2026-10-26) — Backend gap closure + documentation sync
+
+- Migration `0034_missing_indexes`: added composite indexes for chat/alert/screening queries:
+  - `messages(recipient_id, created_at)` — chat history pagination (таблица `messages` не имеет колонки `conversation_id`; используется `recipient_id` как путь доступа)
+  - `alerts(patient_id, status, created_at)` — запросы дашборда алертов
+  - `screening_results(patient_id, questionnaire_type)` — история скринингов пациента
+  - Индексы `audit_logs(entity_type, entity_id)` и `diary_entries(patient_id, recorded_at)` уже существуют в моделях.
+  - Миграция верифицирована: upgrade → downgrade → upgrade.
+- QR invite endpoint: `GET /api/v1/qr/invite` уже реализован в `app/api/v1/qr.py` — возвращает `{code, qr_text, code_display}` для клиентской генерации QR. Отдельного API для сканирования QR не требуется (мобилка извлекает код клиентом и вызывает `/api/v1/auth/invite/verify`).
+- Symptom tracking: dedicated endpoint `GET /api/v1/patients/{id}/symptoms` added in Phase 61 (30-day diary-derived series). Symptoms also tracked via diary (`POST/GET /api/v1/diary`) and alerts type `critical_symptom` (`/api/v1/alerts`). Status: READY (no longer UI-only).
+- OpenAPI regenerated (87 paths). Tests: 150 passed. Migration head: `0034_missing_indexes`.
+
+## Phase 58 Update (2026-10-26) — Consent sharing + code cleanup + test green
+
+- Migration `0035_consent_sharing`: added `patient_profiles.consent_data_sharing_with_doctor` (Boolean NOT NULL, default false) — согласие на передачу данных лечащему врачу. Миграция верифицирована: upgrade → downgrade → upgrade.
+- Код: исправлены service-сигнатуры (medications.get_prescription принимает current_user), типизация `_to_response` в diary, clinic_ids инициализация до try в dependencies, удалён временный `fix_all.py`.
+- Тесты: 159 passed, 0 failed. Миграция head: `0035_consent_sharing`. OpenAPI: 87 paths.
+
+## Phase 59 Update (2026-10-26) — Backend risk closure (partial) + Docker rebuild
+
+- Redis-backed rate limiter: `app/core/ratelimit.py` now provides `RedisRateLimiter` (Redis sorted-set sliding window) with automatic in-memory fallback; `redis>=5.0` added to requirements.txt.
+- Request tracing: `app/main.py` request middleware now logs request-id, method, path, status code and latency (ms); X-Request-ID propagated in response header.
+- Docker: backend image rebuilt without cache and restarted; health `/health` → ok; OpenAPI 87 paths.
+- Remaining risks (service-level authorization/IDOR hardening) require larger refactors and are tracked as next phase. Multi-clinic RLS context and configurable alert rule engine are now closed in Phase 60.
+
+## Phase 60 Update (2026-10-26) — Multi-clinic RLS context + configurable alert engine + required DB URL
+
+- Migration `0036_rls_multi_clinic`: RLS policies migrated from single-clinic context (`app.current_clinic_id`) to list-based multi-clinic context (`app.current_clinic_ids`).
+  - Clinic-linked tables (`patient_profiles`, `clinic_settings`, `practitioner_clinic_memberships`) and patient-linked tables (`screening_results`, `diary_entries`, `care_plans`, `exercise_completions`, `alerts`, `prescriptions`, `safety_plans`, `crisis_signals`, `patient_assignments`, `assessment_plans`, `appointments`, `patient_name_history`, `messages`) now use `clinic_id = ANY(string_to_array(...))` / patient-in-clinic subquery.
+  - Downgrade restores previous single-clinic policies.
+- RLS context wiring: `app/api/dependencies.py` sets `app.current_clinic_ids` for doctor/psychologist/coordinator/clinic_admin (from `practitioner_clinic_ids`) and patient (single clinic); keeps `app.current_clinic_id` for single-clinic compatibility.
+- Configurable alert rule engine: `app/services/alert_rules/engine.py` loads rules from `ALERT_RULES_JSON` / `ALERT_RULES_FILE` settings/env; falls back to `DEFAULT_RULES` when unset or invalid JSON. No alert config file is required for startup.
+- Required DB URL: `database_url` is mandatory (`Field(..., min_length=1)`), no hardcoded credentials; `.env.example` documents `DATABASE_URL`.
+- Rate limiting: `RedisRateLimiter` in `app/core/ratelimit.py` (Redis sorted-set sliding window) with in-memory fallback.
+- Request tracing: middleware logs rid/method/path/status/latency and propagates `X-Request-ID`.
+- Tests: 159 passed. Migration head: `0036_rls_multi_clinic`. OpenAPI: 87 paths.
+
+## Phase 61 Update (2026-10-26) — Admin alert-rule endpoints, dedicated symptom-tracking endpoint, service-level IDOR hardening
+
+- Admin alert rules:
+  - `GET /api/v1/admin/alert-rules` — view configured alert rules (gated by `employee:manage`).
+  - `POST /api/v1/admin/alert-rules/reload` — reset rules cache and re-read configuration (gated by `employee:manage`).
+  - Both return the standard envelope `{data: {items, total, ...}, meta, error}`.
+- Dedicated symptom-tracking endpoint:
+  - `GET /api/v1/patients/{patient_id}/symptoms` — 30-day diary-derived series (mood/anxiety/energy/functioning/sleep) for mobile symptom screens.
+  - Reuses `DiaryRepository`; enforces clinic isolation for practitioners (`practitioner_clinic_ids` / `patient_clinic_id` / `enforce_clinic_match`) and own-patient check for patient role.
+- Service-level IDOR hardening:
+  - `AssessmentPlanService.patient_summary_assessment(db, patient_id, current_user=None)` now accepts optional `current_user` and enforces clinic isolation for practitioners and own-profile for patients when provided.
+  - `PatientService.get_patient_card` passes `current_user` through to assessment summary.
+- Tests: 164 passed (added `test_admin_alert_rules_api.py`, `test_patient_symptoms_api.py`).
+- Migration head: unchanged `0036_rls_multi_clinic`.
+- OpenAPI: 90 paths (regenerated).
+- Note: symptom tracking is no longer UI-only; dedicated endpoint above complements diary/alerts flow.

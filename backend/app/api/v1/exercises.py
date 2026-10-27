@@ -9,6 +9,8 @@ from app.api.dependencies import CurrentUser, DbSession, require_permission
 from app.schemas.common import EnvelopeResponse
 from app.schemas.exercise import (
     CarePlanCreate,
+    CarePlanUpdate,
+
     CarePlanResponse,
     CarePlanListResponse,
     ExerciseAssignmentCreate,
@@ -53,6 +55,17 @@ async def create_care_plan(body: CarePlanCreate, request: Request, current_user:
     except ValueError as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=str(e))
+    return {"data": CarePlanResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
+
+
+@care_plans_router.put("/{care_plan_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse,
+                      dependencies=[Depends(require_permission("exercise:assign"))])
+async def update_care_plan(care_plan_id: str, body: CarePlanUpdate, request: Request, current_user: CurrentUser, db: DbSession):
+    svc = _svc()
+    row = await svc.update_care_plan(db, care_plan_id, body.model_dump(exclude_unset=True), current_user)
+    if row is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Care plan not found")
     return {"data": CarePlanResponse.model_validate(row).model_dump(), "request_id": getattr(request.state, "request_id", "")}
 
 
