@@ -42,7 +42,10 @@ async def list_questionnaires(request: Request) -> dict:
 async def create_screening(body: ScreeningCreateRequest, current_user: CurrentUser, db: DbSession, request: Request) -> dict:
     service = _get_service()
     data = body.model_dump()
-    result = await service.create_screening(db, current_user, data)
+    try:
+        result = await service.create_screening(db, current_user, data)
+    except ValueError as e:
+        raise validation_error(str(e))
     return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 
 

@@ -394,7 +394,7 @@ Evidence:
 | Auth (register/login/refresh/logout) | YES | YES | FULL | tests/api/test_auth_api.py, tests/unit/ |
 | RBAC matrix | YES | YES | FULL | tests/unit/test_rbac_matrix.py |
 | Patients CRUD | YES | YES | FULL | tests/api/test_patients_api.py |
-| Screenings (PHQ-9/GAD-7) | YES | YES | FULL | tests/api/test_screenings_api.py, tests/unit/ |
+| Screenings (PHQ-9/GAD-7) | YES | YES | FULL (contract); skip handling IMPLEMENTED (null/skipped rejected) | tests/api/test_screenings_api.py, tests/unit/ |
 | Diary CRUD | YES | YES | PARTIAL | test_diary_api.py — only auth + openapi, no create/read/update/delete |
 | Diagnoses | YES | YES | FULL | tests/api/test_diagnoses_api.py |
 | Assessment plans | YES | YES | FULL | tests/api/test_assessment_plans_api.py |

@@ -49,7 +49,7 @@
 | CheckInAnxietyScreen | Шкала тревожности | Создание записи дневника | `/api/v1/diary` | READY (backend), MOCK (mobile) |
 | CheckInSleepScreen | Шкала сна | Создание записи дневника | `/api/v1/diary` | READY (backend), MOCK (mobile) |
 | DiaryScreen | Список записей, график | Просмотр дневника | `/api/v1/diary`, `/api/v1/diary/summary` | READY (backend), MOCK (mobile) |
-| QuestionnairesScreen | Список опросников | Прохождение скрининга | `/api/v1/questionnaires`, `/api/v1/screenings` | READY (backend), MOCK (mobile) |
+| QuestionnairesScreen | Список опросников | Прохождение скрининга | `/api/v1/questionnaires`, `/api/v1/screenings` | READY (backend), MOCK (mobile); CLINICAL SEMANTIC GAP: skip handling in rework |
 | SafetyPlanScreen | План безопасности | Редактирование плана | `/api/v1/safety/plans` | READY (backend), MOCK (mobile) |
 | MedicationScreen | Список лекарств | Просмотр назначений | `/api/v1/medications`, `/api/v1/prescriptions` | READY (backend), MOCK (mobile) |
 | ChatScreen | Чат с врачом | Отправка сообщений | `/api/v1/messages` | READY (backend), MOCK (mobile) |
@@ -756,6 +756,13 @@ server {
 1. Mobile home needs aggregated `today_tasks[]` in `PatientSummary` or new `GET /api/v1/patients/{id}/home`. (Resolved: home endpoint, Phase 48/51)
 2. Web patient card tabs require separate endpoints — use React Query caching. (Resolved: `GET /api/v1/patients/{id}/card`, Phase 52)
 3. Patient registry search param needs verification in OpenAPI spec. (Resolved: Phase 47)
+
+## CLINICAL SEMANTIC GAP — Screening Skip Handling (IMPLEMENTED)
+
+**Status:** IMPLEMENTED (contract closed).  
+**Affected screens/endpoints:** `QuestionnairesScreen`, `RegisterQuestionnaireQuestionScreen`, `POST /api/v1/screenings`, `GET /api/v1/questionnaires/{code}/...`.  
+**Owner:** backend screening-service + mobile registration flow.  
+**Resolution:** `ScreeningAnswer.value` is now `int | None` with `skipped: bool`. Incomplete/skipped payloads are rejected with `validation_error` (422); no silent `0` scoring. Alert service no longer converts missing values with `int(value, default=0)`. OpenAPI regenerated.
 
 **Известные ограничения (не блокируют интеграцию):**
 - Symptom tracking: dedicated endpoint не реализован. Симптомы отслеживаются через дневник (`/api/v1/diary`) и алерты `critical_symptom` (`/api/v1/alerts`). Статус: UI-only.

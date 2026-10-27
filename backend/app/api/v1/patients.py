@@ -6,6 +6,8 @@ from app.api.dependencies import CurrentUser, DbSession
 from app.schemas.common import EnvelopeResponse
 from app.schemas.patient import PatientListItem, PatientDetail, PatientUpdate
 
+from app.models.profile import PatientProfile
+from sqlalchemy import select
 from app.services.patient_service import PatientService
 
 
@@ -51,6 +53,23 @@ async def get_patient_home(
         "data": result,
         "request_id": getattr(request.state, "request_id", ""),
     }
+
+
+@router.patch("/me/medications", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})
+async def update_my_medications(
+    body: PatientUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> dict:
+    """Обновление самоотчёта пациента: текущие лекарства и аллергии."""
+    profile = (await db.execute(select(PatientProfile).where(PatientProfile.user_id == current_user.id))).scalar_one_or_none()
+    if profile is None:
+        from app.core.errors import not_found
+        raise not_found("Пациент не найден")
+    service = _get_patient_service(db)
+    result = await service.update_patient(db, str(profile.id), body, current_user)
+    return {"data": result, "request_id": getattr(request.state, "request_id", "")}
 
 
 @router.get("/{patient_id}", status_code=status.HTTP_200_OK, response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Пациент не найден"}})

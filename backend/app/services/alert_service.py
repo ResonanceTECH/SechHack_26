@@ -53,9 +53,16 @@ class AlertService:
         answers = []
         if isinstance(answers_raw, list):
             if answers_raw and isinstance(answers_raw[0], dict):
-                answers = [int(x.get("value", 0)) for x in answers_raw]
+                for x in answers_raw:
+                    value = x.get("value", None)
+                    if value is None or x.get("skipped"):
+                        return []
+                    answers.append(int(value))
             else:
-                answers = [int(x) for x in answers_raw]
+                for x in answers_raw:
+                    if x is None:
+                        return []
+                    answers.append(int(x))
         score = int(screening.get("score", 0))
         is_critical = bool(screening.get("is_critical", False))
         critical_reason = screening.get("critical_reason")

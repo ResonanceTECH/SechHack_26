@@ -7,12 +7,16 @@ class ScreeningService:
     """Сервис скринингов (backend-driven registry)."""
 
     @staticmethod
-    def _validate_answers(defn, answers: list[int]) -> None:
+    def _validate_answers(defn, answers: list) -> None:
         if not isinstance(answers, list) or len(answers) != len(defn.questions):
             raise ValueError(f"Ожидается {len(defn.questions)} ответов")
         allowed = {opt.value for opt in defn.answer_scale}
         for i, value in enumerate(answers):
-            if not isinstance(value, int) or isinstance(value, bool):
+            if isinstance(value, bool):
+                raise ValueError("Недопустимое значение ответа")
+            if value is None:
+                raise ValueError("Пропущенный ответ недопустим: все вопросы обязательны")
+            if not isinstance(value, int):
                 raise ValueError("Недопустимое значение ответа")
             q = defn.questions[i]
             if q.max_value is not None:
@@ -23,9 +27,9 @@ class ScreeningService:
                     raise ValueError("Недопустимое значение ответа")
 
     @staticmethod
-    def score(defn, answers: list[int]) -> int:
+    def score(defn, answers: list) -> int:
         ScreeningService._validate_answers(defn, answers)
-        return int(sum(answers))
+        return int(sum(value for value in answers if value is not None))
 
     async def create_screening(self, db, current_user, data: dict):
         from app.repositories.screening_repository import ScreeningRepository
@@ -44,10 +48,18 @@ class ScreeningService:
             raise ValueError("Неизвестный опросник или версия")
 
         answers_payload = data["answers"]
+        answers = []
         if answers_payload and isinstance(answers_payload[0], dict):
-            answers = [int(item["value"]) for item in answers_payload]
+            for item in answers_payload:
+                skipped = bool(item.get("skipped", False))
+                value = item.get("value", None)
+                if skipped or value is None:
+                    answers.append(None)
+                else:
+                    answers.append(int(value))
         else:
-            answers = [int(v) for v in answers_payload]
+            for v in answers_payload:
+                answers.append(None if v is None else int(v))
 
         score = self.score(defn, answers)
         severity = defn.severity_for(score)

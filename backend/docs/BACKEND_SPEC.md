@@ -768,6 +768,18 @@ RBAC: `schedule:read/write`, `clinic_settings:read/write`. Расчёт `is_avai
 | P2 — для клиники | 9, 10 | Аналитика, аудит, ИБ-контур |
 | P2 — интеграция | 11, 12 | Подключение фронтенда и выпуск |
 
+### Clinical Semantic Caveat — Screening Skip Handling (IMPLEMENTED)
+
+**Status:** implemented (contract closed).  
+`ScreeningAnswer` now represents absence explicitly: `value: int | None` and `skipped: bool` (default `false`). A `null`/skipped answer is **not** scored as `0`; incomplete screening payloads are rejected with `validation_error` (422). `0` remains a valid PHQ-9/GAD-7 answer and is not equivalent to absence. PHQ-9 item 9 criticality is evaluated only on actual numeric answers; skipped item 9 requires a complete resubmission rather than silent `0`. Alert service no longer converts missing values with `int(value, default=0)`; incomplete screenings do not generate alerts.
+
+Invariants:
+- All questions are required for a completed PHQ-9/GAD-7 screening; skipped/`null` answers are rejected.
+- `0` is valid and can legitimately lower or keep total score low.
+- Absence/skip is representable in `ScreeningAnswer`, but is not accepted for scoring.
+- Scoring sums only submitted numeric values after validation; no skipped-item normalization exists because skipped items are rejected.
+- Alert service returns no alert for incomplete/skipped screenings.
+
 ### Clinical Architecture Update — Phase 11.0+ (2026-10-23)
 
 - **Diagnosis Layer** (Phase 13/14): `PatientDiagnosis` реализован (ICD10/ICD11, partial unique index, API, RBAC, clinic isolation, audit logging). `DiagnosisReference` справочник МКБ-10/МКБ-11 (миграция 0007). Deprecated alias `/api/v1/icd10`.

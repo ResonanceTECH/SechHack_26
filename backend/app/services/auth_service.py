@@ -142,6 +142,20 @@ async def login_by_phone(
         raise unauthorized("Учётная запись заблокирована")
     else:
         user.phone_verified = True
+        profile = (
+            await session.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))
+        ).scalar_one_or_none()
+        if profile is None:
+            session.add(
+                PatientProfile(
+                    user_id=user.id,
+                    first_name="Пациент",
+                    last_name="Не указано",
+                    phone=phone,
+                    consent_personal_data=False,
+                    consent_medical_data=False,
+                )
+            )
     await audit_service.record(
         session,
         user_id=user.id,

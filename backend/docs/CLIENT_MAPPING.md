@@ -18,7 +18,7 @@
 ### SMS Flow
 
 1. `POST /api/v1/auth/sms/request` с телефоном.
-2. `POST /api/v1/auth/sms/verify` с телефоном + кодом.
+2. `POST /api/v1/auth/sms/verify` с телефоном + кодом. Ошибки: `sms_code_invalid`, `sms_code_expired` (401), `rate_limited` (429).
 3. Получаем JWT токены.
 
 ### Invite Flow
@@ -193,3 +193,8 @@
 ## Questionnaire anchors
 
 См. [questionnaire_sources](./questionnaire_sources.md) (раздел «Формулировки ответов»): `anchors` присутствуют для PDSS/ISI; YMRS использует только числовые метки.
+
+## Clinical semantic caveat — Screening skip handling (IMPLEMENTED)
+
+`POST /api/v1/screenings` accepts `answers[].value: int | null` and `answers[].skipped: bool`. A skipped/`null` answer is not scored as `0`; incomplete screening payloads are rejected with `validation_error` (422). Clients must not equate skipped/missing answers with `0`. `0` remains a valid answer. PHQ-9 item 9 criticality is evaluated only on actual numeric answers. Mobile registration UX must submit either a real answer for every question or handle the backend rejection of incomplete payloads.
+

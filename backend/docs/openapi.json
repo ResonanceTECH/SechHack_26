@@ -193,6 +193,41 @@
         }
       }
     },
+    "/api/v1/auth/phone/lookup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Phone Lookup",
+        "description": "Проверка телефона: существует ли пользователь и есть ли у него пациентский профиль.",
+        "operationId": "phone_lookup_api_v1_auth_phone_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsRequestModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации"
+          }
+        }
+      }
+    },
     "/api/v1/auth/sms/verify": {
       "post": {
         "tags": [
@@ -223,10 +258,13 @@
             }
           },
           "401": {
-            "description": "Некорректный SMS-код"
+            "description": "Некорректный или истёкший SMS-код"
           },
           "422": {
             "description": "Ошибка валидации"
+          },
+          "429": {
+            "description": "Превышено число попыток"
           }
         }
       }
@@ -815,6 +853,72 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован"
+          },
+          "404": {
+            "description": "Пациент не найден"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/patients/me/medications": {
+      "patch": {
+        "tags": [
+          "patients"
+        ],
+        "summary": "Update My Medications",
+        "description": "Обновление самоотчёта пациента: текущие лекарства и аллергии.",
+        "operationId": "update_my_medications_api_v1_patients_me_medications_patch",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientUpdate"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9285,6 +9389,42 @@
               }
             ],
             "title": "Gender"
+          },
+          "current_medications": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Medications"
+          },
+          "allergy_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allergy Status"
+          },
+          "taking_no_medications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taking No Medications"
           }
         },
         "type": "object",
@@ -9964,16 +10104,27 @@
             "title": "Question Id"
           },
           "value": {
-            "type": "integer",
-            "maximum": 8.0,
-            "minimum": 0.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 8.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Value"
+          },
+          "skipped": {
+            "type": "boolean",
+            "title": "Skipped",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "question_id",
-          "value"
+          "question_id"
         ],
         "title": "ScreeningAnswer"
       },

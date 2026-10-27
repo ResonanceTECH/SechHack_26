@@ -13,10 +13,11 @@ from sqlalchemy import select
 
 from app.api.dependencies import CurrentUser, DbSession
 from app.core.config import get_settings
-from app.core.errors import invalid_credentials, not_found, rate_limited
+from app.core.errors import invalid_credentials, not_found, rate_limited, sms_code_expired, sms_code_invalid
 from app.core.ratelimit import limiter
 from app.core.response import envelope
 from app.models.profile import PatientProfile, PractitionerProfile
+from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     ConsentRequest,
@@ -95,16 +96,38 @@ async def login(body: LoginRequest, request: Request, db: DbSession) -> dict:
 @router.post("/sms/request", response_model=EnvelopeResponse, responses={422: {"description": "Ошибка валидации"}})
 async def sms_request(body: SmsRequestModel, request: Request, db: DbSession) -> dict:
     """Запрос SMS-кода: 4 цифры, TTL 5 минут. Повтор — не чаще 1 раза/60 сек."""
-    await sms_service.request_code(db, body.phone)
-    # Ответ одинаков для любого номера — защита от перечисления (AUTH_PLAN.md §8)
-    return envelope(data={"status": "sent"}, request_id=_rid(request))
+    code = await sms_service.request_code(db, body.phone)
+    data = {"status": "sent"}
+    if get_settings().environment != "production":
+        data["dev_code"] = code
+    return envelope(data=data, request_id=_rid(request))
 
 
-@router.post("/sms/verify", response_model=EnvelopeResponse, responses={401: {"description": "Некорректный SMS-код"}, 422: {"description": "Ошибка валидации"}})
+@router.post("/phone/lookup", response_model=EnvelopeResponse, responses={422: {"description": "Ошибка валидации"}})
+async def phone_lookup(body: SmsRequestModel, request: Request, db: DbSession) -> dict:
+    """Проверка телефона: существует ли пользователь и есть ли у него пациентский профиль."""
+    user = (await db.execute(select(User).where(User.phone == body.phone))).scalar_one_or_none()
+    if user is None:
+        return envelope(data={"exists": False, "has_patient_profile": False}, request_id=_rid(request))
+    profile = (
+        await db.execute(select(PatientProfile).where(PatientProfile.user_id == user.id))
+    ).scalar_one_or_none()
+    return envelope(
+        data={"exists": True, "has_patient_profile": profile is not None},
+        request_id=_rid(request),
+    )
+
+
+@router.post("/sms/verify", response_model=EnvelopeResponse, responses={401: {"description": "Некорректный или истёкший SMS-код"}, 422: {"description": "Ошибка валидации"}, 429: {"description": "Превышено число попыток"}})
 async def sms_verify(body: SmsVerifyRequest, request: Request, db: DbSession) -> dict:
     """Проверка SMS-кода → регистрация/вход по телефону, возврат токенов."""
-    if not await sms_service.verify_code(db, body.phone, body.code):
-        raise invalid_credentials("Некорректный или просроченный SMS-код")
+    result = await sms_service.verify_code(db, body.phone, body.code)
+    if result == "expired":
+        raise sms_code_expired("SMS-код истёк или не найден")
+    if result == "locked":
+        raise rate_limited("Превышено число попыток ввода SMS-кода")
+    if result != "ok":
+        raise sms_code_invalid("Некорректный SMS-код")
     _, tokens = await auth_service.login_by_phone(db, phone=body.phone)
     return envelope(data=_tokens_data(tokens), request_id=_rid(request))
 
@@ -158,7 +181,7 @@ async def me(db: DbSession, user: CurrentUser, request: Request) -> dict:
         first_name=profile.first_name if profile else None,
         last_name=profile.last_name if profile else None,
     )
-    return envelope(data=MeResponse(user=brief).model_dump(mode="json"), request_id=_rid(request))
+    return envelope(data=MeResponse(user=brief, consent_personal_data=bool(profile.consent_personal_data) if profile else False, consent_medical_data=bool(profile.consent_medical_data) if profile else False, consent_data_sharing_with_doctor=bool(profile.consent_data_sharing_with_doctor) if profile else False, has_patient_profile=profile is not None).model_dump(mode="json"), request_id=_rid(request))
 
 
 @router.post("/consent", response_model=EnvelopeResponse, responses={401: {"description": "Не авторизован"}, 404: {"description": "Профиль не найден"}, 422: {"description": "Ошибка валидации"}})

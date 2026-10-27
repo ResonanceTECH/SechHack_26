@@ -81,7 +81,7 @@ session.commit()
 print(f"Created patient profile: {patient_profile.last_name} {patient_profile.first_name} (id={patient_profile.id})")
 
 # 10. Create Invite Code
-invite_code = InviteCode(code="RAV27400", practitioner_id=doctor_profile.id, clinic_id=clinic.id, expires_at=datetime.utcnow() + timedelta(days=30), is_multi_use=False, max_uses=1)
+invite_code = InviteCode(code="RAV27400", practitioner_id=doctor_profile.id, clinic_id=clinic.id, expires_at=datetime.utcnow() + timedelta(days=30), is_multi_use=True, max_uses=1000)
 session.add(invite_code)
 session.commit()
 print(f"Created invite code: {invite_code.code} (id={invite_code.id})")

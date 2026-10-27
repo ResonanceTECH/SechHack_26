@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 class ScreeningAnswer(BaseModel):
     question_id: str
-    value: int = Field(ge=0, le=8)
+    value: int | None = Field(default=None, ge=0, le=8)
+    skipped: bool = False
 
 
 class ScreeningCreateRequest(BaseModel):
