@@ -1,1 +1,17 @@
+# SechHack_26 — «Клинический компас»
+# Корневой файл зависимостей. Python-зависимости бэкенда вынесены в backend/requirements.txt.
+#
+# Установка (из корня SechHack_26):
+#   pip install -r requirements.txt
+#
+# Frontend (React/Vite) и mobile (Expo) используют npm:
+#   cd frontend && npm ci && npm run build
+#   cd mobile  && npm ci && npx tsc --noEmit
+#
+# Быстрый запуск всего стека (PostgreSQL + Redis + backend):
+#   docker compose up -d --build
+#
+# Development-зависимости фронтенда/мобилки ставятся через npm install (см. package.json).
+
 -r backend/requirements.txt
+

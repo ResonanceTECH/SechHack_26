@@ -4,17 +4,13 @@
 
 FROM python:3.11-slim
 
-# Внутренняя работа
 WORKDIR /app
 
-# Системные зависимости для asyncpg + psycopg удалены:
-# asyncpg/psycopg2-binary ставятся из wheels, поэтому apt-пакеты не нужны.
+# Копируем манифест зависимостей
+COPY backend/requirements.txt ./requirements.txt
 
-# Копируем конфигурацию проекта
-COPY backend/pyproject.toml backend/README.md ./
-
-# Устанавливаем package в editable-режиме (включает app пакет)
-RUN pip install --no-cache-dir -e .
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем исходный код приложения
 COPY backend/app ./app
@@ -23,8 +19,12 @@ COPY backend/app ./app
 COPY backend/alembic alembic
 COPY backend/alembic.ini alembic.ini
 
+# Entrypoint (миграции + старт)
+COPY backend/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Экспонируем порт
 EXPOSE 3001
 
 # Старт приложения
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3001"]
+CMD ["sh", "/app/entrypoint.sh"]

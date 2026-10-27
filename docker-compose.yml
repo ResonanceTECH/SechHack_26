@@ -1,8 +1,6 @@
 # Clinical Compass — docker-compose
 # Запуск: docker compose up -d (сначала создайте .env из .env.example)
 
-version: "3.9"
-
 services:
   # --- PostgreSQL (PostgreSQL 16) ---
   postgres:
@@ -82,9 +80,27 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3001/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     # Только для локальной разработки: смонтируйте код, чтобы перезагружать без rebuild
     # volumes:
     #   - ./backend/app:/app/app
+
+  # --- Frontend (React/Vite + nginx) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cc-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
