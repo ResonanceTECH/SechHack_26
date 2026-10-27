@@ -29,9 +29,9 @@ The backend `PatientSummary` must provide:
 - `last_name` → avatar initials
 - Today's tasks: medication dose status, pending questionnaires, upcoming appointment
 
-**Gap:** The Figma home screen shows a "today's check-in" card that requires mood/anxiety/sleep status. The backend `DiaryEntry` schema supports `mood`, `anxiety`, `sleep` fields. However, there is no single "today's summary" endpoint that aggregates all three check-in statuses in one call.
+**Update:** Aggregated patient home/summary endpoint is now available (Phase 48) via `GET /api/v1/patients/{id}/summary`; today's check-in status can be derived from `DiaryEntry` + summary. Individual endpoints remain as fallback.
 
-**Verdict:** PARTIAL — backend has individual endpoints but no aggregated "today" view.
+**Verdict:** RESOLVED — aggregated "today" view is available via patient summary endpoint.
 
 ---
 

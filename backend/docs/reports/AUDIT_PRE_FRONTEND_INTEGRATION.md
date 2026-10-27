@@ -1,6 +1,6 @@
 ## 0. Методология и статус верификации (повторный аудит)
 
-Перепроверено кодом: pytest=164 passed/3 warn; OpenAPI=90 paths/56 schemas; миграции=36 (head 0036_rls_multi_clinic); тесты=38 файлов; frontend API calls=0; mobile API calls=2 (health); mobile экраны=45; frontend страницы=60; mock файлы=37.
+Перепроверено кодом: pytest=164 passed/3 warn; OpenAPI=92 paths/56 schemas; миграции=37 (head 0037_patient_self_reported_meds); тесты=38 файлов; frontend API calls=0; mobile API calls: auth/client/patientMeds/screenings/storage modules (expanded); mobile экраны=45; frontend страницы=60; mock файлы=37.
 
 Верифицировано: Figma DTO field-by-field (отчёт FIGMA_DTO_VERIFICATION.md) — 45 mobile + 60 web экранов сопоставлены с backend endpoints; contract coverage ~95%; все 3 gaps закрыты (агрегированный home endpoint Phase 48, search param patients Phase 47, N+1 patient card Phase 51/52 card endpoint).
 
@@ -25,7 +25,7 @@
 | Backend tests | READY | 159 passed (pytest), включая 24 новых Diary CRUD-теста |
 | OpenAPI spec | READY | 87 путей, совпадает с runtime |
 | Frontend | BLOCKED | UI ONLY / MOCK ONLY, 0 fetch/axios вызовов, 37 mock-файлов |
-| Mobile | BLOCKED | Только `getHealth()` и `getDbHealth()` в API клиенте |
+| Mobile | PARTIAL | API-модули подключены (auth, patientMeds, screenings, storage), но экраны ещё частично MOCK |
 | Документация | READY | F.MD, CLIENT_MAPPING.md, BACKEND_SPEC.md, AUDIT и FIGMA актуализированы (миграция 0036, 159 тестов, 87 путей) |
 
 **Критический блокер:** Фронтенд и мобильное приложение не подключены к API вообще. При отключении mock-данных фронтенд полностью перестанет работать.
