@@ -13,9 +13,9 @@ import styles from './SuspendAccessPage.module.css'
 
 export function SuspendAccessPage() {
   const navigate = useNavigate()
-  const [patientId, setPatientId] = useState(suspendPatientOptions[0].id)
-  const [alertId, setAlertId] = useState(suspendAlertOptions[0].id)
-  const [reasonId, setReasonId] = useState(suspendReasonOptions[0].id)
+  const [patientId, setPatientId] = useState<string>(suspendPatientOptions[0].id)
+  const [alertId, setAlertId] = useState<string>(suspendAlertOptions[0].id)
+  const [reasonId, setReasonId] = useState<string>(suspendReasonOptions[0].id)
   const [confirmed, setConfirmed] = useState(false)
 
   function onSubmit(e: React.FormEvent) {

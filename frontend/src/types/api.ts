@@ -141,6 +141,37 @@ export interface PatientCardApiResponse {
   };
 }
 
+/** Backend GET /api/v1/alerts item. */
+export interface AlertResponse {
+  id: string;
+  patient_id: string;
+  type: string;
+  priority: string;
+  status: string;
+  title: string;
+  summary: string | null;
+  created_at: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
+export interface AlertListResponse {
+  alerts: AlertResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+/** Backend message item. */
+export interface MessageResponse {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  patient_id: string | null;
+  body: string;
+  is_read: boolean;
+  created_at: string | null;
+  read_at: string | null;
+}
 /** Backend GET /api/v1/home/dashboard response for patient role (mobile home screen). */
 export interface HomeDashboardPatientResponse {
   role: string;

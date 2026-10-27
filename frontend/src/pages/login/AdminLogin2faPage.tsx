@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/layouts/AuthLayout'
+import { login, isAuthenticated } from '@/lib/auth'
 import styles from './AdminLogin2faPage.module.css'
-
-const DEMO_APP_CODE = '418502'
 
 type LocationState = {
   email?: string
@@ -15,26 +14,35 @@ export function AdminLogin2faPage() {
   const state = (location.state as LocationState | null) ?? null
   const email = state?.email?.trim() || 'p.orlova@ravnovesie.ru'
 
-  const [appCode, setAppCode] = useState('4 1 8 5 0 2')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  function formatCode(raw: string) {
-    const digits = raw.replace(/\D/g, '').slice(0, 6)
-    return digits.split('').join(' ')
+  if (isAuthenticated()) {
+    return null // already authenticated, will redirect below
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    const digits = appCode.replace(/\D/g, '')
-    if (digits.length !== 6) {
-      setError('Введите 6-значный код из приложения')
+    setError(null)
+    if (!password) {
+      setError('Введите пароль')
       return
     }
-    if (digits !== DEMO_APP_CODE) {
-      setError('Неверный код из приложения')
-      return
+    setSubmitting(true)
+    try {
+      await login(email, password)
+      navigate('/admin/welcome', { replace: true })
+    } catch (err) {
+      setSubmitting(false)
+      if (err instanceof Error) {
+        setError(err.message || 'Неверный пароль')
+      } else {
+        setError('Неверный пароль')
+      }
+    } finally {
+      setSubmitting(false)
     }
-    navigate('/admin/welcome', { replace: true })
   }
 
   return (
@@ -47,25 +55,23 @@ export function AdminLogin2faPage() {
       }
     >
       <form className={styles.form} onSubmit={onSubmit} noValidate>
-        <h2 className={styles.title}>Подтвердите вход</h2>
+        <h2 className={styles.title}>Вход администратора</h2>
         <p className={styles.email}>{email}</p>
         <p className={styles.subtitle}>
-          Введите код из вашего приложения-аутентификатора. Это проверка входа,
-          а не выбор или назначение роли.
+          Введите пароль от вашего аккаунта администратора клиники.
         </p>
 
         <label className={styles.field}>
-          <span className={styles.label}>Код из приложения</span>
+          <span className={styles.label}>Пароль</span>
           <input
-            type="text"
+            type="password"
             className={styles.codeInput}
-            value={appCode}
-            placeholder="4 1 8 5 0 2"
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            value={password}
+            placeholder="••••••••••••"
+            autoComplete="current-password"
             autoFocus
             onChange={(e) => {
-              setAppCode(formatCode(e.target.value))
+              setPassword(e.target.value)
               setError(null)
             }}
           />
@@ -73,8 +79,8 @@ export function AdminLogin2faPage() {
 
         {error ? <p className={styles.error}>{error}</p> : null}
 
-        <button type="submit" className={styles.primaryBtn}>
-          Подтвердить вход
+        <button type="submit" className={styles.primaryBtn} disabled={submitting}>
+          {submitting ? 'Вход…' : 'Войти'}
         </button>
         <button
           type="button"
