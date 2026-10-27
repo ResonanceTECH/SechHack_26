@@ -17,6 +17,9 @@ import {
 } from "../components/ChatAttachSheet";
 import { ScreenGradient } from "../components/ScreenGradient";
 import { colors } from "../theme/colors";
+import { listMessages, sendMessage, markMessageRead } from "../api/messages";
+import type { MobileMessage } from "../api/messages";
+import { getHomeDashboard } from "../api/patient";
 
 type Props = {
   onBack?: () => void;
@@ -247,6 +250,15 @@ export function ChatScreen({
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [outgoing, setOutgoing] = useState<OutgoingMsg[]>([]);
+  const [history, setHistory] = useState<MobileMessage[]>([]);
+  const [recipientId, setRecipientId] = useState<string | null>(null);
+  useEffect(() => {
+    listMessages().then((items) => setHistory(items)).catch(() => {});
+    getHomeDashboard().then((d) => {
+      const rid = (d as any).practitioner_user_id ?? (d.patient_home as any)?.practitioner_user_id ?? null;
+      setRecipientId(rid);
+    }).catch(() => {});
+  }, []);
   /** long-press toggles icons: send ↔ mic; tap on mic starts recording */
   const [actionMode, setActionMode] = useState<"send" | "voice">("send");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -293,12 +305,20 @@ export function ChatScreen({
     );
   };
 
-  const sendText = () => {
+  const sendText = async () => {
     const body = text.trim();
     if (!body) return;
     if (!online) {
       onSendFailed?.();
       return;
+    }
+    if (recipientId) {
+      try {
+        const msg = await sendMessage(recipientId, body);
+        setHistory((prev) => [...prev, msg]);
+      } catch {
+        onSendFailed?.();
+      }
     }
     setOutgoing((prev) => [
       ...prev,
@@ -370,6 +390,19 @@ export function ChatScreen({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <Text style={styles.dateLabel}>История</Text>
+
+          {history.map((m) => (
+            <View key={m.id} style={styles.inRow}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>С</Text>
+              </View>
+              <View style={styles.inBubble}>
+                <Text style={styles.inText}>{m.body}</Text>
+              </View>
+            </View>
+          ))}
+
           <Text style={styles.dateLabel}>Сегодня</Text>
 
           <View style={styles.outWrap}>
