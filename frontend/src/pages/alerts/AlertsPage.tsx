@@ -25,6 +25,7 @@ export function AlertsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [updating, setUpdating] = useState(false)
+  const [safetySteps, setSafetySteps] = useState<string[]>([])
 
   useEffect(() => {
     setBreadcrumbs([{ label: 'Алерты' }])
@@ -50,6 +51,13 @@ export function AlertsPage() {
   }, [])
 
   const selected = alerts.find((a) => a.id === selectedId) ?? null
+
+  useEffect(() => {
+    if (!selectedId) { setSafetySteps([]); return }
+    get<{ alert_id: string; steps: string[] }>(`/api/v1/alerts/${selectedId}/safety-plan`)
+      .then((d) => setSafetySteps(d.steps ?? []))
+      .catch(() => setSafetySteps([]))
+  }, [selectedId])
 
   async function updateStatus(status: string) {
     if (!selected) return
@@ -134,6 +142,16 @@ export function AlertsPage() {
                   ? ` · закрыт ${new Date(selected.resolved_at).toLocaleString()}`
                   : ''}
               </p>
+              {safetySteps.length > 0 ? (
+                <div>
+                  <strong>План безопасности:</strong>
+                  <ul>
+                    {safetySteps.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
             <div className={styles.composer}>
               <div className={styles.inputRow}>

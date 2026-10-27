@@ -6,8 +6,7 @@ import {
   type BreadcrumbItem,
   type TopBarAction,
 } from '@/components/topbar/TopBar'
-import { getPatientCard } from '@/data/mockPatientCard'
-import { patients } from '@/data/mockPatients'
+import { get } from '@/lib/api'
 import styles from './DoctorLayout.module.css'
 
 const STORAGE_KEY = 'kk-sidebar-open'
@@ -39,10 +38,31 @@ export function DoctorLayout() {
   const { patientId } = useParams()
   const [open, setOpen] = useState(readOpen)
   const [pageCrumbs, setPageCrumbs] = useState<BreadcrumbItem[] | null>(null)
+  const [patientNames, setPatientNames] = useState<Record<string, string>>({})
 
   const setBreadcrumbs = useCallback((crumbs: BreadcrumbItem[] | null) => {
     setPageCrumbs(crumbs)
   }, [])
+
+  useEffect(() => {
+    if (!patientId || patientNames[patientId]) return
+    get<{ short_name?: string | null; full_name?: string | null; first_name?: string | null; last_name?: string | null }>(
+      `/api/v1/patients/${patientId}`,
+    )
+      .then((data) => {
+        const name =
+          data.short_name ??
+          data.full_name ??
+          [data.last_name, data.first_name].filter(Boolean).join(' ') ??
+          'Пациент'
+        setPatientNames((prev) => ({ ...prev, [patientId]: name }))
+      })
+      .catch(() => {
+        setPatientNames((prev) => ({ ...prev, [patientId]: 'Пациент' }))
+      })
+  }, [patientId, patientNames])
+
+  const shortNameFor = (id: string) => patientNames[id] ?? 'Пациент'
 
   const topBar = useMemo((): {
     title?: string
@@ -72,9 +92,7 @@ export function DoctorLayout() {
     const reportMatch = pathname.match(/^\/patients\/([^/]+)\/report\/?$/)
     if (reportMatch) {
       const id = patientId ?? reportMatch[1]
-      const card = getPatientCard(id)
-      const row = patients.find((p) => p.id === id)
-      const shortName = card?.shortName ?? row?.name ?? 'Пациент'
+      const shortName = shortNameFor(id)
       return {
         breadcrumbs: [
           { label: 'Пациенты', to: '/patients' },
@@ -87,9 +105,7 @@ export function DoctorLayout() {
     const planMatch = pathname.match(/^\/patients\/([^/]+)\/plan\/?$/)
     if (planMatch) {
       const id = patientId ?? planMatch[1]
-      const card = getPatientCard(id)
-      const row = patients.find((p) => p.id === id)
-      const shortName = card?.shortName ?? row?.name ?? 'Пациент'
+      const shortName = shortNameFor(id)
       return {
         breadcrumbs: [
           { label: 'Пациенты', to: '/patients' },
@@ -102,9 +118,7 @@ export function DoctorLayout() {
     const messagesMatch = pathname.match(/^\/patients\/([^/]+)\/messages\/?$/)
     if (messagesMatch) {
       const id = patientId ?? messagesMatch[1]
-      const card = getPatientCard(id)
-      const row = patients.find((p) => p.id === id)
-      const shortName = card?.shortName ?? row?.name ?? 'Пациент'
+      const shortName = shortNameFor(id)
       return {
         breadcrumbs: [
           { label: 'Пациенты', to: '/patients' },
@@ -117,9 +131,7 @@ export function DoctorLayout() {
     const match = pathname.match(/^\/patients\/([^/]+)/)
     if (match) {
       const id = patientId ?? match[1]
-      const card = getPatientCard(id)
-      const row = patients.find((p) => p.id === id)
-      const shortName = card?.shortName ?? row?.name ?? 'Пациент'
+      const shortName = shortNameFor(id)
       return {
         breadcrumbs: [
           { label: 'Пациенты', to: '/patients' },
@@ -144,7 +156,7 @@ export function DoctorLayout() {
     }
 
     return { title: titles[pathname] ?? 'Кабинет врача' }
-  }, [pathname, patientId, pageCrumbs])
+  }, [pathname, patientId, pageCrumbs, patientNames])
 
   useEffect(() => {
     try {
