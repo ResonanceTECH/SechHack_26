@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   IconLock,
@@ -9,9 +9,24 @@ import {
   IconSend,
   IconTick,
 } from '@/components/icons/NavIcons'
+import { get } from '@/lib/api'
 import { getTreatmentPlan } from '@/data/mockTreatmentPlan'
 import type { SafetyTone } from '@/types/doctor'
 import styles from './TreatmentPlanPage.module.css'
+
+interface CarePlanResponse {
+  id: string
+  patient_id: string
+  title: string
+  description: string | null
+  status: string
+  plan_payload: Record<string, unknown> | null
+}
+
+interface CarePlanListResponse {
+  items: CarePlanResponse[]
+  total: number
+}
 
 const safetyToneClass: Record<SafetyTone, string> = {
   critical: styles.safetyCritical,
@@ -22,9 +37,35 @@ const safetyToneClass: Record<SafetyTone, string> = {
 export function TreatmentPlanPage() {
   const navigate = useNavigate()
   const { patientId = '' } = useParams()
-  const plan = useMemo(() => getTreatmentPlan(patientId), [patientId])
-  const [consent, setConsent] = useState(plan?.consentDefault ?? false)
+  const [realPayload, setRealPayload] = useState<Record<string, unknown> | null>(null)
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    if (!patientId) { setLoading(false); return }
+    let cancelled = false
+    get<CarePlanListResponse>(`/api/v1/care-plans?patient_id=${patientId}`)
+      .then((data) => {
+        if (cancelled) return
+        const first = data.items?.[0]
+        if (first?.plan_payload) setRealPayload(first.plan_payload)
+      })
+      .catch(() => { /* keep mock fallback */ })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [patientId])
+
+  const plan = useMemo(() => {
+    if (realPayload) return realPayload as any
+    return getTreatmentPlan(patientId)
+  }, [realPayload, patientId])
+
+  const [consent, setConsent] = useState(false)
+
+  useEffect(() => {
+    setConsent((plan as any)?.consentDefault ?? false)
+  }, [plan])
+
+  if (loading) return <div className={styles.page}>Загрузка плана…</div>
   if (!plan) {
     return <Navigate to="/patients" replace />
   }
@@ -84,7 +125,7 @@ export function TreatmentPlanPage() {
             </div>
 
             <div className={styles.fields}>
-              {plan.drug.fields.map((field) => (
+              {plan.drug.fields.map((field: any) => (
                 <label key={field.id} className={styles.field}>
                   <span className={styles.fieldLabel}>{field.label}</span>
                   <span className={styles.fieldControl}>
@@ -125,7 +166,7 @@ export function TreatmentPlanPage() {
             </div>
 
             <ul className={styles.exerciseList}>
-              {plan.exercises.map((item) => (
+              {plan.exercises.map((item: any) => (
                 <li key={item.id} className={styles.exerciseItem}>
                   <span
                     className={`${styles.exerciseDot} ${
@@ -162,7 +203,7 @@ export function TreatmentPlanPage() {
               <h3 className={styles.cardTitle}>Рекомендации</h3>
             </div>
             <ul className={styles.recoList}>
-              {plan.recommendations.map((text) => (
+              {plan.recommendations.map((text: any) => (
                 <li key={text} className={styles.recoItem}>
                   <span className={styles.recoBullet} aria-hidden />
                   {text}
@@ -176,10 +217,10 @@ export function TreatmentPlanPage() {
           <section className={styles.sideCard} aria-label="Проверка безопасности">
             <h3 className={styles.sideTitle}>Проверка безопасности</h3>
             <div className={styles.safetyList}>
-              {plan.safety.map((item) => (
+              {plan.safety.map((item: any) => (
                 <article
                   key={item.id}
-                  className={`${styles.safetyItem} ${safetyToneClass[item.tone]}`}
+                  className={`${styles.safetyItem} ${safetyToneClass[item.tone as SafetyTone]}`}
                 >
                   <div className={styles.safetyTop}>
                     <span className={styles.safetyPriority}>

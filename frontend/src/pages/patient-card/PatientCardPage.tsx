@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import {
   IconCalendar,
@@ -11,15 +11,10 @@ import {
   IconPlus,
 } from '@/components/icons/NavIcons'
 import { RequestQuestionnaireModal } from '@/components/RequestQuestionnaireModal/RequestQuestionnaireModal'
-import { getPatientCard } from '@/data/mockPatientCard'
-import { getPatientAccessLog } from '@/data/mockAccessLog'
-import { getPatientDiary } from '@/data/mockDiary'
-import { getPatientMedications } from '@/data/mockPatientMedications'
-import { getPatientProgram } from '@/data/mockProgram'
-import { getPatientQuestionnaires } from '@/data/mockQuestionnaires'
-import { getPatientVisits } from '@/data/mockVisits'
+import { get } from '@/lib/api'
+import type { PatientCardApiResponse } from '@/types/api'
 import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
-import type { PatientCardTab } from '@/types/doctor'
+import type { PatientCard, PatientCardTab } from '@/types/doctor'
 import { AccessTab } from './widgets/AccessTab'
 import { DiaryChart } from './widgets/DiaryChart'
 import { DiaryTab } from './widgets/DiaryTab'
@@ -52,19 +47,108 @@ export function PatientCardPage() {
   const navigate = useNavigate()
   const { setBreadcrumbs } = useOutletContext<DoctorOutletContext>()
   const { patientId = '' } = useParams()
-  const card = useMemo(() => getPatientCard(patientId), [patientId])
-  const questionnaires = useMemo(
-    () => getPatientQuestionnaires(patientId),
-    [patientId],
-  )
-  const diary = useMemo(() => getPatientDiary(patientId), [patientId])
-  const program = useMemo(() => getPatientProgram(patientId), [patientId])
-  const medications = useMemo(
-    () => getPatientMedications(patientId),
-    [patientId],
-  )
-  const visits = useMemo(() => getPatientVisits(patientId), [patientId])
-  const accessLog = useMemo(() => getPatientAccessLog(patientId), [patientId])
+  const [card, setCard] = useState<PatientCard | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!patientId) return
+    setLoading(true)
+    setError(null)
+    get<PatientCardApiResponse>(`/api/v1/patients/${patientId}/card`)
+      .then((data) => {
+        // Map backend response (snake_case) to PatientCard (camelCase)
+        const apiCard: PatientCard = {
+          id: data.id,
+          fullName: data.full_name ?? data.short_name ?? '',
+          shortName: data.short_name ?? data.full_name ?? '',
+          initials: data.initials ?? '',
+          age: data.age ?? 0,
+          diagnosisCode: data.diagnosis_code ?? '',
+          inProgramSince: data.in_program_since ?? '',
+          leadDoctor: data.lead_doctor ?? '',
+          badges: (data.badges ?? []).map((b) => ({
+            id: b.id,
+            label: b.label,
+            tone: b.tone as any,
+            withCalendar: b.with_calendar,
+          })),
+          alert: data.alert
+            ? {
+                id: data.alert.id,
+                priorityLabel: data.alert.priority_label,
+                title: data.alert.title,
+                body: data.alert.body,
+                cta: data.alert.cta,
+              }
+            : null,
+          diary: {
+            title: data.diary?.title ?? 'Дневник',
+            footnote: data.diary?.footnote ?? '',
+            points: (data.diary?.points ?? []).map((p) => ({
+              day: p.day,
+              mood: p.mood,
+              anxiety: p.anxiety,
+              sleep: p.sleep,
+              worsenZone: p.worsen_zone,
+              gap: p.gap,
+            })),
+          },
+          questionnaires: (data.questionnaires ?? []).map((q) => ({
+            id: q.id,
+            code: q.code,
+            score: q.score,
+            max: q.max,
+            previous: q.previous,
+            trend: q.trend,
+            trendLabel: q.trend_label,
+            dates: q.dates as [string, string],
+            bars: q.bars as any,
+            note: q.note,
+          })),
+          program: {
+            title: data.program?.title ?? 'Программа',
+            weekProgress: data.program?.week_progress ?? 0,
+            weekLabel: data.program?.week_label ?? '',
+            tasks: (data.program?.tasks ?? []).map((t) => ({
+              id: t.id,
+              title: t.title,
+              status: t.status as any,
+              statusLabel: t.status_label,
+              progressLabel: t.progress_label,
+            })),
+          },
+          medication: data.medication
+            ? {
+                id: data.medication.name,
+                name: data.medication.name,
+                dose: data.medication.dose,
+                schedule: data.medication.schedule,
+                adherence: data.medication.adherence,
+                sideEffects: data.medication.side_effects,
+                warnings: data.medication.warnings,
+                contourLabel: data.medication.contour_label,
+              }
+            : null,
+          summary: {
+            title: data.summary?.title ?? 'Сводка',
+            body: data.summary?.body ?? '',
+            basedOn: data.summary?.based_on ?? '',
+            decisionNote: data.summary?.decision_note ?? '',
+          },
+        }
+        setCard(apiCard)
+      })
+      .catch((e) => setError(e?.message ?? 'Ошибка загрузки'))
+      .finally(() => setLoading(false))
+  }, [patientId])
+
+  const questionnaires: any = null
+  const diary: any = null
+  const program: any = null
+  const medications: any = null
+  const visits: any = null
+  const accessLog: any = null
   const [tab, setTab] = useState<PatientCardTab>('overview')
   const [requestOpen, setRequestOpen] = useState(false)
   const [questionnaireResultOpen, setQuestionnaireResultOpen] = useState(false)
@@ -103,6 +187,12 @@ export function PatientCardPage() {
     return () => setBreadcrumbs(null)
   }, [card, tab, questionnaireResultOpen, setBreadcrumbs])
 
+  if (loading) {
+    return <div className={styles.page}>Загрузка...</div>
+  }
+  if (error) {
+    return <div className={styles.page}>Ошибка: {error}</div>
+  }
   if (!card) {
     return <Navigate to="/patients" replace />
   }

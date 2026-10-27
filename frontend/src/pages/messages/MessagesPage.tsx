@@ -1,183 +1,116 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  Navigate,
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from 'react-router-dom'
-import { IconCall, IconSend } from '@/components/icons/NavIcons'
-import {
-  dialogList,
-  getChatThread,
-  getDialogByPatientId,
-} from '@/data/mockMessages'
+import { useEffect, useState } from 'react'
+import { useOutletContext, useParams } from 'react-router-dom'
+import { get, patch, post } from '@/lib/api'
 import type { DoctorOutletContext } from '@/layouts/DoctorLayout'
+import type { MessageResponse } from '@/types/api'
 import styles from './MessagesPage.module.css'
 
-const avatarClass: Record<string, string> = {
-  rose: styles.avRose,
-  amber: styles.avAmber,
-  blue: styles.avBlue,
-  green: styles.avGreen,
-  violet: styles.avViolet,
-  teal: styles.avTeal,
+interface MessageListResponse {
+  items: MessageResponse[]
+  total: number
 }
 
 export function MessagesPage() {
   const { patientId = '' } = useParams()
-  const navigate = useNavigate()
   const { setBreadcrumbs } = useOutletContext<DoctorOutletContext>()
+  const [messages, setMessages] = useState<MessageResponse[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [recipientId, setRecipientId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
-
-  const dialog = useMemo(() => getDialogByPatientId(patientId), [patientId])
-  const thread = useMemo(() => getChatThread(patientId), [patientId])
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    if (!thread) return
-    setBreadcrumbs([
-      { label: 'Пациенты', to: '/patients' },
-      { label: thread.patientFullName, to: `/patients/${patientId}` },
-      { label: 'Сообщения' },
-    ])
+    setBreadcrumbs([{ label: 'Сообщения' }])
     return () => setBreadcrumbs(null)
-  }, [thread, patientId, setBreadcrumbs])
+  }, [setBreadcrumbs])
+
+  async function load() {
+    if (!patientId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const [msgData, patientData] = await Promise.all([
+        get<MessageListResponse>(`/api/v1/messages?patient_id=${patientId}`),
+        get<{ user_id?: string }>(`/api/v1/patients/${patientId}`),
+      ])
+      setMessages(msgData.items ?? [])
+      setRecipientId(patientData.user_id ?? null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось загрузить сообщения')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    setDraft('')
+    load()
   }, [patientId])
 
-  if (!patientId || !dialog || !thread) {
-    return <Navigate to={`/patients/${dialogList[0]?.patientId}/messages`} replace />
+  async function markRead(id: string) {
+    try {
+      await patch(`/api/v1/messages/${id}/read`)
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, is_read: true } : m)))
+    } catch {
+      // ignore
+    }
   }
+
+  async function send() {
+    if (!recipientId || !draft.trim()) return
+    setSending(true)
+    try {
+      const res = await post<{ id: string; body: string; created_at?: string | null; is_read: boolean; sender_id: string; recipient_id: string; patient_id?: string | null }>(
+        '/api/v1/messages',
+        { recipient_id: recipientId, patient_id: patientId, body: draft.trim() },
+      )
+      setMessages((prev) => [...prev, res as unknown as MessageResponse])
+      setDraft('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось отправить сообщение')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (loading) return <div className={styles.page}>Загрузка сообщений…</div>
+  if (error) return <div className={styles.page}><p>{error}</p><button onClick={load}>Повторить</button></div>
+  if (messages.length === 0) return <div className={styles.page}>Сообщений нет</div>
 
   return (
     <div className={styles.page}>
-      <aside className={styles.dialogs} aria-label="Диалоги">
-        <h2 className={styles.dialogsTitle}>Диалоги</h2>
-        <ul className={styles.dialogList}>
-          {dialogList.map((item) => {
-            const active = item.patientId === patientId
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className={active ? styles.dialogActive : styles.dialog}
-                  onClick={() => navigate(`/patients/${item.patientId}/messages`)}
-                >
-                  <div
-                    className={`${styles.avatar} ${avatarClass[item.avatarTone]}`}
-                    aria-hidden
-                  >
-                    {item.initials}
-                  </div>
-                  <div className={styles.dialogBody}>
-                    <div className={styles.dialogTop}>
-                      <span className={styles.dialogName}>
-                        {item.patientShortName}
-                      </span>
-                      <span className={styles.dialogTime}>{item.timeLabel}</span>
-                    </div>
-                    <div className={styles.dialogBottom}>
-                      <p className={styles.dialogPreview}>{item.preview}</p>
-                      {item.unread ? (
-                        <span className={styles.unread}>{item.unread}</span>
-                      ) : null}
-                    </div>
-                  </div>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      </aside>
-
       <section className={styles.chat} aria-label="Переписка">
-        <header className={styles.chatHead}>
-          <div className={styles.chatHeadMain}>
-            <h3 className={styles.chatName}>{thread.patientFullName}</h3>
-            <p className={styles.chatSub}>{thread.subtitle}</p>
-          </div>
-          <div className={styles.chatActions}>
-            <button type="button" className={styles.btnGhost}>
-              Запросить опросник
-            </button>
-            <button type="button" className={styles.btnCall}>
-              <IconCall aria-hidden />
-              Позвонить
-            </button>
-          </div>
-        </header>
-
         <div className={styles.feed}>
-          {thread.messages.map((msg) => {
-            if (msg.kind === 'system') {
-              return (
-                <div key={msg.id} className={styles.systemCard}>
-                  <p className={styles.systemText}>{msg.text}</p>
-                  <button
-                    type="button"
-                    className={styles.systemCta}
-                    onClick={() => navigate(msg.ctaTo)}
-                  >
-                    {msg.ctaLabel}
-                  </button>
-                </div>
-              )
-            }
-
-            if (msg.kind === 'incoming') {
-              return (
-                <div key={msg.id} className={styles.incomingBlock}>
-                  <div className={styles.bubbleIn}>{msg.text}</div>
-                  {msg.photo ? (
-                    <div className={styles.photo} aria-label="Фото вложения" />
-                  ) : null}
-                </div>
-              )
-            }
-
-            return (
-              <div key={msg.id} className={styles.outgoingBlock}>
-                <div className={styles.bubbleOut}>{msg.text}</div>
-              </div>
-            )
-          })}
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={m.is_read ? styles.incomingBlock : styles.outgoingBlock}
+              onClick={() => !m.is_read && markRead(m.id)}
+            >
+              <div className={m.is_read ? styles.bubbleIn : styles.bubbleOut}>{m.body}</div>
+              <small>{m.created_at ? new Date(m.created_at).toLocaleString() : ''}</small>
+            </div>
+          ))}
         </div>
-
         <div className={styles.composer}>
-          <div className={styles.quickRow}>
-            {thread.quickReplies.map((label) => (
-              <button
-                key={label}
-                type="button"
-                className={styles.quick}
-                onClick={() => setDraft(label)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
           <div className={styles.inputRow}>
             <input
               type="text"
               className={styles.input}
-              placeholder="Ответ пациенту..."
+              placeholder="Сообщение пациенту..."
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              aria-label="Ответ пациенту"
+              aria-label="Сообщение пациенту"
             />
             <button
               type="button"
               className={styles.send}
-              aria-label="Отправить"
-              disabled={!draft.trim()}
+              disabled={sending || !draft.trim() || !recipientId}
+              onClick={send}
             >
-              <IconSend aria-hidden />
+              Отправить
             </button>
           </div>
-
-          <p className={styles.footerNote}>{thread.footerNote}</p>
         </div>
       </section>
     </div>
