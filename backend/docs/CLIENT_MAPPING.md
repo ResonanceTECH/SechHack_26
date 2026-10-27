@@ -125,6 +125,27 @@
 | Exercise complete | `/api/v1/exercises/{id}/complete` | POST | `ExerciseCompletionCreate` | `ExerciseCompletion` | patient | READY |
 | Exercise compliance | `/api/v1/exercises/{id}/compliance` | GET | — | `ComplianceResponse` | doctor/psychologist | READY |
 
+### Frontend Connection Status (Web — React+Vite)
+
+| Screen | File | API Call | Endpoint | Method | Status |
+|--------|------|----------|----------|--------|--------|
+| Login | `frontend_dev/frontend/src/pages/login/LoginPage.tsx` | `login()` → `request()` | `/api/v1/auth/login` | POST | REAL API |
+| Patients list | `frontend_dev/frontend/src/pages/patients/PatientsPage.tsx` | `get<PatientListItem[]>()` | `/api/v1/patients` | GET | REAL API |
+| Dashboard | `frontend_dev/frontend/src/pages/dashboard/DashboardPage.tsx` | `get<DashboardResponse>()` | `/api/v1/home/dashboard` | GET | REAL API |
+| Profile | `frontend_dev/frontend/src/pages/profile/ProfilePage.tsx` | mock (`@/data/mockDoctor`) | — | — | MOCK ONLY |
+| Patient Card | `frontend_dev/frontend/src/pages/patient-card/PatientCardPage.tsx` | mock | — | — | MOCK ONLY |
+| Pre-visit Report | `frontend_dev/frontend/src/pages/pre-visit-report/PreVisitReportPage.tsx` | mock | — | — | MOCK ONLY |
+| Alerts | `frontend_dev/frontend/src/pages/alerts/` | mock | — | — | MOCK ONLY |
+| Medications | `frontend_dev/frontend/src/pages/medications/` | mock | — | — | MOCK ONLY |
+| Messages | `frontend_dev/frontend/src/pages/messages/` | mock | — | — | MOCK ONLY |
+| Exercises | `frontend_dev/frontend/src/pages/exercises/` | mock | — | — | MOCK ONLY |
+| Register | `frontend_dev/frontend/src/pages/register/` | mock | — | — | MOCK ONLY |
+| Invite | `frontend_dev/frontend/src/pages/invite/` | mock | — | — | MOCK ONLY |
+| Admin (all) | `frontend_dev/frontend/src/pages/admin/` | mock | — | — | MOCK ONLY |
+| Connect Clinic | `frontend_dev/frontend/src/pages/connect-clinic/` | mock | — | — | MOCK ONLY |
+| Treatment Plan | `frontend_dev/frontend/src/pages/treatment-plan/` | mock | — | — | MOCK ONLY |
+| Scenarios | `frontend_dev/frontend/src/pages/scenarios/` | mock | — | — | MOCK ONLY |
+
 ### Partial / Blocked (Frontend)
 
 | Screen/Feature | Status | Reason |
@@ -135,6 +156,7 @@
 | Mobile offline sync UI | PARTIAL | backend bulk-sync ready |
 | Chat / messaging | PARTIAL | `/api/v1/messages` (list/create/read-state), SLA availability `/api/v1/messages/sla/{practitioner_id}` (GET) |
 | Push notifications | PARTIAL | backend events planned, delivery pending |
+| Frontend mock removal | IN PROGRESS | 3 of ~37 screens connected to real API; 34 mock files remain |
 
 ## 4.5 Schedule / Availability
 

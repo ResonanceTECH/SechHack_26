@@ -3,7 +3,7 @@
 > Документ ведётся в процессе подключения клиентов (React+Vite web, React Native+Expo mobile) к реальному backend API.
 > Источник истины по контрактам: `SechHack_26/backend` (код + миграции + `GET /openapi.json`), `docs/BACKEND_SPEC.md`, `docs/CLIENT_MAPPING.md`.
 
-**Статус:** Backend готов (миграции head `0036_rls_multi_clinic`, 164 теста зелёные, OpenAPI 90 путей/56 схем). Клиенты пока на mock/UI-only: frontend 37 mock-файлов, 0 реальных вызовов; mobile API-клиент содержит только `getHealth`/`getDbHealth`.
+**Статус:** Backend готов (миграции head `0037_patient_self_reported_meds`, 164 теста зелёные, OpenAPI 92 путей/56 схем). Фронтенд частично подключён: реализован API-слой (`src/lib/api.ts`, `src/lib/auth.ts`, `src/types/api.ts`), 3 экрана используют реальные API (Login, Patients, Dashboard), остальные 34 mock-файла ещё на моках. Mobile API-клиент содержит `getHealth`/`getDbHealth` plus auth modules.
 
 ---
 

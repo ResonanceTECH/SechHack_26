@@ -52,7 +52,7 @@ The backend `PatientSummary` must provide:
 - Patient list: `GET /api/v1/patients` (with clinic filter)
 - Alerts count: `GET /api/v1/alerts` (filtered by status=new)
 
-**Verdict:** READY — all endpoints exist. Frontend uses mock data.
+**Verdict:** READY — all endpoints exist. Frontend `DashboardPage.tsx` now wired to `GET /api/v1/home/dashboard` (REAL API).
 
 ---
 
@@ -120,9 +120,9 @@ The backend `PatientSummary` must provide:
 
 - **Backend endpoints:** 90 paths, all documented in OpenAPI
 - **Figma screens:** 45 mobile + 60 web = 105 screens
-- **Frontend/Mobile API calls:** 0 (all mock data)
+- **Frontend API calls:** 3 (Login→POST /api/v1/auth/login, Patients→GET /api/v1/patients, Dashboard→GET /api/v1/home/dashboard). Mobile API calls: 0 (all mock data on screens).
 - **Contract coverage:** ~95% of Figma screens have corresponding backend endpoints
-- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`; dedicated symptom endpoint `GET /api/v1/patients/{id}/symptoms` (Phase 61). Remaining: client integration (replace mock data).
+- **Gaps:** Mobile home aggregated today view resolved via `GET /api/v1/patients/{id}/home` + `GET /api/v1/home/dashboard`; patient registry search resolved via `search`/`q` (Phase 47); QR invite endpoint READY via `GET /api/v1/qr/invite`; dedicated symptom endpoint `GET /api/v1/patients/{id}/symptoms` (Phase 61). Remaining: client integration (replace mock data on 34 remaining frontend screens).
 
 ### Next steps
 
