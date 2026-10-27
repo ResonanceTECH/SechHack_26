@@ -75,7 +75,8 @@ import {
   CheckInAnxietyScreen,
   type AnxietyId,
 } from "./src/screens/CheckInAnxietyScreen";
-import { CheckInSleepScreen } from "./src/screens/CheckInSleepScreen";
+import { CheckInSleepScreen, type SleepCheckIn } from "./src/screens/CheckInSleepScreen";
+import { submitDiaryEntry } from "./src/api/diary";
 import { CheckInSavedScreen } from "./src/screens/CheckInSavedScreen";
 import { AppointmentScreen } from "./src/screens/AppointmentScreen";
 import { RescheduleAppointmentScreen } from "./src/screens/RescheduleAppointmentScreen";
@@ -1012,9 +1013,20 @@ export default function App() {
             setScreen(sleepFrom === "anxiety" ? "checkInAnxiety" : "home")
           }
           onClose={() => setScreen("home")}
-          onSave={async () => {
+          onSave={async (sleep: SleepCheckIn) => {
             const ok = online ? true : await refreshNetwork();
             if (!ok) {
+              openError("checkInSaveFailed", "checkInSleep");
+              return;
+            }
+            try {
+              await submitDiaryEntry({
+                mood: checkInMood,
+                anxiety: checkInAnxiety,
+                sleepMinutes: sleep.minutes,
+                recordedAt: new Date(),
+              });
+            } catch {
               openError("checkInSaveFailed", "checkInSleep");
               return;
             }
