@@ -18,6 +18,7 @@ class ExerciseRepository:
             practitioner_id=uuid.UUID(str(data["practitioner_id"])),
             title=data["title"],
             description=data.get("description"),
+            plan_payload=data.get("plan_payload"),
             status=data.get("status", "active"),
         )
         db.add(row)

@@ -241,8 +241,27 @@ class PatientService:
                     today_tasks.append({"type": "appointment", "title": "Приём", "related_id": next_appointment.get("id"), "completed": False, "scheduled_at": next_appointment.get("scheduled_at")})
             except Exception:
                 pass
+        # practitioner (assigned doctor) user id for messaging
+        practitioner_user_id = None
+        try:
+            from sqlalchemy import select
+            from app.models.assignment import PatientAssignment
+            from app.models.profile import PractitionerProfile
+            assign = (await db.execute(
+                select(PatientAssignment).where(PatientAssignment.patient_id == UUID(str(patient_id)))
+            )).scalar_one_or_none()
+            if assign is not None:
+                prac = (await db.execute(
+                    select(PractitionerProfile).where(PractitionerProfile.id == assign.practitioner_id)
+                )).scalar_one_or_none()
+                if prac is not None:
+                    practitioner_user_id = str(prac.user_id)
+        except Exception:
+            practitioner_user_id = None
+
         return {
             "patient": patient,
+            "practitioner_user_id": practitioner_user_id,
             "alerts": {"active": len(alerts)},
             "latest_diary": latest_diary,
             "next_appointment": next_appointment,

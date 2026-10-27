@@ -144,6 +144,7 @@ class ReportService:
                 for s in screenings
             ],
             "diary_summary": diary_summary,
+            "trajectory": _compute_trajectory(screenings),
         }
 
     async def clinic_analytics(self, db: AsyncSession, current_user=None) -> dict:
@@ -197,3 +198,36 @@ def _avg(values):
     if not nums:
         return None
     return round(sum(nums) / len(nums), 2)
+
+def _compute_trajectory(screenings):
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for s in screenings:
+        groups[getattr(s, "questionnaire_type", None)].append(s)
+    result = {}
+    for code, items in groups.items():
+        if not code:
+            continue
+        items_sorted = sorted(items, key=lambda x: getattr(x, "created_at", None) or datetime.min.replace(tzinfo=timezone.utc))
+        baseline = items_sorted[0]
+        latest = items_sorted[-1]
+        b_score = getattr(baseline, "score", None)
+        l_score = getattr(latest, "score", None)
+        delta = None
+        direction = "stable"
+        if b_score is not None and l_score is not None:
+            delta = l_score - b_score
+            if delta > 0:
+                direction = "worsening"
+            elif delta < 0:
+                direction = "improving"
+        result[code] = {
+            "baseline_score": b_score,
+            "latest_score": l_score,
+            "delta": delta,
+            "direction": direction,
+            "n_measurements": len(items_sorted),
+            "baseline_date": getattr(baseline, "created_at", None).isoformat() if getattr(baseline, "created_at", None) else None,
+            "latest_date": getattr(latest, "created_at", None).isoformat() if getattr(latest, "created_at", None) else None,
+        }
+    return result

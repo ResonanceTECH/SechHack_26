@@ -47,6 +47,7 @@ class CarePlan(UUIDPkMixin, TimestampMixin, Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    plan_payload: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(String(30), default="active", server_default="active")
 
 

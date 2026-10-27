@@ -218,6 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # . & envs
+.clinerules
 .env.local
 .DS_Store
 .vscode
@@ -227,7 +228,6 @@ __marimo__/
 node_modules/
 
 
+
 # other
-docs/reports/archive
-TGChatExport*
-get_tree.py
+

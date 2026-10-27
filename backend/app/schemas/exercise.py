@@ -15,12 +15,14 @@ class CarePlanCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
     status: str = "active"
+    plan_payload: Optional[dict] = None
 
 
 class CarePlanUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=255)
     description: Optional[str] = None
     status: Optional[str] = None
+    plan_payload: Optional[dict] = None
 
 
 class CarePlanResponse(BaseModel):
@@ -30,6 +32,7 @@ class CarePlanResponse(BaseModel):
     title: str
     description: Optional[str] = None
     status: str
+    plan_payload: Optional[dict] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

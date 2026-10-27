@@ -218,6 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # . & envs
+.clinerules
 .env.local
 .DS_Store
 .vscode
@@ -229,5 +230,4 @@ node_modules/
 
 
 # other
-docs/reports/archive
-get_tree.py
+

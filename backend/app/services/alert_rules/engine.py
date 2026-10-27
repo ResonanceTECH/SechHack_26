@@ -30,6 +30,52 @@ class AlertRule:
     enabled: bool = True
 
 
+@dataclass(frozen=True)
+class AdherenceAlertRule:
+    code: str
+    kind: str  # consecutive_misses | adherence_below | drop_after_prescription | disengagement
+    threshold: int = 3
+    alert_type: str = "adherence"
+    priority: str = "mandatory"
+    reason: str = "adherence_rule"
+    enabled: bool = True
+
+
+DEFAULT_ADHERENCE_RULES: list[AdherenceAlertRule] = [
+    AdherenceAlertRule(code="consecutive_misses", kind="consecutive_misses", threshold=3,
+                       alert_type="adherence", priority="mandatory", reason="three_consecutive_misses"),
+    AdherenceAlertRule(code="adherence_below", kind="adherence_below", threshold=80,
+                       alert_type="adherence", priority="mandatory", reason="adherence_below_80"),
+    AdherenceAlertRule(code="drop_after_prescription", kind="drop_after_prescription", threshold=20,
+                       alert_type="adherence", priority="optional", reason="adherence_drop_after_prescription"),
+    AdherenceAlertRule(code="disengagement", kind="disengagement", threshold=7,
+                       alert_type="missed_diary", priority="optional", reason="patient_disengaged"),
+]
+
+
+def evaluate_adherence(
+    consecutive_misses: int = 0,
+    adherence_pct: float | None = None,
+    adherence_drop: float | None = None,
+    days_since_last_entry: int | None = None,
+) -> AlertRuleResult:
+    for rule in DEFAULT_ADHERENCE_RULES:
+        if not rule.enabled:
+            continue
+        triggered = False
+        if rule.kind == "consecutive_misses" and consecutive_misses >= rule.threshold:
+            triggered = True
+        elif rule.kind == "adherence_below" and adherence_pct is not None and adherence_pct < rule.threshold:
+            triggered = True
+        elif rule.kind == "drop_after_prescription" and adherence_drop is not None and adherence_drop >= rule.threshold:
+            triggered = True
+        elif rule.kind == "disengagement" and days_since_last_entry is not None and days_since_last_entry >= rule.threshold:
+            triggered = True
+        if triggered:
+            return AlertRuleResult(True, rule.alert_type, rule.priority, rule.reason)
+    return AlertRuleResult(False, None, None, None)
+
+
 DEFAULT_RULES: list[AlertRule] = [
     AlertRule(code="phq9", kind="item_gte", threshold=1, item_index=8,
              alert_type="critical_symptom", priority="mandatory", reason="phq9_item_9"),
