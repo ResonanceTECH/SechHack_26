@@ -15,6 +15,7 @@ import { submitScreening } from "./src/api/screenings";
 import { updateMyMedications } from "./src/api/patientMeds";
 import { ApiError } from "./src/api/client";
 import { clearTokens } from "./src/api/storage";
+import { getHomeDashboard, buildNameAndInitials } from "./src/api/patient";
 import { RegisterPhoneScreen } from "./src/screens/RegisterPhoneScreen";
 import { RegisterSmsScreen } from "./src/screens/RegisterSmsScreen";
 import { RegisterConsentScreen } from "./src/screens/RegisterConsentScreen";
@@ -225,6 +226,8 @@ export default function App() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<SymptomId[]>([]);
   const [emergencyBack, setEmergencyBack] = useState<Screen>("home");
   const [symptomBack, setSymptomBack] = useState<Screen>("home");
+  const [patientName, setPatientName] = useState("Анна");
+  const [patientInitials, setPatientInitials] = useState("АМ");
   const [consentBack, setConsentBack] = useState<Screen>("registerConsent");
   const [callBack, setCallBack] = useState<Screen>("safetyPlan");
   const [safetyPlanBack, setSafetyPlanBack] = useState<Screen>("profile");
@@ -242,7 +245,26 @@ export default function App() {
     (async () => {
       try {
         const me = await getMe();
-        if (!cancelled && me?.user) setScreen("home");
+        if (!cancelled && me?.user) {
+          // Fetch patient name/initials from home dashboard
+          try {
+            const dashboard = await getHomeDashboard();
+            const patient = dashboard?.patient_home?.patient;
+            if (patient) {
+              const { name, initials } = buildNameAndInitials(
+                patient.first_name,
+                patient.last_name,
+              );
+              if (!cancelled) {
+                setPatientName(name);
+                setPatientInitials(initials);
+              }
+            }
+          } catch {
+            // keep defaults
+          }
+          setScreen("home");
+        }
       } catch {
         // no valid session -> stay on welcome
       }
@@ -405,6 +427,21 @@ export default function App() {
               me.consent_personal_data &&
               me.consent_medical_data &&
               me.consent_data_sharing_with_doctor;
+            // Fetch patient name/initials from home dashboard
+            try {
+              const dashboard = await getHomeDashboard();
+              const patient = dashboard?.patient_home?.patient;
+              if (patient) {
+                const { name, initials } = buildNameAndInitials(
+                  patient.first_name,
+                  patient.last_name,
+                );
+                setPatientName(name);
+                setPatientInitials(initials);
+              }
+            } catch {
+              // keep defaults
+            }
             if (me.user.role === "patient" && me.has_patient_profile && consentsDone) {
               setScreen("home");
             } else if (me.user.role === "patient") {
@@ -451,6 +488,21 @@ export default function App() {
                 me.consent_personal_data &&
                 me.consent_medical_data &&
                 me.consent_data_sharing_with_doctor;
+              // Fetch patient name/initials from home dashboard
+              try {
+                const dashboard = await getHomeDashboard();
+                const patient = dashboard?.patient_home?.patient;
+                if (patient) {
+                  const { name, initials } = buildNameAndInitials(
+                    patient.first_name,
+                    patient.last_name,
+                  );
+                  setPatientName(name);
+                  setPatientInitials(initials);
+                }
+              } catch {
+                // keep defaults
+              }
               if (me.has_patient_profile && !consentsDone) {
                 setScreen("registerConsent");
               } else {
@@ -727,6 +779,8 @@ export default function App() {
 
       {screen === "home" && (
         <HomeScreen
+          name={patientName}
+          initials={patientInitials}
           onProfile={() => setScreen("profile")}
           onSos={() => {
             setEmergencyBack("home");
