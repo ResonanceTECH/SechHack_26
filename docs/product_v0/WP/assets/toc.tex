@@ -1,0 +1,23 @@
+\documentclass{article}
+\usepackage{tocloft}
+\usepackage{etoolbox}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+% Настройка стиля оглавления
+\renewcommand{\cftsecfont}{\color{blue}} % Цвет заголовков разделов
+\renewcommand{\cftsecpagefont}{\color{blue}} % Цвет номеров страниц
+\renewcommand{\cftsecfont}{\bfseries} % Жирный шрифт для заголовков разделов
+\renewcommand{\cftsecpagefont}{\bfseries} % Жирный шрифт для номеров страниц
+\setlength{\cftbeforesecskip}{1em} % Отступ перед заголовками разделов
+
+\begin{document}
+\tableofcontents
+\newpage
+\def\tightlist{\itemsep1pt\parskip0pt\parsep0pt}
+$body$
+\end{document}

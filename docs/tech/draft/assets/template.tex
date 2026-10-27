@@ -1,0 +1,19 @@
+\documentclass{article}
+\usepackage{tocloft}
+
+\begin{document}
+
+% Первая глава
+\section{Первая глава}
+\input{chapter1.tex}
+
+% Содержание после первой главы
+$if(toc)$
+\tableofcontents
+$endif$
+
+% Вторая глава
+\section{Вторая глава}
+\input{chapter2.tex}
+
+\end{document}

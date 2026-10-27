@@ -1,0 +1,73 @@
+.wrap {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.grid {
+  stroke: rgba(27, 36, 64, 0.06);
+  stroke-width: 1;
+}
+
+.axis {
+  fill: var(--footer);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font);
+  text-anchor: end;
+}
+
+.axisX {
+  fill: var(--footer);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.gap {
+  fill: rgba(160, 168, 188, 0.22);
+}
+
+.worsen {
+  fill: rgba(229, 77, 77, 0.1);
+}
+
+.mood {
+  stroke: #3b78ff;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.anxiety {
+  stroke: #e6a317;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sleep {
+  stroke: #1b2440;
+  stroke-width: 1.75;
+  stroke-dasharray: 3 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.dotMood {
+  fill: #3b78ff;
+}
+
+.dotAnxiety {
+  fill: #e6a317;
+}
+
+.dotSleep {
+  fill: #7b6cf0;
+}
