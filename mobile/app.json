@@ -44,7 +44,8 @@
           "cameraPermission": "Камера нужна, чтобы отсканировать QR-код приглашения от врача.",
           "barcodeScannerEnabled": true
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

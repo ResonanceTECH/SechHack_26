@@ -239,21 +239,6 @@ export function RegisterQuestionnaireQuestionScreen({
           >
             <Text style={styles.btnPrimaryText}>Далее</Text>
           </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              const next = { ...answers, [question.id]: null };
-              setAnswers(next);
-              goNext(next);
-            }}
-            style={({ pressed }) => [
-              styles.skipWrap,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.skipText}>Пропустить вопрос</Text>
-          </Pressable>
         </View>
       </View>
     </ScreenGradient>

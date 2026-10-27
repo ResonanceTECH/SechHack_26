@@ -26,6 +26,7 @@ type Props = {
 const CATALOG: MedicationItem[] = [
   { id: "sertr-50", name: "Сертралин 50 мг", form: "таблетки" },
   { id: "sertr-100", name: "Сертралин 100 мг", form: "таблетки" },
+  { id: "aviandr-20", name: "Авиандр 20 мг", form: "таблетки" },
   { id: "escit-10", name: "Эсциталопрам 10 мг", form: "таблетки" },
   { id: "escit-20", name: "Эсциталопрам 20 мг", form: "таблетки" },
   { id: "quet-25", name: "Кветиапин 25 мг", form: "таблетки" },
